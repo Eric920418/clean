@@ -1,0 +1,169 @@
+// invisible care · Prisma Schema
+// 居家清潔服務 CMS — 核心特色：大量「清潔前後對比圖」
+// 文檔：見專案根目錄 README.md（單一事實來源）
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// 管理員帳號
+// ============================================
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String   // bcrypt hashed
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// 服務（六大核心：防霾紗網 / 全戶濾水 / 水塔 / 冷氣 / 洗衣機 / 居家清潔）
+// ============================================
+model Service {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  shortDesc   String   // 卡片摘要（建議 80 字內）
+  longDesc    String   // 詳情頁主文（可長段）
+  icon        String?  // Lucide icon 名稱（如 "Wind", "Droplet"）
+  heroImage   String?  // 詳情頁 Hero 大圖 R2 URL
+  cardImage   String?  // 卡片縮圖
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  seoTitle    String?
+  seoDesc     String?
+
+  features      ServiceFeature[]
+  faqs          ServiceFaq[]
+  beforeAfters  BeforeAfterPair[]
+  galleryImgs   ServiceGalleryImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// 服務特色 bullet（可排序）
+// ============================================
+model ServiceFeature {
+  id        Int     @id @default(autoincrement())
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  text      String
+  order     Int     @default(0)
+}
+
+// ============================================
+// 服務 FAQ
+// ============================================
+model ServiceFaq {
+  id        Int     @id @default(autoincrement())
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  question  String
+  answer    String
+  order     Int     @default(0)
+}
+
+// ============================================
+// 前後對比圖（核心：drink 專案沒有此 model）
+// 一組 = 一個 before + 一個 after，可附 caption 與拍攝資訊
+// ============================================
+model BeforeAfterPair {
+  id         Int      @id @default(autoincrement())
+  serviceId  Int
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  beforeUrl  String
+  afterUrl   String
+  caption    String?  // 例：「30 年老屋冷氣風輪深度清洗」
+  location   String?  // 例：「台北市信義區」（可關閉顯示）
+  takenAt    DateTime?
+  order      Int      @default(0)
+  isFeatured Boolean  @default(false) // 首頁作品牆是否主推
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ============================================
+// 服務一般圖庫（非對比，純展示）
+// ============================================
+model ServiceGalleryImage {
+  id        Int     @id @default(autoincrement())
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  order     Int     @default(0)
+}
+
+// ============================================
+// 預約諮詢（取代 drink 的 ContactMessage，含服務多選與處理狀態）
+// ============================================
+model BookingInquiry {
+  id         Int           @id @default(autoincrement())
+  name       String
+  phone      String
+  email      String?
+  serviceIds Int[]         // 客戶想諮詢的服務 ID 陣列
+  preferDate DateTime?     // 希望服務日期
+  address    String?       // 概略區域（隱私保護用）
+  message    String?       // 補充訊息
+  status     InquiryStatus @default(NEW)
+  isRead     Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+enum InquiryStatus {
+  NEW         // 新進
+  CONTACTED   // 已聯繫
+  QUOTED      // 已報價
+  DONE        // 已完成
+  CLOSED      // 已關閉（不成案）
+}
+
+// ============================================
+// 頁面內容區塊（首頁 hero / about / why-us / cta payload 動態管理）
+// ============================================
+model ContentBlock {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // hero, about, why-us, process, cta, footer
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// 客戶評價（首頁見證區塊）
+// ============================================
+model Testimonial {
+  id        Int      @id @default(autoincrement())
+  authorName String   // 客戶署名（可化名）
+  authorMeta String?  // 例：「台北・洗冷氣 + 洗衣機」
+  rating     Int      @default(5)  // 1-5
+  content    String
+  serviceId  Int?     // 可選：對應哪項服務
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ============================================
+// 網站設定（電話、Line、FB、服務區域、社群連結）
+// ============================================
+model SiteSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // siteName, phone, lineId, fbUrl, igUrl, address, serviceArea, ...
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
