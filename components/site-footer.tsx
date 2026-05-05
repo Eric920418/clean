@@ -5,8 +5,8 @@ import { mockServices } from '@/lib/mock-data'
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-hairline bg-bg-soft">
-      <div className="container-narrow grid grid-cols-1 gap-10 py-16 md:grid-cols-4">
+    <footer className="mt-16 border-t border-hairline bg-bg-soft">
+      <div className="container-narrow grid grid-cols-1 gap-10 py-12 md:grid-cols-4">
         <div className="md:col-span-2">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">

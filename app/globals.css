@@ -207,11 +207,11 @@
 
   /* Section 容器 */
   .section {
-    padding-top: 6rem;
-    padding-bottom: 6rem;
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
   }
   @media (min-width: 768px) {
-    .section { padding-top: 8rem; padding-bottom: 8rem; }
+    .section { padding-top: 5rem; padding-bottom: 5rem; }
   }
 
   /* 內容寬度 */

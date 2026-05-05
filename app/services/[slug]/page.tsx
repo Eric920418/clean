@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
-import { BeforeAfterSlider } from '@/components/before-after-slider'
+import { BeforeAfterPair } from '@/components/before-after-pair'
 import { IconByName } from '@/components/icon-by-name'
 import { Faq } from '@/components/faq'
 import { getServiceBySlug, mockServices } from '@/lib/mock-data'
@@ -60,7 +60,7 @@ export default async function ServiceDetailPage({
           />
           <div className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/60 to-transparent" />
         </div>
-        <div className="container-narrow relative grid min-h-[420px] py-20 md:min-h-[520px] md:py-28">
+        <div className="container-narrow relative grid min-h-[340px] py-14 md:min-h-[420px] md:py-20">
           <div className="max-w-2xl text-white">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/15 text-white backdrop-blur-sm">
               <IconByName name={service.icon} className="h-5 w-5" />
@@ -110,16 +110,16 @@ export default async function ServiceDetailPage({
 
       {/* 前後對比牆 */}
       {service.beforeAfters.length > 0 && (
-        <section id="works" className="bg-bg-soft py-24 md:py-32">
+        <section id="works" className="bg-bg-soft py-16 md:py-24">
           <div className="container-narrow">
             <SectionHeading
               eyebrow="Real Results"
               title={`${service.name}・實際施作前後`}
               description="拖動中央分隔線，親眼比較施作前後的差異。"
             />
-            <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="mx-auto mt-9 grid max-w-4xl grid-cols-1 gap-10">
               {service.beforeAfters.map((p) => (
-                <BeforeAfterSlider
+                <BeforeAfterPair
                   key={p.id}
                   beforeUrl={p.beforeUrl}
                   afterUrl={p.afterUrl}
@@ -137,7 +137,7 @@ export default async function ServiceDetailPage({
         <section className="section">
           <div className="container-narrow">
             <SectionHeading eyebrow="Gallery" title="施作過程" />
-            <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-9 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {service.galleryImgs.map((img) => (
                 <div
                   key={img.id}
@@ -159,10 +159,10 @@ export default async function ServiceDetailPage({
 
       {/* FAQ */}
       {service.faqs.length > 0 && (
-        <section className="bg-bg-soft py-24 md:py-32">
+        <section className="bg-bg-soft py-16 md:py-24">
           <div className="container-narrow max-w-3xl">
             <SectionHeading eyebrow="FAQ" title="常見問題" align="center" />
-            <div className="mt-12">
+            <div className="mt-9">
               <Faq items={service.faqs} />
             </div>
           </div>
@@ -170,8 +170,8 @@ export default async function ServiceDetailPage({
       )}
 
       {/* CTA */}
-      <section className="container-narrow py-24 md:py-32">
-        <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">
+      <section className="container-narrow py-16 md:py-24">
+        <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-8 text-center md:p-12">
           <h2 className="text-3xl font-medium tracking-tight text-ink md:text-4xl">
             準備好讓 {service.name} 上線了嗎？
           </h2>
@@ -191,9 +191,9 @@ export default async function ServiceDetailPage({
       </section>
 
       {/* 推薦其他服務 */}
-      <section className="container-narrow pb-24 md:pb-32">
+      <section className="container-narrow pb-16 md:pb-24">
         <SectionHeading eyebrow="More services" title="您可能也需要" />
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-3">
           {others.map((s) => (
             <Link
               key={s.id}

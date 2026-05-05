@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BeforeAfterSlider } from '@/components/before-after-slider'
+import { BeforeAfterPair } from '@/components/before-after-pair'
 import { cn } from '@/lib/utils'
 
 type GalleryItem = {
@@ -53,10 +53,10 @@ export function WorksGallery({ items, filters }: Props) {
         ))}
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-10">
         {filtered.map((p) => (
           <div key={p.id} className="space-y-3">
-            <BeforeAfterSlider
+            <BeforeAfterPair
               beforeUrl={p.beforeUrl}
               afterUrl={p.afterUrl}
               caption={p.caption}

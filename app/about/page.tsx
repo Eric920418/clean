@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section className="bg-medical-glow pt-20 pb-12 md:pt-28 md:pb-16">
+      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
         <div className="container-narrow grid grid-cols-1 items-end gap-10 md:grid-cols-2">
           <div>
             <span className="eyebrow">About invisible care</span>
@@ -30,7 +30,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="section pt-16 md:pt-20">
+      <section className="section pt-10 md:pt-14">
         <div className="container-narrow grid grid-cols-1 items-center gap-12 md:grid-cols-2">
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
             <Image
@@ -58,7 +58,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-bg-soft py-24 md:py-32">
+      <section className="bg-bg-soft py-16 md:py-24">
         <div className="container-narrow">
           <SectionHeading
             align="center"
@@ -66,7 +66,7 @@ export default function AboutPage() {
             title="三項職人信仰"
             description="我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。"
           />
-          <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
             {siteConfig.promises.map((p, idx) => (
               <div
                 key={p.title}
@@ -83,7 +83,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="container-narrow py-24 md:py-32">
+      <section className="container-narrow py-16 md:py-24">
         <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">
           <h2 className="text-3xl font-medium tracking-tight text-ink md:text-4xl">
             您的家，值得被溫柔對待

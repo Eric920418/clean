@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <section className="bg-medical-glow pt-20 pb-12 md:pt-28 md:pb-16">
+      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
             eyebrow="Contact"
@@ -24,7 +24,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="section pt-12 md:pt-16">
+      <section className="section pt-8 md:pt-10">
         <div className="container-narrow grid grid-cols-1 gap-10 lg:grid-cols-3">
           <aside className="lg:col-span-1">
             <div className="rounded-xl border border-hairline bg-bg-soft p-7">

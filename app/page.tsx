@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CheckCircle2, Star } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
-import { BeforeAfterSlider } from '@/components/before-after-slider'
+import { BeforeAfterPair } from '@/components/before-after-pair'
 import { IconByName } from '@/components/icon-by-name'
 import { mockServices, mockTestimonials, featuredBeforeAfters } from '@/lib/mock-data'
 import { siteConfig } from '@/lib/site-config'
@@ -27,7 +27,7 @@ export default function HomePage() {
 function Hero() {
   return (
     <section className="relative overflow-hidden bg-medical-glow">
-      <div className="container-narrow grid grid-cols-1 items-center gap-12 pt-20 pb-24 md:grid-cols-2 md:gap-16 md:pt-28 md:pb-36">
+      <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-14 pb-16 md:grid-cols-2 md:gap-14 md:pt-20 md:pb-24">
         <div>
           <span className="eyebrow">Invisible Care · 居家健康守護</span>
           <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-ink md:text-6xl">
@@ -60,14 +60,20 @@ function Hero() {
         </div>
 
         <div className="relative">
-          <BeforeAfterSlider
-            beforeUrl={featuredBeforeAfters[0].beforeUrl}
-            afterUrl={featuredBeforeAfters[0].afterUrl}
-            caption={featuredBeforeAfters[0].caption}
-            location={featuredBeforeAfters[0].location}
-            aspect="photo"
-            priority
-          />
+          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-hairline bg-bg-soft shadow-sm">
+            <Image
+              src={featuredBeforeAfters[0].afterUrl}
+              alt={featuredBeforeAfters[0].caption ?? '清洗後實況'}
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover"
+              priority
+            />
+            <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-primary/95 px-3 py-1 text-xs font-medium tracking-wide text-white shadow-sm">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
+              清洗後實況
+            </span>
+          </div>
           <div className="pointer-events-none absolute -bottom-6 -left-6 hidden h-24 w-24 rounded-full bg-primary-soft/40 blur-2xl md:block" />
           <div className="pointer-events-none absolute -top-8 -right-8 hidden h-32 w-32 rounded-full bg-accent-soft/40 blur-3xl md:block" />
         </div>
@@ -88,7 +94,7 @@ function ServicesGrid() {
           title="六大專業服務，一站式守護"
           description="從窗戶上的紗網，到家中每一滴用水，我們整合全方位居家維護技術，由內而外照顧您與家人的健康。"
         />
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {mockServices.map((s) => (
             <Link
               key={s.id}
@@ -119,7 +125,7 @@ function ServicesGrid() {
  * ============================================================ */
 function WhyUs() {
   return (
-    <section className="bg-bg-soft py-24 md:py-32">
+    <section className="bg-bg-soft py-16 md:py-24">
       <div className="container-narrow">
         <SectionHeading
           align="center"
@@ -127,7 +133,7 @@ function WhyUs() {
           title="三項堅持，讓家人安心"
           description="我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。"
         />
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {siteConfig.promises.map((p, idx) => (
             <div
               key={p.title}
@@ -165,9 +171,9 @@ function FeaturedWorks() {
           </Link>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {featuredBeforeAfters.slice(0, 4).map((p) => (
-            <BeforeAfterSlider
+        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-10">
+          {featuredBeforeAfters.slice(0, 3).map((p) => (
+            <BeforeAfterPair
               key={p.id}
               beforeUrl={p.beforeUrl}
               afterUrl={p.afterUrl}
@@ -186,14 +192,14 @@ function FeaturedWorks() {
  * ============================================================ */
 function Process() {
   return (
-    <section className="bg-gradient-to-b from-white to-bg-tint/40 py-24 md:py-32">
+    <section className="bg-gradient-to-b from-white to-bg-tint/40 py-16 md:py-24">
       <div className="container-narrow">
         <SectionHeading
           align="center"
           eyebrow="How it works"
           title="四步驟・讓您安心交付"
         />
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
           {siteConfig.process.map((p, idx) => (
             <div key={p.step} className="relative rounded-xl border border-hairline bg-white p-6">
               <span className="font-display text-3xl font-semibold tracking-tight text-primary">
@@ -223,7 +229,7 @@ function Testimonials() {
           eyebrow="Customer Voices"
           title="他們選擇了 invisible care"
         />
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {mockTestimonials.map((t) => (
             <figure
               key={t.id}
@@ -254,8 +260,8 @@ function Testimonials() {
  * ============================================================ */
 function CtaBanner() {
   return (
-    <section className="container-narrow pb-24 md:pb-32">
-      <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-14 text-white md:px-16 md:py-20">
+    <section className="container-narrow pb-16 md:pb-24">
+      <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
         <div className="absolute inset-0 opacity-25">
           <Image
             src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1600&q=80"

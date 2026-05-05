@@ -55,7 +55,7 @@ export const mockServices: MockService[] = [
       '冷氣不冷、滴水、噴黑點，都是機器發出的求救信號。我們堅持「全拆解」工法，將風輪、蒸發鋁片、排水盤拆下後以專業洗劑徹底清洗，徹底瓦解長年累積的黴菌與灰塵，恢復新機般的冷房效率與寧靜運轉。',
     icon: 'Wind',
     heroImage: u('photo-1582719471384-894fbb16e074'),
-    cardImage: u('photo-1631545806609-21fc7d54a23e', 800),
+    cardImage: u('photo-1585320806297-9794b3e4eeae', 800),
     order: 1,
     isActive: true,
     isFeatured: true,
@@ -90,7 +90,7 @@ export const mockServices: MockService[] = [
       {
         id: 1,
         beforeUrl: u('photo-1585421514738-01798e348b17'),
-        afterUrl: u('photo-1631545806609-21fc7d54a23e'),
+        afterUrl: u('photo-1585320806297-9794b3e4eeae'),
         caption: '使用 8 年未深度清洗的分離式冷氣風輪',
         location: '台北市信義區',
         takenAt: '2026-03-12',
@@ -128,7 +128,7 @@ export const mockServices: MockService[] = [
     longDesc:
       '洗衣機內槽與外桶之間的夾層，長年積累皮屑、棉絮與洗劑殘留，髒汙程度往往高出馬桶數倍。我們提供直立式與滾筒式洗衣機的完全拆解清洗，讓您親眼見證清潔前後的巨大反差，從根本解決衣物洗後發臭與皮膚搔癢的問題。',
     icon: 'WashingMachine',
-    heroImage: u('photo-1610557892470-55d9e80c0bd6'),
+    heroImage: u('photo-1545173168-9f1947eebb7f'),
     cardImage: u('photo-1626806787461-102c1bfaaea1', 800),
     order: 2,
     isActive: true,
@@ -146,8 +146,8 @@ export const mockServices: MockService[] = [
     beforeAfters: [
       {
         id: 4,
-        beforeUrl: u('photo-1604335079441-95b121cb09da'),
-        afterUrl: u('photo-1610557892470-55d9e80c0bd6'),
+        beforeUrl: u('photo-1620626011761-996317b8d101'),
+        afterUrl: u('photo-1545173168-9f1947eebb7f'),
         caption: '5 年未拆洗的滾筒洗衣機內桶',
         location: '台北市大安區',
         takenAt: '2026-02-18',
@@ -156,7 +156,7 @@ export const mockServices: MockService[] = [
       {
         id: 5,
         beforeUrl: u('photo-1626806787461-102c1bfaaea1'),
-        afterUrl: u('photo-1610557892470-55d9e80c0bd6'),
+        afterUrl: u('photo-1545173168-9f1947eebb7f'),
         caption: '直立式洗衣機底盤毛屑',
         location: '新北市三重區',
         takenAt: '2026-03-05',
@@ -164,7 +164,7 @@ export const mockServices: MockService[] = [
       },
     ],
     galleryImgs: [
-      { id: 3, url: u('photo-1604335079441-95b121cb09da', 800), alt: '拆解後的洗衣槽' },
+      { id: 3, url: u('photo-1620626011761-996317b8d101', 800), alt: '拆解後的洗衣槽' },
     ],
   },
   {
@@ -241,8 +241,8 @@ export const mockServices: MockService[] = [
     longDesc:
       '飲用水可以買，但洗澡、刷牙、洗臉的「生活用水」卻無法迴避。我們安裝的全戶大胖過濾系統，能有效濾除自來水中的餘氯、重金屬、農藥殘留與泥沙，不僅保護您的肌膚與髮質不再受化學物質侵擾，更能防止管路結垢，延長家中熱水器、洗衣機等用水設備的壽命。',
     icon: 'Filter',
-    heroImage: u('photo-1583912267550-d44c9c2bb6c4'),
-    cardImage: u('photo-1583912267550-d44c9c2bb6c4', 800),
+    heroImage: u('photo-1581922814484-0b48460b7010'),
+    cardImage: u('photo-1581922814484-0b48460b7010', 800),
     order: 5,
     isActive: true,
     isFeatured: false,

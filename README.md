@@ -13,7 +13,7 @@
 | 項目 | 狀態 |
 |---|---|
 | 前台靜態原型（首頁 / 六大服務 / 服務詳情 / 作品集 / 關於 / 預約 / FAQ） | ✅ 已完成，可瀏覽 |
-| 自建 Before/After 拖曳對比元件 | ✅ 已完成（桌面拖曳 + 手機觸控 + 鍵盤左右鍵） |
+| Before/After 並排對比元件（傳統並排，純 Server Component） | ✅ 已完成 |
 | 設計系統（純淨醫療感配色） | ✅ 已完成 |
 | Prisma schema（六大 model + 對比圖獨立 model） | ✅ 已完成 |
 | 預約諮詢表單 UI（含 toast、錯誤顯示） | ✅ 已完成（前端） |
@@ -61,7 +61,7 @@ clean/
 │   └── globals.css                 設計系統 CSS（純淨醫療感）
 │
 ├── components/
-│   ├── before-after-slider.tsx    🎯 自建拖曳對比元件（核心）
+│   ├── before-after-pair.tsx      🎯 並排對比元件（左 Before / 右 After，純 Server Component）
 │   ├── site-nav.tsx                Sticky 上方導航
 │   ├── site-footer.tsx             頁尾
 │   ├── section-heading.tsx         章節標題（eyebrow + title + desc）
@@ -255,28 +255,30 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 ## Before/After 對比元件
 
-`components/before-after-slider.tsx` 是這個專案的視覺核心：
+`components/before-after-pair.tsx` 採傳統並排式（甲方指定）：
 
-- **底層**：完整的 Before 圖
-- **上層**：After 圖用 `clip-path: inset(0 X% 0 0)` 動態裁切
-- **桌面**：滑鼠拖曳分隔線，使用 `setPointerCapture` 讓拖曳離開元件外仍有效
-- **手機**：手指拖曳（`touch-none` 防止頁面捲動）
-- **無障礙**：`role="slider"` + `tabIndex` + 鍵盤左右鍵調整位置
-- **效能**：`next/image` + 鎖定 `aspect-ratio` 避免 CLS
-- **語意**：左上角顯示「清洗前」、右上角顯示「清洗後」標籤
+- **桌面**：左 Before、右 After，兩張圖等寬並排，各自帶清楚標籤
+- **手機**：自動上下堆疊（CSS grid `grid-cols-1 md:grid-cols-2`）
+- **零 client JS**：純 Server Component，無 useState、無事件處理，每組 pair 不增加 bundle
+- **效能**：`next/image` + 鎖定 aspect-ratio 避免 CLS，預設 `4/3`
+- **微互動**：hover 時兩張圖一同放大 2%（`group-hover:scale-[1.02]`），保留品味但不喧賓奪主
+- **語意**：Before 標籤用 `bg-ink/80`（深色），After 用 `bg-primary/95`（emerald），形成色彩對比
+- **配置**：作品牆統一單欄 `max-w-4xl mx-auto`，每組 pair 滿版顯示，視覺反差最大化
 
 使用範例：
 
 ```tsx
-<BeforeAfterSlider
+<BeforeAfterPair
   beforeUrl={pair.beforeUrl}
   afterUrl={pair.afterUrl}
   caption="使用 8 年未深度清洗的冷氣風輪"
   location="台北市信義區"
-  aspect="photo"        // photo | video | square
-  priority              // 首屏載入時加上
+  aspect="photo"        // photo (4/3) | video (16/9) | square (1/1)
+  priority              // 首屏首組加上
 />
 ```
+
+**首頁 Hero 例外**：Hero 不放 pair（避免縮成迷你尺寸）。改用單張「清洗後實況」大圖搭配 `aspect-[4/5]` 海報感框；對比展示交給下方「親眼見證的反差」區塊滿版呈現。
 
 ---
 
@@ -305,17 +307,24 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 - 目前所有資料來自 `lib/mock-data.ts`，並未實際連線資料庫
 - 圖片暫用 Unsplash 公開圖，部分 ID 已失效顯示為破圖（生產環境會用 R2 上傳真實照片取代）
-- Before/After slider 在 iOS Safari 14 以下未測試（目標瀏覽器為 iOS 16+ / Chrome 110+）
+- Before/After 並排元件在 iOS Safari 14 以下未測試（目標瀏覽器為 iOS 16+ / Chrome 110+）
 - 預約諮詢表單目前模擬送出（600ms delay），尚未串接 `/api/inquiries`
 
 ---
 
 ## 變更記錄
 
+### 2026-05-05
+
+- **並排對比改版**：依甲方需求把拖曳式 slider 改為傳統並排（左 Before / 右 After），元件改為 Server Component，整體前台 client JS 縮減
+- **節奏調整**：`.section` 由 `py-24/32` 改為 `py-14/20`，搭配章節 heading 與內容間距 `mt-14 → mt-10`，整頁高度 ~30%
+- **作品牆滿版單欄**：`grid-cols-2` 改為 `mx-auto max-w-4xl grid-cols-1`，每組對比圖完整呈現
+- **Hero 換單張海報圖**：避免並排在 Hero 右半被壓縮成迷你尺寸
+- 修正 4 張 Unsplash 404 ID
+
 ### 2026-04-30
 
 - 初始化專案，沿用 `/Users/eric/Desktop/project/drink` 技術棧但全面調整為清潔產業需求
 - 完成前台靜態原型（首頁、服務、實績、關於、預約、FAQ）
-- 自建 Before/After 拖曳對比元件
 - 完成 SEO 基礎建設（sitemap.xml、robots.txt、generateMetadata）
 - 完成 Prisma schema 設計（含 `BeforeAfterPair` 獨立 model）
