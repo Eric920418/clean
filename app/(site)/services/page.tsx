@@ -6,6 +6,8 @@ import { SectionHeading } from '@/components/section-heading'
 import { IconByName } from '@/components/icon-by-name'
 import { getActiveServices } from '@/lib/queries'
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: '服務項目',
   description:

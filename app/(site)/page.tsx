@@ -13,6 +13,9 @@ import { siteConfig } from '@/lib/site-config'
 import { JsonLd } from '@/components/json-ld'
 import { localBusinessJsonLd } from '@/lib/seo'
 
+// ISR：每 60 秒 background revalidation；首次以外的訪客都讀 cache
+export const revalidate = 60
+
 export default async function HomePage() {
   const [services, testimonials, featured] = await Promise.all([
     getActiveServices(),

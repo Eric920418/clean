@@ -14,10 +14,9 @@ import { siteConfig } from '@/lib/site-config'
 
 type Params = { slug: string }
 
-export async function generateStaticParams() {
-  const services = await getActiveServices()
-  return services.map((s) => ({ slug: s.slug }))
-}
+// CMS 內容隨時可被業主在後台修改 — 不做 build-time 預渲染
+// 改 ISR：每 60 秒重新生成一次，期間用 cache（速度近似靜態，業主編輯最慢 1 分鐘可見）
+export const revalidate = 60
 
 export async function generateMetadata({
   params,

@@ -25,6 +25,23 @@ export const siteConfig = {
     instagram: 'https://instagram.com/',
     line: 'https://line.me/',
   },
+  /**
+   * 合作媒合平台。url 為空字串時 footer 不渲染此區塊，避免死連結。
+   * proshake.url 應為店家頁，而非 https://proshake.tw 首頁。
+   */
+  partners: {
+    proshake: {
+      name: 'Proshake 媒合平台',
+      url: '', // TODO: 貼上 invisible care 在 Proshake 上的店家頁 URL（不是首頁）
+    },
+  },
+  /**
+   * App 下載連結。url 為空字串時 footer 不渲染對應按鈕。
+   * 目前只規劃 iOS；Android 版尚未開發。
+   */
+  apps: {
+    ios: '', // TODO: 貼上 App Store 完整 URL，例如 https://apps.apple.com/tw/app/...
+  },
   promises: [
     { title: '專業技術領先', desc: '師傅皆通過內訓與實戰考核，標準化流程，絕不趕工犧牲品質。' },
     { title: '環保低殘留', desc: '優選歐盟認證、生物可分解洗劑，對小孩、寵物、敏感肌一樣安全。' },

@@ -5,6 +5,8 @@ import { SectionHeading } from '@/components/section-heading'
 import { Faq } from '@/components/faq'
 import { getActiveServices } from '@/lib/queries'
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: '常見問題',
   description: 'invisible care 居家服務常見問題，包含冷氣、洗衣機、水塔等服務的細節說明。',

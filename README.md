@@ -127,7 +127,7 @@ clean/
 ├── lib/
 │   ├── prisma.ts                   Prisma singleton client
 │   ├── utils.ts                    cn() class helper
-│   ├── site-config.ts              品牌靜態資訊（電話、Line、三大堅持、流程）
+│   ├── site-config.ts              品牌靜態資訊（電話、Line、三大堅持、流程、合作平台、App 連結）
 │   └── mock-data.ts                Mock 資料（嚴格對應 Prisma model 形狀）
 │
 ├── prisma/
@@ -379,6 +379,21 @@ model BookingInquiry {                   // 取代 ContactMessage
 ---
 
 ## 變更記錄
+
+### 2026-05-09（Footer 外部連結 + LINE@ 按鈕視覺升級）
+
+Footer 新增兩個外部連結區塊，皆採用「URL 為空字串就不渲染」的 conditional 模式（與既有 LINE 按鈕一致），確保未填值時前端不會出現死連結：
+
+- **Proshake 媒合平台店家頁** — `siteConfig.partners.proshake.url`，顯示在「聯絡資訊」欄末端，外觀與 LINE 通話按鈕同層級
+- **iOS App 下載** — `siteConfig.apps.ios`，顯示在品牌描述下方（左側大區塊），按鈕為深色 + Apple icon。Android 版未規劃，故無對應欄位
+
+同時把「加 LINE 好友」按鈕從小膠囊樣式升級為大顆 CTA 按鈕（綠底 `#06C755` + 白色 LINE icon + 雙行文字「免費估價 / LINE@」），LINE icon 用 inline SVG（白色圓角矩形 + 內嵌綠色 "LINE" 字樣），不引入商標檔案。文案沿用「LINE@」（注意：LINE 已於 2019 年將 LINE@ 整併為「LINE 官方帳號」，台灣中小企業普遍仍習慣 LINE@ 稱呼）。`aria-label` 設為「免費估價，加 LINE 官方帳號」確保螢幕閱讀器讀出完整語意。
+
+> ⚠️ **業主待辦**：到 `lib/site-config.ts` 補上兩個 URL：
+> 1. `partners.proshake.url`：必須是 invisible care 在 Proshake 上的**店家頁**，**不是** `https://proshake.tw` 首頁，否則使用者點下去看不到自家服務
+> 2. `apps.ios`：App Store 完整 URL（例如 `https://apps.apple.com/tw/app/...`）
+
+未填 URL 時對應區塊不顯示；填上後 footer 自動出現。日後搬到 `SiteSetting` 後台管理時，這兩欄也能直接接 admin。
 
 ### 2026-05-05（第二批，後台 CMS）
 

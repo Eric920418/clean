@@ -3,6 +3,8 @@ import { SectionHeading } from '@/components/section-heading'
 import { WorksGallery } from '@/components/works-gallery'
 import { getAllBeforeAfters, getActiveServices } from '@/lib/queries'
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: '清潔實績',
   description:

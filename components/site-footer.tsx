@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Clock, ShieldCheck, MessageCircle, PhoneCall } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, ShieldCheck, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
 import { siteConfig } from '@/lib/site-config'
 import { getActiveServices } from '@/lib/queries'
 
@@ -27,6 +27,23 @@ export async function SiteFooter() {
           <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
             {siteConfig.description}
           </p>
+
+          {siteConfig.apps.ios && (
+            <div className="mt-5">
+              <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+                APP 下載
+              </p>
+              <a
+                href={siteConfig.apps.ios}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90 transition"
+              >
+                <Apple className="h-4 w-4" fill="currentColor" />
+                App Store 下載 iOS 版
+              </a>
+            </div>
+          )}
         </div>
 
         <div>
@@ -81,10 +98,31 @@ export async function SiteFooter() {
                     href={siteConfig.contact.lineFriendUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#06C755] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition"
+                    aria-label="免費估價，加 LINE 官方帳號"
+                    className="inline-flex items-center gap-3 rounded-md bg-[#06C755] px-4 py-2 text-white shadow-sm hover:opacity-90 transition"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                    加 LINE 好友
+                    <svg
+                      viewBox="0 0 32 32"
+                      className="h-7 w-7 shrink-0"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="5" width="26" height="20" rx="5" fill="white" />
+                      <text
+                        x="16"
+                        y="19"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fontWeight="900"
+                        fill="#06C755"
+                        fontFamily="-apple-system, system-ui, sans-serif"
+                      >
+                        LINE
+                      </text>
+                    </svg>
+                    <span className="flex flex-col leading-tight">
+                      <span className="text-[11px] font-medium opacity-90">免費估價</span>
+                      <span className="text-base font-bold tracking-wide">LINE@</span>
+                    </span>
                   </a>
                 )}
                 {siteConfig.contact.lineCallUrl && (
@@ -109,6 +147,20 @@ export async function SiteFooter() {
               <Clock className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
               <span>{siteConfig.contact.hours}</span>
             </li>
+
+            {siteConfig.partners.proshake.url && (
+              <li className="pt-2">
+                <a
+                  href={siteConfig.partners.proshake.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-primary-deep hover:text-primary-deep transition"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  在 {siteConfig.partners.proshake.name} 預約
+                </a>
+              </li>
+            )}
           </ul>
         </div>
       </div>

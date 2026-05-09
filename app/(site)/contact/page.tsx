@@ -5,6 +5,8 @@ import { ContactForm } from '@/components/contact-form'
 import { getActiveServices } from '@/lib/queries'
 import { siteConfig } from '@/lib/site-config'
 
+export const revalidate = 60
+
 export const metadata: Metadata = {
   title: '預約諮詢',
   description:
