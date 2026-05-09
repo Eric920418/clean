@@ -26,6 +26,12 @@ const emptyForm = {
   order: 0,
   seoTitle: '',
   seoDesc: '',
+  introEyebrow: '',
+  introTitle: '',
+  introParagraph1: '',
+  introParagraph2: '',
+  introParagraph3: '',
+  introImage: '',
 }
 
 type FormState = typeof emptyForm
@@ -79,6 +85,12 @@ export default function ServicesAdminPage() {
       order: s.order,
       seoTitle: s.seoTitle ?? '',
       seoDesc: s.seoDesc ?? '',
+      introEyebrow: s.introEyebrow ?? '',
+      introTitle: s.introTitle ?? '',
+      introParagraph1: s.introParagraph1 ?? '',
+      introParagraph2: s.introParagraph2 ?? '',
+      introParagraph3: s.introParagraph3 ?? '',
+      introImage: s.introImage ?? '',
     })
     setError(null)
     setModalOpen(true)
@@ -421,6 +433,65 @@ export default function ServicesAdminPage() {
                 value={form.heroImage}
                 onChange={(url) => setForm({ ...form, heroImage: url })}
                 folder="services"
+              />
+            </Field>
+          </div>
+
+          <div className="rounded-md bg-bg-tint/40 border border-primary-deep/20 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-primary-deep">服務介紹（詳情頁故事區）</p>
+              <p className="text-xs text-ink-muted mt-0.5">顯示在 hero 之下，圖文並排介紹這項服務的理念。所有欄位選填，未填則前台不顯示故事區。</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Field label="Eyebrow（小標籤）" hint="例：Our Story / 為何重要">
+                <input
+                  value={form.introEyebrow}
+                  onChange={(e) => setForm({ ...form, introEyebrow: e.target.value })}
+                  className={inputClass}
+                  placeholder="Why this matters"
+                />
+              </Field>
+              <Field label="標題">
+                <input
+                  value={form.introTitle}
+                  onChange={(e) => setForm({ ...form, introTitle: e.target.value })}
+                  className={inputClass}
+                  placeholder="冷氣不只是冷，更是空氣的入口"
+                />
+              </Field>
+            </div>
+
+            <Field label="段落 1">
+              <textarea
+                value={form.introParagraph1}
+                onChange={(e) => setForm({ ...form, introParagraph1: e.target.value })}
+                className={textareaClass}
+                rows={3}
+              />
+            </Field>
+            <Field label="段落 2">
+              <textarea
+                value={form.introParagraph2}
+                onChange={(e) => setForm({ ...form, introParagraph2: e.target.value })}
+                className={textareaClass}
+                rows={3}
+              />
+            </Field>
+            <Field label="段落 3">
+              <textarea
+                value={form.introParagraph3}
+                onChange={(e) => setForm({ ...form, introParagraph3: e.target.value })}
+                className={textareaClass}
+                rows={3}
+              />
+            </Field>
+
+            <Field label="故事區圖片">
+              <ImageUploader
+                value={form.introImage}
+                onChange={(url) => setForm({ ...form, introImage: url })}
+                folder="services-intro"
               />
             </Field>
           </div>

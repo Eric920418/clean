@@ -14,6 +14,12 @@ export type AdminService = {
   isFeatured: boolean
   seoTitle: string | null
   seoDesc: string | null
+  introEyebrow: string | null
+  introTitle: string | null
+  introParagraph1: string | null
+  introParagraph2: string | null
+  introParagraph3: string | null
+  introImage: string | null
   createdAt: string
   updatedAt: string
   features?: AdminServiceFeature[]

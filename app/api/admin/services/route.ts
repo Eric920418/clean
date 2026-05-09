@@ -47,6 +47,12 @@ export async function POST(request: NextRequest) {
       order,
       seoTitle,
       seoDesc,
+      introEyebrow,
+      introTitle,
+      introParagraph1,
+      introParagraph2,
+      introParagraph3,
+      introImage,
     } = body
 
     if (!slug || !name || !shortDesc || !longDesc) {
@@ -71,6 +77,12 @@ export async function POST(request: NextRequest) {
         order: order || 0,
         seoTitle: seoTitle || null,
         seoDesc: seoDesc || null,
+        introEyebrow: introEyebrow || null,
+        introTitle: introTitle || null,
+        introParagraph1: introParagraph1 || null,
+        introParagraph2: introParagraph2 || null,
+        introParagraph3: introParagraph3 || null,
+        introImage: introImage || null,
       },
     })
 

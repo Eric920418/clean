@@ -97,6 +97,48 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
+      {/* 故事區（hero 下方圖文並排介紹） */}
+      {(service.introTitle || service.introImage) && (() => {
+        const paragraphs = [
+          service.introParagraph1,
+          service.introParagraph2,
+          service.introParagraph3,
+        ].filter((p): p is string => Boolean(p && p.trim()))
+        return (
+          <section className="section pt-12 md:pt-16">
+            <div className="container-narrow grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+              {service.introImage && (
+                <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
+                  <Image
+                    src={service.introImage}
+                    alt={service.introTitle ?? service.name}
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              )}
+              <div>
+                {service.introTitle && (
+                  <SectionHeading
+                    eyebrow={service.introEyebrow ?? undefined}
+                    title={service.introTitle}
+                  />
+                )}
+                {paragraphs.length > 0 && (
+                  <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
+                    {paragraphs.map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )
+      })()}
+
       {/* 詳細介紹 + 特色 */}
       <section className="section">
         <div className="container-narrow grid grid-cols-1 gap-14 lg:grid-cols-3">

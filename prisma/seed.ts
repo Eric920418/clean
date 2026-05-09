@@ -19,10 +19,40 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
+// 只示範 2 個服務的故事區，其他 4 個留空讓業主自己寫
+const introMap: Record<string, {
+  introEyebrow: string
+  introTitle: string
+  introParagraph1: string
+  introParagraph2: string
+  introParagraph3: string
+  introImage: string
+}> = {
+  'aircon-cleaning': {
+    introEyebrow: 'Why this matters',
+    introTitle: '冷氣不只是冷，更是空氣的入口',
+    introParagraph1: '夏季長時間運轉的冷氣，蒸發器與導風葉常年潮濕，是黴菌與細菌最愛的繁殖場。一台沒清過的冷氣，吹出來的空氣可能比戶外還髒。',
+    introParagraph2: '我們採用整機拆卸式深度清洗，把蒸發器、貫流扇、外殼通通卸下來進高壓水柱清洗，搭配生物可分解洗劑，敏感肌、寵物、嬰幼兒環境一樣安全。',
+    introParagraph3: '每一台冷氣施作前後都會錄影、拍照，讓您清楚看見「黑水變清水」的真實過程。我們相信，看不見的潔淨，才是最頂級的居家品質。',
+    introImage: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=900&q=80',
+  },
+  'washer-deep-clean': {
+    introEyebrow: 'The hidden truth',
+    introTitle: '看似乾淨的洗衣機，其實藏著厚厚一層黑垢',
+    introParagraph1: '洗衣機內筒與外筒之間的夾層，是您每天洗衣時看不到的地方。長年累積的洗劑殘渣、衣物纖維、發霉黴斑，讓洗出來的衣服看似乾淨、實則沾滿微生物。',
+    introParagraph2: '我們的洗衣機拆解清潔，是把整台洗衣機翻過來、拆下內筒做物理清洗，而不是丟一顆清潔錠就交差。整個過程拍照記錄，您能看見原本藏在縫隙裡的東西。',
+    introParagraph3: '滾筒式、直立式、變頻、雙槽，我們都能處理。每一次拆洗都搭配抗菌處理，讓您下一批衣服真正洗得乾淨。',
+    introImage: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
+  },
+}
+
 async function main() {
   console.log('🌱 開始 seed…')
 
   for (const m of mockServices) {
+    const intro = introMap[m.slug] ?? null
+    const existing = await prisma.service.findUnique({ where: { slug: m.slug } })
+
     const service = await prisma.service.upsert({
       where: { slug: m.slug },
       create: {
@@ -36,10 +66,13 @@ async function main() {
         order: m.order,
         isActive: m.isActive,
         isFeatured: m.isFeatured,
+        ...(intro ?? {}),
       },
       update: {
-        // 已存在則只補名稱與描述（避免覆蓋業主自訂的圖片與設定）
+        // 已存在則只補名稱（避免覆蓋業主自訂的圖片與設定）
         name: m.name,
+        // 只在業主還沒填過 intro 時才補示範文案，不會覆蓋業主編輯
+        ...(intro && existing && existing.introTitle === null ? intro : {}),
       },
     })
 
@@ -96,6 +129,27 @@ async function main() {
     }
 
     console.log(`  ✓ ${m.slug} (${m.beforeAfters.length} 組對比)`)
+  }
+
+  // ContentBlock：about 故事區（前台 /about 頁面從這裡讀）
+  const aboutBlockExisting = await prisma.contentBlock.findUnique({ where: { key: 'about' } })
+  if (!aboutBlockExisting) {
+    await prisma.contentBlock.create({
+      data: {
+        key: 'about',
+        payload: {
+          eyebrow: 'Our story',
+          title: '關於那些被遺忘的空間',
+          paragraph1: '我們常說「家是最好的避風港」，但如果避風港裡的空氣充滿塵蟎、水源帶著餘氯、家電裡藏著陳年黴菌，這個家，真的安全嗎？',
+          paragraph2: 'invisible care 整合了防霾通風、全戶濾水、深度清潔、家電維修等核心技術，致力於為每一位客戶提供「由內而外」的居家健康解決方案。',
+          paragraph3: '我們不只是清潔工，更是您居家的健康顧問，用職人精神與精準技術，為您守護家人的每一次呼吸與每一滴用水。',
+          image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
+        },
+      },
+    })
+    console.log('  ✓ ContentBlock: about（含圖片）')
+  } else {
+    console.log('  ↷ ContentBlock: about 已存在，跳過（避免覆蓋業主編輯）')
   }
 
   // Testimonials

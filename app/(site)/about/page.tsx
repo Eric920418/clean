@@ -1,9 +1,9 @@
 import Image from 'next/image'
-import Link from 'next/link'
 import type { Metadata } from 'next'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { siteConfig } from '@/lib/site-config'
+import { getContentBlock } from '@/lib/queries'
 
 export const metadata: Metadata = {
   title: '關於我們',
@@ -11,7 +11,22 @@ export const metadata: Metadata = {
     'invisible care 是一群對「居家純淨度」有著偏執追求的職人。我們是「居家健康空間的修復師」。',
 }
 
-export default function AboutPage() {
+// CMS 內容隨時可由業主在後台修改，每 60 秒重新生成
+export const revalidate = 60
+
+export default async function AboutPage() {
+  const aboutBlock = await getContentBlock('about')
+  const eyebrow = aboutBlock?.eyebrow || 'Our story'
+  const title = aboutBlock?.title || '關於那些被遺忘的空間'
+  const paragraphs = [
+    aboutBlock?.paragraph1 || '我們常說「家是最好的避風港」，但如果避風港裡的空氣充滿塵蟎、水源帶著餘氯、家電裡藏著陳年黴菌，這個家，真的安全嗎？',
+    aboutBlock?.paragraph2 || 'invisible care 整合了防霾通風、全戶濾水、深度清潔、家電維修等核心技術，致力於為每一位客戶提供「由內而外」的居家健康解決方案。',
+    aboutBlock?.paragraph3 || '我們不只是清潔工，更是您居家的健康顧問，用職人精神與精準技術，為您守護家人的每一次呼吸與每一滴用水。',
+  ].filter(Boolean)
+  const image =
+    aboutBlock?.image ||
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80'
+
   return (
     <>
       <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
@@ -34,25 +49,20 @@ export default function AboutPage() {
         <div className="container-narrow grid grid-cols-1 items-center gap-12 md:grid-cols-2">
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
             <Image
-              src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80"
+              src={image}
               alt="師傅施作中"
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
               className="object-cover"
+              unoptimized
             />
           </div>
           <div>
-            <SectionHeading eyebrow="Our story" title="關於那些被遺忘的空間" />
+            <SectionHeading eyebrow={eyebrow} title={title} />
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
-              <p>
-                我們常說「家是最好的避風港」，但如果避風港裡的空氣充滿塵蟎、水源帶著餘氯、家電裡藏著陳年黴菌，這個家，真的安全嗎？
-              </p>
-              <p>
-                invisible care 整合了防霾通風、全戶濾水、深度清潔、家電維修等核心技術，致力於為每一位客戶提供「由內而外」的居家健康解決方案。
-              </p>
-              <p>
-                我們不只是清潔工，更是您居家的健康顧問，用職人精神與精準技術，為您守護家人的每一次呼吸與每一滴用水。
-              </p>
+              {paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
             </div>
           </div>
         </div>

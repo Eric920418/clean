@@ -5,12 +5,15 @@ import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { ImageUploader } from '@/components/admin/image-uploader'
 
 type BlockKey = 'hero' | 'about' | 'why-us' | 'process' | 'cta'
 
+type FieldType = 'text' | 'textarea' | 'image'
+
 const BLOCK_DEFS: Record<
   BlockKey,
-  { title: string; description: string; fields: { name: string; label: string; type: 'text' | 'textarea'; hint?: string }[] }
+  { title: string; description: string; fields: { name: string; label: string; type: FieldType; hint?: string; folder?: string }[] }
 > = {
   hero: {
     title: 'Hero（首頁主視覺）',
@@ -33,6 +36,7 @@ const BLOCK_DEFS: Record<
       { name: 'paragraph1', label: '段落 1', type: 'textarea' },
       { name: 'paragraph2', label: '段落 2', type: 'textarea' },
       { name: 'paragraph3', label: '段落 3', type: 'textarea' },
+      { name: 'image', label: '故事區圖片', type: 'image', folder: 'about' },
     ],
   },
   'why-us': {
@@ -163,6 +167,12 @@ function BlockEditor({ blockKey }: { blockKey: BlockKey }) {
                   onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
                   className={textareaClass}
                   rows={3}
+                />
+              ) : f.type === 'image' ? (
+                <ImageUploader
+                  value={values[f.name] ?? ''}
+                  onChange={(url) => setValues({ ...values, [f.name]: url })}
+                  folder={f.folder ?? 'content'}
                 />
               ) : (
                 <input

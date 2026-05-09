@@ -1,5 +1,6 @@
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
+import { FloatingCta } from '@/components/floating-cta'
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SiteNav />
       <main>{children}</main>
       <SiteFooter />
+      <FloatingCta />
     </>
   )
 }

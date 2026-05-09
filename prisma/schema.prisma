@@ -40,6 +40,14 @@ model Service {
   seoTitle    String?
   seoDesc     String?
 
+  // 詳情頁故事區（hero 下方圖文並排介紹），對齊 about 故事區結構
+  introEyebrow    String?  // 故事區小標籤，例：Our Story
+  introTitle      String?  // 故事區標題
+  introParagraph1 String?  // 段落 1
+  introParagraph2 String?  // 段落 2
+  introParagraph3 String?  // 段落 3
+  introImage      String?  // 故事區圖片 R2 URL
+
   features      ServiceFeature[]
   faqs          ServiceFaq[]
   beforeAfters  BeforeAfterPair[]

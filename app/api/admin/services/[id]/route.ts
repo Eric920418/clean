@@ -54,6 +54,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.order !== undefined && { order: body.order }),
         ...(body.seoTitle !== undefined && { seoTitle: body.seoTitle || null }),
         ...(body.seoDesc !== undefined && { seoDesc: body.seoDesc || null }),
+        ...(body.introEyebrow !== undefined && { introEyebrow: body.introEyebrow || null }),
+        ...(body.introTitle !== undefined && { introTitle: body.introTitle || null }),
+        ...(body.introParagraph1 !== undefined && { introParagraph1: body.introParagraph1 || null }),
+        ...(body.introParagraph2 !== undefined && { introParagraph2: body.introParagraph2 || null }),
+        ...(body.introParagraph3 !== undefined && { introParagraph3: body.introParagraph3 || null }),
+        ...(body.introImage !== undefined && { introImage: body.introImage || null }),
       },
     })
 

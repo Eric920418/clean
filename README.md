@@ -380,7 +380,38 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 ## 變更記錄
 
-### 2026-05-09（Footer 外部連結 + LINE@ 按鈕視覺升級）
+### 2026-05-09（服務詳情頁故事區 + about CMS 完成接通）
+
+每個服務的詳情頁 `/services/[slug]` 在 hero 下方新增「圖文並排故事區」（對齊 about 頁面結構），且**每個服務的故事獨立**（per-service 內容，不是全站共用）：
+
+- Prisma `Service` model 加 6 個 nullable 欄位：`introEyebrow`、`introTitle`、`introParagraph1-3`、`introImage`
+- 後台 `/admin/services` 主編輯 modal 新增「服務介紹」區塊，含 ImageUploader（上傳到 R2 `services-intro/` folder）
+- 前台條件渲染：`introTitle || introImage` 任一存在才顯示故事區，`introTitle` 存在才顯示 SectionHeading，空段落自動過濾
+- API `POST/PUT /api/admin/services/*` 加 6 欄位 spread
+
+同時修補既有缺陷：`app/(site)/about/page.tsx` 之前是**全部硬寫**，後台 admin/content 編了沒效果。本次：
+
+- about 頁改 `async function` + `getContentBlock('about')`
+- 硬寫文案改為 fallback（DB 沒資料時顯示原本的）
+- BlockEditor 擴展支援 `type: 'image'`，串現有 ImageUploader
+- `BLOCK_DEFS.about` 加 `image` 欄位
+- seed 補入 about ContentBlock（含圖片預設值）
+
+R2 folder 慣例：服務介紹圖 `services-intro/`、about 故事區圖 `about/`、ContentBlock 通用圖 `content/`。
+
+### 2026-05-09（手機/平板浮動 CTA + Footer 外部連結 + LINE@ 按鈕視覺升級）
+
+新增 `components/floating-cta.tsx` 浮動行動按鈕（FAB），掛在 `app/(site)/layout.tsx`：
+
+- 紅色圓鈕 `#E53935`：直撥 `siteConfig.contact.phoneTel`
+- 綠色圓鈕 `#06C755`：開 `siteConfig.contact.lineFriendUrl`（URL 為空就不渲染）
+- 響應式：`lg:hidden`（≥1024px 桌機隱藏）
+- 安全區：`bottom: calc(1rem + env(safe-area-inset-bottom))` 避開 iPhone home indicator
+- 純 Server Component，零 client JS
+
+⚠️ **斷點邊緣案例**：iPad Pro 12.9" 直立寬度為 1024px，剛好被 `lg:hidden` 蓋住。若需該尺寸顯示 FAB，把 `lg:hidden` 改為 `xl:hidden`（1280px 才隱藏）。
+
+
 
 Footer 新增兩個外部連結區塊，皆採用「URL 為空字串就不渲染」的 conditional 模式（與既有 LINE 按鈕一致），確保未填值時前端不會出現死連結：
 
