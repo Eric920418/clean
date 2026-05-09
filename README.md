@@ -399,6 +399,15 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 R2 folder 慣例：服務介紹圖 `services-intro/`、about 故事區圖 `about/`、ContentBlock 通用圖 `content/`。
 
+### 2026-05-09（手機 Navbar 加入 CTA 按鈕）
+
+`components/site-nav.tsx` 行動裝置版（`md` 以下）兩處新增 CTA：
+
+- **Top bar 永遠可見**：hamburger 旁邊新增紅色電話圓鈕 + 綠色 LINE 圓鈕（icon-only，36px，跟 hamburger 同層級）
+- **Menu drawer 展開時**：nav links 下方加入 full-width 文字按鈕「立即來電預約」「立即加 LINE 諮詢」，搭配 icon 與箭頭
+
+LINE icon 沿用 floating-cta 的 inline SVG knockout 風格（白底 + 綠 LINE 字）；目前在 nav 跟 FAB 都各自 inline 一份，未來第三次出現再抽共用元件（rule of three）。
+
 ### 2026-05-09（手機/平板浮動 CTA + Footer 外部連結 + LINE@ 按鈕視覺升級）
 
 新增 `components/floating-cta.tsx` 浮動行動按鈕（FAB），掛在 `app/(site)/layout.tsx`：

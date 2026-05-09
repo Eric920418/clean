@@ -2,9 +2,32 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Menu, X, ShieldCheck } from 'lucide-react'
+import { Menu, X, ShieldCheck, Phone, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { siteConfig } from '@/lib/site-config'
+
+// 內嵌 LINE 風格 icon（白底 + 綠字 knockout，跟 floating-cta 同款）
+function LineIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="white"
+        d="M12 3C6.5 3 2 6.6 2 11c0 3.9 3.6 7.2 8.4 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1.1 1 .6 1.2-.5 6.4-3.8 8.7-6.5 1.6-1.7 2.1-3.5 2.1-4.4 0-4.4-4.5-8-10-8z"
+      />
+      <text
+        x="12"
+        y="13"
+        textAnchor="middle"
+        fontSize="5.5"
+        fontWeight="900"
+        fill="#06C755"
+        fontFamily="-apple-system, system-ui, sans-serif"
+      >
+        LINE
+      </text>
+    </svg>
+  )
+}
 
 const navItems = [
   { href: '/services', label: '服務項目' },
@@ -64,13 +87,34 @@ export function SiteNav() {
           </a>
         </nav>
 
-        <button
-          className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-md text-ink hover:bg-bg-soft"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="開關選單"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* 手機 top bar：icon-only CTA + hamburger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <a
+            href={siteConfig.contact.phoneTel}
+            aria-label={`撥打電話 ${siteConfig.contact.phone}`}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E53935] text-white shadow-sm active:scale-95 transition"
+          >
+            <Phone className="h-4 w-4" strokeWidth={2.4} />
+          </a>
+          {siteConfig.contact.lineFriendUrl && (
+            <a
+              href={siteConfig.contact.lineFriendUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="加 LINE 官方帳號"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#06C755] text-white shadow-sm active:scale-95 transition"
+            >
+              <LineIcon className="h-5 w-5" />
+            </a>
+          )}
+          <button
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-ink hover:bg-bg-soft"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="開關選單"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -86,6 +130,31 @@ export function SiteNav() {
                 {item.label}
               </Link>
             ))}
+
+            <div className="mt-3 grid gap-2 border-t border-hairline pt-4">
+              <a
+                href={siteConfig.contact.phoneTel}
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#E53935] px-4 py-3 text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition"
+              >
+                <Phone className="h-4 w-4" strokeWidth={2.4} />
+                立即來電預約
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              {siteConfig.contact.lineFriendUrl && (
+                <a
+                  href={siteConfig.contact.lineFriendUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-4 py-3 text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition"
+                >
+                  <LineIcon className="h-5 w-5" />
+                  立即加 LINE 諮詢
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           </nav>
         </div>
       )}
