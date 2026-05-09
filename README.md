@@ -12,17 +12,18 @@
 
 | 項目 | 狀態 |
 |---|---|
-| 前台靜態原型（首頁 / 六大服務 / 服務詳情 / 作品集 / 關於 / 預約 / FAQ） | ✅ 已完成，可瀏覽 |
-| Before/After 並排對比元件（傳統並排，純 Server Component） | ✅ 已完成 |
+| 前台 7 頁（首頁 / 服務 / 服務詳情 / 作品集 / 關於 / 預約 / FAQ） | ✅ 已串接 Prisma |
+| Before/After 並排對比元件（純 Server Component） | ✅ 已完成 |
 | 設計系統（純淨醫療感配色） | ✅ 已完成 |
-| Prisma schema（六大 model + 對比圖獨立 model） | ✅ 已完成 |
-| 預約諮詢表單 UI（含 toast、錯誤顯示） | ✅ 已完成（前端） |
+| Prisma schema + seed.ts | ✅ 已完成 |
+| 預約諮詢表單（前端 → 公開 API → DB） | ✅ 已完成 |
 | sitemap.xml / robots.txt / generateMetadata | ✅ 已完成 |
-| 後台 CRUD（services / before-afters / inquiries / settings） | ⏳ 待開發 |
-| NextAuth 登入 / R2 圖片上傳 / 串接真實 DB | ⏳ 待開發 |
-| LocalBusiness JSON-LD | ⏳ 待開發 |
+| LocalBusiness + Service JSON-LD（SEO 結構化資料） | ✅ 已完成 |
+| **後台 CMS**（11 頁完整管理介面） | ✅ 已完成 |
+| NextAuth 登入 + middleware 保護 + R2 圖片上傳 | ✅ 已完成 |
+| 業主可自助操作：服務 CRUD / 對比圖 / 詢問單 / 評價 / 內容 / 設定 | ✅ 已完成 |
 
-下一階段：用戶 review 前台視覺定版後，啟動後台 CRUD 與 R2 圖片上傳。
+下一步：使用者填入 `.env`（DB / R2 / NEXTAUTH_SECRET），跑 `pnpm db:push && pnpm db:seed`，即可啟用整套後台。
 
 ---
 
@@ -41,6 +42,59 @@
 | 字體 | Noto Sans TC + Inter（next/font/google） |
 
 ---
+
+## 後台路由速覽（Admin CMS）
+
+| 路由 | 用途 |
+|---|---|
+| `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
+| `/admin/dashboard` | 儀表板：4 張統計卡 + 最近 5 筆未讀詢問單 |
+| `/admin/services` | 六大服務 CRUD（modal 編輯主欄位、排序、上下架、刪除） |
+| `/admin/services/[id]/edit` | 服務子表（特色 / FAQ inline 編輯） |
+| `/admin/services/[id]/before-afters` | ⭐ 對比圖配對管理（每組 modal 上傳 Before / After + caption） |
+| `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
+| `/admin/inquiries` | 詢問單列表（依狀態 / 已讀篩選） |
+| `/admin/inquiries/[id]` | 詢問單詳情（狀態切換 NEW → CONTACTED → QUOTED → DONE / CLOSED） |
+| `/admin/testimonials` | 客戶評價 CRUD |
+| `/admin/content` | 頁面內容（hero / about / why-us / process / cta JSON 結構化編輯） |
+| `/admin/settings` | 站台設定（電話、Line、社群、服務區域） |
+
+整個 `/admin/*` 由 `middleware.ts` 保護，未登入會自動導向 `/admin/login`。
+
+## API 路由
+
+```
+# 公開
+POST   /api/auth/[...nextauth]              認證
+POST   /api/inquiries                       前台預約諮詢提交（公開）
+
+# 受保護（需要 admin session）
+POST   /api/admin/upload                    R2 圖片上傳
+
+GET    /api/admin/services                  服務列表（亦供前台使用）
+POST   /api/admin/services
+GET/PUT/DELETE  /api/admin/services/[id]
+GET/POST        /api/admin/services/[id]/features
+PUT/DELETE      /api/admin/services/[id]/features/[fid]
+GET/POST        /api/admin/services/[id]/faqs
+PUT/DELETE      /api/admin/services/[id]/faqs/[fid]
+GET/POST        /api/admin/services/[id]/before-afters
+PUT/DELETE      /api/admin/services/[id]/before-afters/[bid]
+GET/POST/PATCH/DELETE   /api/admin/services/[id]/gallery
+
+GET    /api/admin/inquiries                 詢問單列表（支援 status / isRead 過濾）
+GET/PUT/DELETE  /api/admin/inquiries/[id]
+
+GET/POST        /api/admin/testimonials
+PUT/DELETE      /api/admin/testimonials/[id]
+
+GET             /api/admin/content
+GET/PUT         /api/admin/content/[key]
+
+GET/PUT         /api/admin/settings         一次拿 / 存所有 key/value
+```
+
+所有受保護 API 都用 `lib/api-auth.ts` 的 `checkAdminAuth()` 驗證；未登入回 401。
 
 ## 目錄結構
 
@@ -305,16 +359,40 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 ## 已知限制
 
-- 目前所有資料來自 `lib/mock-data.ts`，並未實際連線資料庫
-- 圖片暫用 Unsplash 公開圖，部分 ID 已失效顯示為破圖（生產環境會用 R2 上傳真實照片取代）
+- 部分 mock 圖片仍用 Unsplash，實機部署後業主透過 `/admin/services/[id]/before-afters` 與 `/gallery` 上傳真實照片，會自動存到 Cloudflare R2 並覆蓋顯示
 - Before/After 並排元件在 iOS Safari 14 以下未測試（目標瀏覽器為 iOS 16+ / Chrome 110+）
-- 預約諮詢表單目前模擬送出（600ms delay），尚未串接 `/api/inquiries`
+- 後台無多管理員 / 角色權限；單一 admin 帳號（drink 模式）
+- 後台無操作 audit log
+- 後台無草稿 / 排程發布（直接 `isActive` 切換）
+- 對比圖採「一次新增一組 modal」UX；未做拖拉批次上傳
+
+## 第一次啟動完整步驟
+
+1. **`pnpm install`** — 套件安裝（會自動 `prisma generate`）
+2. **填寫 `.env`** — 從 `.env.example` 複製，填入 Neon DATABASE_URL、NEXTAUTH_SECRET（`openssl rand -base64 32`）、ADMIN_USERNAME/PASSWORD、R2 五個 keys、NEXT_PUBLIC_SITE_URL、NEXT_PUBLIC_BRAND_NAME
+3. **`pnpm db:push`** — 將 schema 推到資料庫（首次無資料，**禁用** `--accept-data-loss`）
+4. **`pnpm db:seed`** — 寫入 6 大服務 + 對比圖 + 評價 mock 資料
+5. **`pnpm dev --port 3100`** — 啟動開發伺服器
+6. 開瀏覽器到 `http://localhost:3100`（前台）或 `http://localhost:3100/admin/login`（後台），用 `.env` 設定的帳密登入
+7. 進入後台後可以開始上傳真實照片、編輯內容、處理詢問單
 
 ---
 
 ## 變更記錄
 
-### 2026-05-05
+### 2026-05-05（第二批，後台 CMS）
+
+- 新增 11 頁後台管理介面：登入、儀表板、服務 CRUD、服務子表編輯、對比圖配對管理、圖庫、詢問單列表 + 詳情、客戶評價、頁面內容、站台設定
+- 新增 ~25 條 API 路由（全部沿用 drink `errorResponse/successResponse/checkAdminAuth` 三件套）
+- 新增 `lib/auth.ts`（NextAuth + Credentials + bcryptjs，session 1h）、`lib/api-auth.ts`、`lib/r2.ts`、`middleware.ts`（保護 /admin/*）
+- 新增 `prisma/seed.ts`：把 mock-data 內容寫入 DB，業主有預設資料可改
+- 前台 6 個頁面從 mock-data 切到 Prisma server queries（`lib/queries.ts`）
+- contact-form 串接公開 `/api/inquiries`，移除 600ms delay 模擬
+- 新增 LocalBusiness + Service JSON-LD（`lib/seo.ts` + `components/json-ld.tsx`）
+- 修正 drink AdminContent 的 ml-64/ml-16 不同步小 bug：sidebar 摺疊狀態提升到 React context
+- 對比圖刪除時連帶清除 R2 上的圖檔，避免孤兒檔案
+
+### 2026-05-05（第一批，並排對比改版）
 
 - **並排對比改版**：依甲方需求把拖曳式 slider 改為傳統並排（左 Before / 右 After），元件改為 Server Component，整體前台 client JS 縮減
 - **節奏調整**：`.section` 由 `py-24/32` 改為 `py-14/20`，搭配章節 heading 與內容間距 `mt-14 → mt-10`，整頁高度 ~30%

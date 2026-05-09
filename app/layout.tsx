@@ -2,8 +2,6 @@ import type { Metadata } from 'next'
 import { Noto_Sans_TC, Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { siteConfig } from '@/lib/site-config'
-import { SiteNav } from '@/components/site-nav'
-import { SiteFooter } from '@/components/site-footer'
 import './globals.css'
 
 const noto = Noto_Sans_TC({
@@ -46,9 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${noto.variable} ${inter.variable}`}
     >
       <body className="font-sans antialiased">
-        <SiteNav />
-        <main>{children}</main>
-        <SiteFooter />
+        {children}
         <Toaster position="top-center" richColors closeButton />
       </body>
     </html>

@@ -40,15 +40,21 @@ export function ContactForm({ services }: { services: ServiceOption[] }) {
 
     setSubmitting(true)
     try {
-      // 後端 API 串接前的 placeholder：模擬 600ms 後成功
-      await new Promise((r) => setTimeout(r, 600))
-      // 真實接 API：
-      // const res = await fetch('/api/inquiries', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name, phone, email, serviceIds: selectedIds, preferDate, address, message }),
-      // })
-      // if (!res.ok) throw new Error((await res.json()).error ?? '送出失敗')
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          serviceIds: selectedIds,
+          preferDate: preferDate || null,
+          address,
+          message,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? '送出失敗')
       setDone(true)
       toast.success('預約已送出！我們會在 30 分鐘內聯繫您。')
     } catch (err) {

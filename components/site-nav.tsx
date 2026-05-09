@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Menu, X, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { siteConfig } from '@/lib/site-config'
 
 const navItems = [
-  { href: '/services', label: '六大服務' },
+  { href: '/services', label: '服務項目' },
   { href: '/works', label: '清潔實績' },
   { href: '/about', label: '關於我們' },
   { href: '/faq', label: '常見問題' },
@@ -58,9 +59,9 @@ export function SiteNav() {
               {item.label}
             </Link>
           ))}
-          <Link href="/contact" className="btn-primary !py-2 !text-sm">
-            立即預約
-          </Link>
+          <a href={siteConfig.contact.phoneTel} className="btn-primary !py-2 !text-sm">
+            立即來電預約
+          </a>
         </nav>
 
         <button

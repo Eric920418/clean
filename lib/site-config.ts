@@ -5,11 +5,18 @@ export const siteConfig = {
   brandTagline: '看不見的守護，才是家最頂級的豪華',
   brandShort: '居家健康空間的修復師',
   description:
-    'invisible care 整合防霾紗網、全戶濾水、水塔清洗、冷氣與洗衣機深度拆洗、精緻居家清潔六大專業服務，由內而外為您守護家的純淨與健康。',
+    'invisible care 整合防霾紗網、全戶濾水、水塔清洗、冷氣與洗衣機深度拆洗、精緻居家清潔等專業服務，由內而外為您守護家的純淨與健康。',
   contact: {
-    phone: '0800-000-000',
-    line: '@invisible-care',
-    email: 'service@invisible-care.tw',
+    phone: '0916-998036',
+    /** tel: 連結用（無連字號，便於各平台撥號 app 解析） */
+    phoneTel: 'tel:+886916998036',
+    email: 'chen0105hc@gmail.com',
+    /** LINE 好友 ID，會直接顯示給用戶看 */
+    lineId: '',
+    /** 加 LINE 好友連結（如 https://line.me/R/ti/p/@xxx） */
+    lineFriendUrl: '',
+    /** LINE 語音通話連結 */
+    lineCallUrl: '',
     serviceArea: '雙北・桃園・新竹',
     hours: '週一至週六 09:00 – 19:00',
   },
