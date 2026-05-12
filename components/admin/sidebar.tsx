@@ -14,6 +14,8 @@ import {
   LogOut,
   ShieldCheck,
   BadgeCheck,
+  Workflow,
+  HelpCircle,
   ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -34,6 +36,8 @@ const PRIMARY_ITEMS = [
   { title: NAV_LABELS.inquiries, href: '/admin/inquiries', icon: Inbox },
   { title: NAV_LABELS.testimonials, href: '/admin/testimonials', icon: Quote },
   { title: NAV_LABELS.whyUs, href: '/admin/why-us-sections', icon: BadgeCheck },
+  { title: NAV_LABELS.processSteps, href: '/admin/process-steps', icon: Workflow },
+  { title: NAV_LABELS.generalFaqs, href: '/admin/general-faqs', icon: HelpCircle },
 ]
 
 const ADVANCED_ITEMS = [

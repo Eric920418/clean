@@ -8,10 +8,18 @@ import { AdminModal } from '@/components/admin/admin-modal'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
+import { cn } from '@/lib/utils'
 import { emptyCards, WHY_US_CARD_COUNT, type WhyUsCard } from '@/lib/why-us'
 import type { AdminWhyUsSection } from '@/lib/admin-types'
 
+type Location = 'home' | 'about'
+const LOCATION_LABEL: Record<Location, string> = {
+  home: '首頁「為何選我們」',
+  about: '關於頁「三項職人信仰」',
+}
+
 type FormState = {
+  location: Location
   eyebrow: string
   title: string
   description: string
@@ -19,6 +27,7 @@ type FormState = {
 }
 
 const emptyForm: FormState = {
+  location: 'home',
   eyebrow: '',
   title: '',
   description: '',
@@ -27,6 +36,7 @@ const emptyForm: FormState = {
 
 export default function WhyUsSectionsPage() {
   const [items, setItems] = useState<AdminWhyUsSection[]>([])
+  const [activeLocation, setActiveLocation] = useState<Location>('home')
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<AdminWhyUsSection | null>(null)
@@ -34,6 +44,8 @@ export default function WhyUsSectionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const { confirm, node: confirmNode } = useConfirm()
+
+  const visibleItems = items.filter((it) => it.location === activeLocation)
 
   async function fetchAll() {
     setLoading(true)
@@ -55,7 +67,7 @@ export default function WhyUsSectionsPage() {
 
   function openCreate() {
     setEditing(null)
-    setForm({ ...emptyForm, cards: emptyCards() })
+    setForm({ ...emptyForm, location: activeLocation, cards: emptyCards() })
     setError(null)
     setOpen(true)
   }
@@ -63,6 +75,7 @@ export default function WhyUsSectionsPage() {
   function openEdit(it: AdminWhyUsSection) {
     setEditing(it)
     setForm({
+      location: (it.location === 'about' ? 'about' : 'home') as Location,
       eyebrow: it.eyebrow ?? '',
       title: it.title,
       description: it.description ?? '',
@@ -120,9 +133,9 @@ export default function WhyUsSectionsPage() {
     })
   }
 
-  // 上下移動：swap order（仿 services pattern）
+  // 上下移動：swap order（同 location 內互換）
   async function move(section: AdminWhyUsSection, dir: 'up' | 'down') {
-    const sorted = [...items].sort((a, b) => a.order - b.order)
+    const sorted = visibleItems.slice().sort((a, b) => a.order - b.order)
     const idx = sorted.findIndex((s) => s.id === section.id)
     const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
     if (!swap) return
@@ -157,7 +170,7 @@ export default function WhyUsSectionsPage() {
     <>
       <AdminPageHeader
         title="為何選我們"
-        description="首頁「為何選我們」可以有多組，每組固定三張卡片"
+        description="可在首頁或關於頁顯示，每組固定三張卡片"
         actions={
           <button onClick={openCreate} className="btn-primary !py-2 !px-4 !text-sm">
             <Plus className="h-4 w-4" />
@@ -166,17 +179,34 @@ export default function WhyUsSectionsPage() {
         }
       />
 
+      <div className="mb-4 inline-flex rounded-lg border border-hairline bg-white p-1">
+        {(Object.keys(LOCATION_LABEL) as Location[]).map((loc) => (
+          <button
+            key={loc}
+            onClick={() => setActiveLocation(loc)}
+            className={cn(
+              'rounded-md px-4 py-2 text-sm font-medium transition',
+              activeLocation === loc
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-ink-soft hover:text-ink',
+            )}
+          >
+            {LOCATION_LABEL[loc]}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 text-primary-deep animate-spin" />
         </div>
-      ) : items.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <div className="rounded-xl border border-dashed border-hairline bg-bg-soft py-20 text-center text-ink-muted">
-          尚未新增任何區塊
+          {LOCATION_LABEL[activeLocation]} 尚未新增任何區塊
         </div>
       ) : (
         <div className="space-y-4">
-          {items.map((it, idx) => (
+          {visibleItems.map((it, idx) => (
             <article
               key={it.id}
               className="rounded-xl border border-hairline bg-white p-5"
@@ -204,7 +234,7 @@ export default function WhyUsSectionsPage() {
                   </button>
                   <button
                     onClick={() => move(it, 'down')}
-                    disabled={idx === items.length - 1}
+                    disabled={idx === visibleItems.length - 1}
                     className="rounded-md p-1.5 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition disabled:opacity-30 disabled:cursor-not-allowed"
                     title="下移"
                   >
@@ -253,6 +283,20 @@ export default function WhyUsSectionsPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <ErrorBanner message={error} />
+
+          <Field label="顯示位置" required>
+            <select
+              value={form.location}
+              onChange={(e) => setForm({ ...form, location: e.target.value as Location })}
+              className={inputClass}
+            >
+              {(Object.keys(LOCATION_LABEL) as Location[]).map((loc) => (
+                <option key={loc} value={loc}>
+                  {LOCATION_LABEL[loc]}
+                </option>
+              ))}
+            </select>
+          </Field>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Eyebrow（小標籤）" hint="例：Why invisible care">

@@ -6,6 +6,8 @@ import { useState } from 'react'
 import {
   Quote,
   BadgeCheck,
+  Workflow,
+  HelpCircle,
   FileText,
   Settings,
   LogOut,
@@ -34,8 +36,20 @@ const COMMON_ITEMS = [
   {
     href: '/admin/why-us-sections',
     label: NAV_LABELS.whyUs,
-    description: '首頁「為何選我們」的多組區塊',
+    description: '首頁「為何選我們」與關於頁「三項職人信仰」',
     icon: BadgeCheck,
+  },
+  {
+    href: '/admin/process-steps',
+    label: NAV_LABELS.processSteps,
+    description: '首頁「四步驟」服務流程',
+    icon: Workflow,
+  },
+  {
+    href: '/admin/general-faqs',
+    label: NAV_LABELS.generalFaqs,
+    description: '常見問題頁的一般問答',
+    icon: HelpCircle,
   },
 ] as const
 

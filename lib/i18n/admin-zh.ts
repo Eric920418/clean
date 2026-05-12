@@ -11,6 +11,8 @@ export const NAV_LABELS = {
   inquiries: '客人問問題',
   testimonials: '客人的好話',
   whyUs: '為何選我們',
+  processSteps: '服務流程',
+  generalFaqs: '常見問題',
   content: '首頁文字',
   settings: '設定',
   advanced: '進階',

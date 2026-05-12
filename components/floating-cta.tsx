@@ -1,27 +1,32 @@
 import { Phone } from 'lucide-react'
-import { siteConfig } from '@/lib/site-config'
 
 /**
  * 手機/平板右下角浮動 CTA。lg(≥1024px) 桌面隱藏，僅顯示於行動裝置。
  * 紅色電話直撥，綠色 LINE 開官方帳號。LINE URL 為空時自動省略綠色按鈕。
  */
-export function FloatingCta() {
+export function FloatingCta({ settings }: { settings: Record<string, string> }) {
+  const phoneTel = settings.phoneTel || ''
+  const phone = settings.phone || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
+
+  if (!phoneTel) return null
+
   return (
     <div
       className="fixed right-4 z-40 flex flex-col gap-3 lg:hidden"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
     >
       <a
-        href={siteConfig.contact.phoneTel}
-        aria-label={`撥打電話 ${siteConfig.contact.phone}`}
+        href={phoneTel}
+        aria-label={`撥打電話 ${phone}`}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E53935] text-white shadow-lg shadow-black/20 active:scale-95 transition"
       >
         <Phone className="h-6 w-6" strokeWidth={2.4} />
       </a>
 
-      {siteConfig.contact.lineFriendUrl && (
+      {lineFriendUrl && (
         <a
-          href={siteConfig.contact.lineFriendUrl}
+          href={lineFriendUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="加 LINE 官方帳號免費估價"

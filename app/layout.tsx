@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Noto_Sans_TC, Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
-import { siteConfig } from '@/lib/site-config'
+import { getSiteSettings } from '@/lib/queries'
 import './globals.css'
 
 const noto = Noto_Sans_TC({
@@ -20,20 +20,31 @@ const inter = Inter({
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
-export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),
-  title: {
-    default: `${siteConfig.brandName} · ${siteConfig.brandTagline}`,
-    template: `%s · ${siteConfig.brandName}`,
-  },
-  description: siteConfig.description,
-  openGraph: {
-    title: `${siteConfig.brandName} · ${siteConfig.brandTagline}`,
-    description: siteConfig.description,
-    type: 'website',
-    locale: 'zh_TW',
-  },
-  robots: { index: true, follow: true },
+export async function generateMetadata(): Promise<Metadata> {
+  let settings: Record<string, string> = {}
+  try {
+    settings = await getSiteSettings()
+  } catch {
+    settings = {}
+  }
+  const siteName = settings.siteName || 'invisible care'
+  const tagline = settings.tagline || '看不見的守護，才是家最頂級的豪華'
+  const description = settings.description || ''
+  return {
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: `${siteName} · ${tagline}`,
+      template: `%s · ${siteName}`,
+    },
+    description,
+    openGraph: {
+      title: `${siteName} · ${tagline}`,
+      description,
+      type: 'website',
+      locale: 'zh_TW',
+    },
+    robots: { index: true, follow: true },
+  }
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

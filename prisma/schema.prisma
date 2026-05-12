@@ -160,6 +160,7 @@ model ContentBlock {
 // ============================================
 model WhyUsSection {
   id          Int      @id @default(autoincrement())
+  location    String   @default("home") // "home" 顯示在首頁、"about" 顯示在 /about
   eyebrow     String?
   title       String
   description String?
@@ -167,6 +168,33 @@ model WhyUsSection {
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([location, order])
+}
+
+// ============================================
+// 首頁「服務流程」步驟（後台多筆排序）
+// ============================================
+model ProcessStep {
+  id        Int      @id @default(autoincrement())
+  step      String   // 顯示用編號，例如 "01"
+  title     String
+  desc      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// /faq 一般問題（非特定服務的常見問題）
+// ============================================
+model GeneralFaq {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================

@@ -2,8 +2,8 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
-import { siteConfig } from '@/lib/site-config'
-import { getContentBlock } from '@/lib/queries'
+import { getContentBlock, getSiteSettings, getWhyUsSections } from '@/lib/queries'
+import type { WhyUsCard } from '@/lib/why-us'
 
 export const metadata: Metadata = {
   title: '關於我們',
@@ -15,7 +15,12 @@ export const metadata: Metadata = {
 export const revalidate = 60
 
 export default async function AboutPage() {
-  const aboutBlock = await getContentBlock('about')
+  const [aboutBlock, settings, beliefSections] = await Promise.all([
+    getContentBlock('about'),
+    getSiteSettings(),
+    getWhyUsSections({ location: 'about' }),
+  ])
+  const phoneTel = settings.phoneTel || ''
   const eyebrow = aboutBlock?.eyebrow || 'Our story'
   const title = aboutBlock?.title || '關於那些被遺忘的空間'
   const paragraphs = [
@@ -68,30 +73,35 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-bg-soft py-16 md:py-24">
-        <div className="container-narrow">
-          <SectionHeading
-            align="center"
-            eyebrow="Our beliefs"
-            title="三項職人信仰"
-            description="我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。"
-          />
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {siteConfig.promises.map((p, idx) => (
-              <div
-                key={p.title}
-                className="rounded-xl border border-hairline bg-white p-8"
-              >
-                <span className="font-display text-xs font-semibold tracking-[0.25em] text-primary-deep">
-                  Belief {idx + 1}
-                </span>
-                <h3 className="mt-4 text-xl font-medium text-ink">{p.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-ink-soft">{p.desc}</p>
+      {beliefSections.map((section) => {
+        const cards = (section.cards as unknown as WhyUsCard[]) ?? []
+        return (
+          <section key={section.id} className="bg-bg-soft py-16 md:py-24">
+            <div className="container-narrow">
+              <SectionHeading
+                align="center"
+                eyebrow={section.eyebrow ?? undefined}
+                title={section.title}
+                description={section.description ?? undefined}
+              />
+              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+                {cards.map((card, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-hairline bg-white p-8"
+                  >
+                    <span className="font-display text-xs font-semibold tracking-[0.25em] text-primary-deep">
+                      Belief {idx + 1}
+                    </span>
+                    <h3 className="mt-4 text-xl font-medium text-ink">{card.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-ink-soft">{card.desc}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
+        )
+      })}
 
       <section className="container-narrow py-16 md:py-24">
         <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">
@@ -101,7 +111,7 @@ export default async function AboutPage() {
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft">
             讓專業的職人團隊，為您的愛家注入全新的生命力。
           </p>
-          <a href={siteConfig.contact.phoneTel} className="btn-primary mt-8">
+          <a href={phoneTel} className="btn-primary mt-8">
             立即來電預約
             <ArrowRight className="h-4 w-4" />
           </a>

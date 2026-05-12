@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import { Phone, Mail, Clock, MapPin, MessageCircle, PhoneCall } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { ContactForm } from '@/components/contact-form'
-import { getActiveServices } from '@/lib/queries'
-import { siteConfig } from '@/lib/site-config'
+import { getActiveServices, getSiteSettings } from '@/lib/queries'
 
 export const revalidate = 60
 
@@ -20,6 +19,15 @@ export default async function ContactPage() {
   } catch {
     services = []
   }
+  const settings = await getSiteSettings().catch(() => ({}) as Record<string, string>)
+  const phone = settings.phone || ''
+  const phoneTel = settings.phoneTel || ''
+  const email = settings.email || ''
+  const lineId = settings.lineId || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
+  const lineCallUrl = settings.lineCallUrl || ''
+  const hours = settings.hours || ''
+  const serviceArea = settings.serviceArea || ''
   return (
     <>
       <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
@@ -43,10 +51,10 @@ export default async function ContactPage() {
                   <div>
                     <div className="text-ink-muted">服務專線（點擊來電）</div>
                     <a
-                      href={siteConfig.contact.phoneTel}
+                      href={phoneTel}
                       className="font-medium text-ink hover:text-primary-deep"
                     >
-                      {siteConfig.contact.phone}
+                      {phone}
                     </a>
                   </div>
                 </li>
@@ -55,29 +63,29 @@ export default async function ContactPage() {
                   <div>
                     <div className="text-ink-muted">電子郵件</div>
                     <a
-                      href={`mailto:${siteConfig.contact.email}`}
+                      href={`mailto:${email}`}
                       className="font-medium text-ink hover:text-primary-deep break-all"
                     >
-                      {siteConfig.contact.email}
+                      {email}
                     </a>
                   </div>
                 </li>
 
-                {siteConfig.contact.lineId && (
+                {lineId && (
                   <li className="flex items-start gap-3">
                     <MessageCircle className="mt-0.5 h-4 w-4 text-primary-deep" />
                     <div>
                       <div className="text-ink-muted">LINE 好友 ID</div>
-                      <span className="font-medium text-ink">{siteConfig.contact.lineId}</span>
+                      <span className="font-medium text-ink">{lineId}</span>
                     </div>
                   </li>
                 )}
 
-                {(siteConfig.contact.lineFriendUrl || siteConfig.contact.lineCallUrl) && (
+                {(lineFriendUrl || lineCallUrl) && (
                   <li className="pt-2 space-y-2">
-                    {siteConfig.contact.lineFriendUrl && (
+                    {lineFriendUrl && (
                       <a
-                        href={siteConfig.contact.lineFriendUrl}
+                        href={lineFriendUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition w-full"
@@ -86,9 +94,9 @@ export default async function ContactPage() {
                         加 LINE 好友
                       </a>
                     )}
-                    {siteConfig.contact.lineCallUrl && (
+                    {lineCallUrl && (
                       <a
-                        href={siteConfig.contact.lineCallUrl}
+                        href={lineCallUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 rounded-md border border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/5 transition w-full"
@@ -104,14 +112,14 @@ export default async function ContactPage() {
                   <Clock className="mt-0.5 h-4 w-4 text-primary-deep" />
                   <div>
                     <div className="text-ink-muted">服務時間</div>
-                    <span className="font-medium text-ink">{siteConfig.contact.hours}</span>
+                    <span className="font-medium text-ink">{hours}</span>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-4 w-4 text-primary-deep" />
                   <div>
                     <div className="text-ink-muted">服務範圍</div>
-                    <span className="font-medium text-ink">{siteConfig.contact.serviceArea}</span>
+                    <span className="font-medium text-ink">{serviceArea}</span>
                   </div>
                 </li>
               </ul>

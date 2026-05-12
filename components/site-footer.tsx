@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { Phone, Mail, MapPin, Clock, ShieldCheck, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
-import { siteConfig } from '@/lib/site-config'
 import { getActiveServices } from '@/lib/queries'
 
-export async function SiteFooter() {
+export async function SiteFooter({ settings }: { settings: Record<string, string> }) {
   // 拿真實服務列表；DB 不可用時回退空清單，footer 仍能顯示
   let services: { slug: string; name: string }[] = []
   try {
@@ -11,6 +10,19 @@ export async function SiteFooter() {
   } catch {
     services = []
   }
+
+  const phone = settings.phone || ''
+  const phoneTel = settings.phoneTel || ''
+  const email = settings.email || ''
+  const lineId = settings.lineId || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
+  const lineCallUrl = settings.lineCallUrl || ''
+  const serviceArea = settings.serviceArea || ''
+  const hours = settings.hours || ''
+  const description = settings.description || ''
+  const siteName = settings.siteName || 'invisible care'
+  const iosAppUrl = settings.iosAppUrl || ''
+  const proshakeUrl = settings.proshakeUrl || ''
 
   return (
     <footer className="mt-16 border-t border-hairline bg-bg-soft">
@@ -25,16 +37,16 @@ export async function SiteFooter() {
             </span>
           </Link>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
-            {siteConfig.description}
+            {description}
           </p>
 
-          {siteConfig.apps.ios && (
+          {iosAppUrl && (
             <div className="mt-5">
               <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
                 APP 下載
               </p>
               <a
-                href={siteConfig.apps.ios}
+                href={iosAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90 transition"
@@ -65,37 +77,37 @@ export async function SiteFooter() {
             <li className="flex items-start gap-2">
               <Phone className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
               <a
-                href={siteConfig.contact.phoneTel}
+                href={phoneTel}
                 className="hover:text-primary-deep transition"
               >
-                {siteConfig.contact.phone}
+                {phone}
               </a>
             </li>
             <li className="flex items-start gap-2">
               <Mail className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
               <a
-                href={`mailto:${siteConfig.contact.email}`}
+                href={`mailto:${email}`}
                 className="hover:text-primary-deep transition break-all"
               >
-                {siteConfig.contact.email}
+                {email}
               </a>
             </li>
 
-            {siteConfig.contact.lineId && (
+            {lineId && (
               <li className="flex items-start gap-2">
                 <MessageCircle className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
                 <span>
                   LINE ID：
-                  <span className="text-ink font-medium">{siteConfig.contact.lineId}</span>
+                  <span className="text-ink font-medium">{lineId}</span>
                 </span>
               </li>
             )}
 
-            {(siteConfig.contact.lineFriendUrl || siteConfig.contact.lineCallUrl) && (
+            {(lineFriendUrl || lineCallUrl) && (
               <li className="flex flex-wrap gap-2 pt-1">
-                {siteConfig.contact.lineFriendUrl && (
+                {lineFriendUrl && (
                   <a
-                    href={siteConfig.contact.lineFriendUrl}
+                    href={lineFriendUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="免費估價，加 LINE 官方帳號"
@@ -125,9 +137,9 @@ export async function SiteFooter() {
                     </span>
                   </a>
                 )}
-                {siteConfig.contact.lineCallUrl && (
+                {lineCallUrl && (
                   <a
-                    href={siteConfig.contact.lineCallUrl}
+                    href={lineCallUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-md border border-[#06C755] px-3 py-1.5 text-xs font-medium text-[#06C755] hover:bg-[#06C755]/5 transition"
@@ -141,23 +153,23 @@ export async function SiteFooter() {
 
             <li className="flex items-start gap-2">
               <MapPin className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
-              <span>{siteConfig.contact.serviceArea}</span>
+              <span>{serviceArea}</span>
             </li>
             <li className="flex items-start gap-2">
               <Clock className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
-              <span>{siteConfig.contact.hours}</span>
+              <span>{hours}</span>
             </li>
 
-            {siteConfig.partners.proshake.url && (
+            {proshakeUrl && (
               <li className="pt-2">
                 <a
-                  href={siteConfig.partners.proshake.url}
+                  href={proshakeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-primary-deep hover:text-primary-deep transition"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  在 {siteConfig.partners.proshake.name} 預約
+                  在 {"Proshake 媒合平台"} 預約
                 </a>
               </li>
             )}
@@ -167,7 +179,7 @@ export async function SiteFooter() {
 
       <div className="border-t border-hairline">
         <div className="container-narrow flex flex-col items-start gap-2 py-6 text-xs text-ink-muted md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} {siteConfig.brandName}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
           <p>本網站所有清洗前後對比圖均經客戶授權刊登</p>
         </div>
       </div>

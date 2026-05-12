@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Menu, X, ShieldCheck, Phone, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { siteConfig } from '@/lib/site-config'
 
 // 內嵌 LINE 風格 icon（白底 + 綠字 knockout，跟 floating-cta 同款）
 function LineIcon({ className }: { className?: string }) {
@@ -37,7 +36,10 @@ const navItems = [
   { href: '/contact', label: '預約諮詢' },
 ]
 
-export function SiteNav() {
+export function SiteNav({ settings }: { settings: Record<string, string> }) {
+  const phoneTel = settings.phoneTel || ''
+  const phone = settings.phone || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -82,7 +84,7 @@ export function SiteNav() {
               {item.label}
             </Link>
           ))}
-          <a href={siteConfig.contact.phoneTel} className="btn-primary !py-2 !text-sm">
+          <a href={phoneTel} className="btn-primary !py-2 !text-sm">
             立即來電預約
           </a>
         </nav>
@@ -90,15 +92,15 @@ export function SiteNav() {
         {/* 手機 top bar：icon-only CTA + hamburger */}
         <div className="flex items-center gap-2 md:hidden">
           <a
-            href={siteConfig.contact.phoneTel}
-            aria-label={`撥打電話 ${siteConfig.contact.phone}`}
+            href={phoneTel}
+            aria-label={`撥打電話 ${phone}`}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#E53935] text-white shadow-sm active:scale-95 transition"
           >
             <Phone className="h-4 w-4" strokeWidth={2.4} />
           </a>
-          {siteConfig.contact.lineFriendUrl && (
+          {lineFriendUrl && (
             <a
-              href={siteConfig.contact.lineFriendUrl}
+              href={lineFriendUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="加 LINE 官方帳號"
@@ -133,7 +135,7 @@ export function SiteNav() {
 
             <div className="mt-3 grid gap-2 border-t border-hairline pt-4">
               <a
-                href={siteConfig.contact.phoneTel}
+                href={phoneTel}
                 onClick={() => setOpen(false)}
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-[#E53935] px-4 py-3 text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition"
               >
@@ -141,9 +143,9 @@ export function SiteNav() {
                 立即來電預約
                 <ArrowRight className="h-4 w-4" />
               </a>
-              {siteConfig.contact.lineFriendUrl && (
+              {lineFriendUrl && (
                 <a
-                  href={siteConfig.contact.lineFriendUrl}
+                  href={lineFriendUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setOpen(false)}

@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
-import { parseCards } from '@/lib/why-us'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -13,13 +12,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const body = await request.json()
     const data: Record<string, unknown> = {}
-
-    if (body.location !== undefined) {
-      data.location = body.location === 'about' ? 'about' : 'home'
-    }
-    if (body.eyebrow !== undefined) {
-      data.eyebrow =
-        typeof body.eyebrow === 'string' && body.eyebrow.trim() ? body.eyebrow.trim() : null
+    if (body.step !== undefined) {
+      if (typeof body.step !== 'string' || !body.step.trim()) {
+        return errorResponse('步驟編號為必填', 400)
+      }
+      data.step = body.step.trim()
     }
     if (body.title !== undefined) {
       if (typeof body.title !== 'string' || !body.title.trim()) {
@@ -27,25 +24,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
       data.title = body.title.trim()
     }
-    if (body.description !== undefined) {
-      data.description =
-        typeof body.description === 'string' && body.description.trim()
-          ? body.description.trim()
-          : null
-    }
-    if (body.cards !== undefined) {
-      const cardsResult = parseCards(body.cards)
-      if (!cardsResult.ok) return errorResponse(cardsResult.error, 400)
-      data.cards = cardsResult.cards
+    if (body.desc !== undefined) {
+      if (typeof body.desc !== 'string' || !body.desc.trim()) {
+        return errorResponse('描述為必填', 400)
+      }
+      data.desc = body.desc.trim()
     }
     if (body.order !== undefined) {
       data.order = typeof body.order === 'number' ? body.order : parseInt(String(body.order), 10)
     }
 
-    const item = await prisma.whyUsSection.update({
-      where: { id: parseInt(id, 10) },
-      data,
-    })
+    const item = await prisma.processStep.update({ where: { id: parseInt(id, 10) }, data })
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -58,7 +47,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    await prisma.whyUsSection.delete({ where: { id: parseInt(id, 10) } })
+    await prisma.processStep.delete({ where: { id: parseInt(id, 10) } })
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

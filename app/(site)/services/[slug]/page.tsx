@@ -7,10 +7,9 @@ import { SectionHeading } from '@/components/section-heading'
 import { BeforeAfterPair } from '@/components/before-after-pair'
 import { IconByName } from '@/components/icon-by-name'
 import { Faq } from '@/components/faq'
-import { getServiceBySlugFull, getActiveServices } from '@/lib/queries'
+import { getServiceBySlugFull, getActiveServices, getSiteSettings } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
 import { serviceJsonLd } from '@/lib/seo'
-import { siteConfig } from '@/lib/site-config'
 
 type Params = { slug: string }
 
@@ -43,13 +42,15 @@ export default async function ServiceDetailPage({
   params: Promise<Params>
 }) {
   const { slug } = await params
-  const [service, allServices] = await Promise.all([
+  const [service, allServices, settings] = await Promise.all([
     getServiceBySlugFull(slug),
     getActiveServices(),
+    getSiteSettings(),
   ])
   if (!service) notFound()
 
   const others = allServices.filter((s) => s.id !== service.id).slice(0, 3)
+  const phoneTel = settings.phoneTel || ''
 
   return (
     <>
@@ -82,7 +83,7 @@ export default async function ServiceDetailPage({
               {service.shortDesc}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href={siteConfig.contact.phoneTel} className="btn-primary">
+              <a href={phoneTel} className="btn-primary">
                 立即來電預約
                 <ArrowRight className="h-4 w-4" />
               </a>
@@ -237,7 +238,7 @@ export default async function ServiceDetailPage({
             填寫預約表單或撥打專線，30 分鐘內專人聯繫，現場評估後給您完整透明報價。
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href={siteConfig.contact.phoneTel} className="btn-primary">
+            <a href={phoneTel} className="btn-primary">
               立即來電預約
               <ArrowRight className="h-4 w-4" />
             </a>

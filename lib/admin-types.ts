@@ -99,10 +99,30 @@ export type AdminTestimonial = {
 
 export type AdminWhyUsSection = {
   id: number
+  location: string
   eyebrow: string | null
   title: string
   description: string | null
   cards: { title: string; desc: string }[]
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type AdminProcessStep = {
+  id: number
+  step: string
+  title: string
+  desc: string
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type AdminGeneralFaq = {
+  id: number
+  question: string
+  answer: string
   order: number
   createdAt: string
   updatedAt: string

@@ -154,10 +154,13 @@ async function main() {
   }
 
   // WhyUsSection：首頁「為何選我們」第一筆（從 siteConfig.promises 搬過來）
-  const whyUsExisting = await prisma.whyUsSection.findFirst({ where: { order: 0 } })
-  if (!whyUsExisting) {
+  const whyUsHomeExisting = await prisma.whyUsSection.findFirst({
+    where: { location: 'home', order: 0 },
+  })
+  if (!whyUsHomeExisting) {
     await prisma.whyUsSection.create({
       data: {
+        location: 'home',
         eyebrow: 'Why invisible care',
         title: '三項堅持，讓家人安心',
         description: '我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。',
@@ -165,7 +168,7 @@ async function main() {
         order: 0,
       },
     })
-    console.log('  ✓ WhyUsSection: 第一筆已建立')
+    console.log('  ✓ WhyUsSection(home): 第一筆已建立')
 
     // 既有 ContentBlock(key=why-us) 變成孤兒資料，清掉
     const removed = await prisma.contentBlock.deleteMany({ where: { key: 'why-us' } })
@@ -173,7 +176,112 @@ async function main() {
       console.log(`  ✓ 已清除孤兒 ContentBlock(key=why-us) × ${removed.count}`)
     }
   } else {
-    console.log('  ↷ WhyUsSection: 已有資料，跳過')
+    console.log('  ↷ WhyUsSection(home): 已有資料，跳過')
+  }
+
+  // WhyUsSection(about)：about 頁「三項職人信仰」
+  const whyUsAboutExisting = await prisma.whyUsSection.findFirst({
+    where: { location: 'about' },
+  })
+  if (!whyUsAboutExisting) {
+    await prisma.whyUsSection.create({
+      data: {
+        location: 'about',
+        eyebrow: 'Our beliefs',
+        title: '三項職人信仰',
+        description: '我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。',
+        cards: siteConfig.promises,
+        order: 0,
+      },
+    })
+    console.log('  ✓ WhyUsSection(about): 第一筆已建立')
+  } else {
+    console.log('  ↷ WhyUsSection(about): 已有資料，跳過')
+  }
+
+  // ProcessStep：首頁四步驟服務流程
+  const processExisting = await prisma.processStep.count()
+  if (processExisting === 0) {
+    await prisma.processStep.createMany({
+      data: siteConfig.process.map((p, idx) => ({
+        step: p.step,
+        title: p.title,
+        desc: p.desc,
+        order: idx,
+      })),
+    })
+    console.log(`  ✓ ProcessStep: ${siteConfig.process.length} 筆已建立`)
+  } else {
+    console.log('  ↷ ProcessStep: 已有資料，跳過')
+  }
+
+  // GeneralFaq：/faq 一般問題（非特定服務）
+  const generalFaqExisting = await prisma.generalFaq.count()
+  if (generalFaqExisting === 0) {
+    await prisma.generalFaq.createMany({
+      data: [
+        {
+          question: '預約後多久能安排施作？',
+          answer:
+            '一般情況下 1–3 天內可安排，旺季（夏季冷氣、年末居家清潔）建議提前 1 週預約。',
+          order: 0,
+        },
+        {
+          question: '報價會不會中途加價？',
+          answer:
+            '不會。我們堅持透明報價：到府評估後給出總價，書面確認再施作。若現場發現額外狀況，我們會先停下來與您溝通，確認後才繼續，絕不擅自加價。',
+          order: 1,
+        },
+        {
+          question: '使用的洗劑對小孩、寵物安全嗎？',
+          answer:
+            '我們優選歐盟認證、生物可分解的環保洗劑，無刺鼻氣味、無毒性殘留，敏感肌、嬰幼兒、寵物環境皆可安心。',
+          order: 2,
+        },
+        {
+          question: '完工後若有問題怎麼辦？',
+          answer:
+            '所有服務皆提供 30 天無憂保固，若清洗後出現異常運轉、未清潔到位等問題，我們將免費回訪處理。',
+          order: 3,
+        },
+      ],
+    })
+    console.log('  ✓ GeneralFaq: 4 筆已建立')
+  } else {
+    console.log('  ↷ GeneralFaq: 已有資料，跳過')
+  }
+
+  // SiteSetting：把 siteConfig.contact / brand 全寫進 DB（業主後台可改）
+  // 用 upsert.create 模式但不覆蓋既有值，避免覆蓋業主已編輯資料
+  const initialSettings: Record<string, string> = {
+    siteName: siteConfig.brandName,
+    tagline: siteConfig.brandTagline,
+    description: siteConfig.description,
+    phone: siteConfig.contact.phone,
+    phoneTel: siteConfig.contact.phoneTel,
+    email: siteConfig.contact.email,
+    lineId: siteConfig.contact.lineId,
+    lineFriendUrl: siteConfig.contact.lineFriendUrl,
+    lineCallUrl: siteConfig.contact.lineCallUrl,
+    serviceArea: siteConfig.contact.serviceArea,
+    hours: siteConfig.contact.hours,
+    fbUrl: siteConfig.social.facebook,
+    igUrl: siteConfig.social.instagram,
+    proshakeUrl: siteConfig.partners.proshake.url,
+    iosAppUrl: siteConfig.apps.ios,
+  }
+  let createdCount = 0
+  for (const [key, value] of Object.entries(initialSettings)) {
+    const existing = await prisma.siteSetting.findUnique({ where: { key } })
+    if (!existing) {
+      await prisma.siteSetting.create({ data: { key, value } })
+      createdCount++
+    }
+  }
+  if (createdCount > 0) {
+    console.log(`  ✓ SiteSetting: 補入 ${createdCount} 筆初始值`)
+  } else {
+    console.log('  ↷ SiteSetting: 全部已存在，跳過')
   }
 
   // Testimonials

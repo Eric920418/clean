@@ -9,8 +9,9 @@ import {
   getActiveTestimonials,
   getFeaturedBeforeAfters,
   getWhyUsSections,
+  getProcessSteps,
+  getSiteSettings,
 } from '@/lib/queries'
-import { siteConfig } from '@/lib/site-config'
 import type { WhyUsCard } from '@/lib/why-us'
 import { JsonLd } from '@/components/json-ld'
 import { localBusinessJsonLd } from '@/lib/seo'
@@ -19,12 +20,16 @@ import { localBusinessJsonLd } from '@/lib/seo'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [services, testimonials, featured, whyUsSections] = await Promise.all([
-    getActiveServices(),
-    getActiveTestimonials(),
-    getFeaturedBeforeAfters(),
-    getWhyUsSections(),
-  ])
+  const [services, testimonials, featured, whyUsSections, processSteps, settings] =
+    await Promise.all([
+      getActiveServices(),
+      getActiveTestimonials(),
+      getFeaturedBeforeAfters(),
+      getWhyUsSections({ location: 'home' }),
+      getProcessSteps(),
+      getSiteSettings(),
+    ])
+  const phoneTel = settings.phoneTel || ''
 
   const ratingAvg =
     testimonials.length > 0
@@ -38,13 +43,13 @@ export default async function HomePage() {
   return (
     <>
       <JsonLd data={businessJsonLd} />
-      <Hero featured={featured[0]} />
+      <Hero featured={featured[0]} phoneTel={phoneTel} />
       <ServicesGrid services={services} />
       <WhyUs sections={whyUsSections} />
       <FeaturedWorks featured={featured} />
-      <Process />
+      <Process steps={processSteps} />
       <Testimonials testimonials={testimonials} />
-      <CtaBanner />
+      <CtaBanner phoneTel={phoneTel} />
     </>
   )
 }
@@ -57,7 +62,7 @@ type WhyUsSectionData = Awaited<ReturnType<typeof getWhyUsSections>>[number]
 /* ============================================================
  * Hero
  * ============================================================ */
-function Hero({ featured }: { featured?: Featured }) {
+function Hero({ featured, phoneTel }: { featured?: Featured; phoneTel: string }) {
   return (
     <section className="relative overflow-hidden bg-medical-glow">
       <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-14 pb-16 md:grid-cols-2 md:gap-14 md:pt-20 md:pb-24">
@@ -71,7 +76,7 @@ function Hero({ featured }: { featured?: Featured }) {
             從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href={siteConfig.contact.phoneTel} className="btn-primary">
+            <a href={phoneTel} className="btn-primary">
               立即來電預約
               <ArrowRight className="h-4 w-4" />
             </a>
@@ -239,7 +244,19 @@ function FeaturedWorks({ featured }: { featured: Featured[] }) {
 /* ============================================================
  * 服務流程
  * ============================================================ */
-function Process() {
+type ProcessStepData = Awaited<ReturnType<typeof getProcessSteps>>[number]
+
+function Process({ steps }: { steps: ProcessStepData[] }) {
+  if (steps.length === 0) return null
+  // 自動依 step 數量決定 grid 欄數，避免硬寫死 4 欄
+  const gridClass =
+    steps.length >= 4
+      ? 'md:grid-cols-4'
+      : steps.length === 3
+        ? 'md:grid-cols-3'
+        : steps.length === 2
+          ? 'md:grid-cols-2'
+          : 'md:grid-cols-1'
   return (
     <section className="bg-gradient-to-b from-white to-bg-tint/40 py-16 md:py-24">
       <div className="container-narrow">
@@ -248,15 +265,15 @@ function Process() {
           eyebrow="How it works"
           title="四步驟・讓您安心交付"
         />
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-4">
-          {siteConfig.process.map((p, idx) => (
-            <div key={p.step} className="relative rounded-xl border border-hairline bg-white p-6">
+        <div className={`mt-10 grid grid-cols-1 gap-6 ${gridClass}`}>
+          {steps.map((p, idx) => (
+            <div key={p.id} className="relative rounded-xl border border-hairline bg-white p-6">
               <span className="font-display text-3xl font-semibold tracking-tight text-primary">
                 {p.step}
               </span>
               <h3 className="mt-3 text-base font-medium text-ink">{p.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">{p.desc}</p>
-              {idx < siteConfig.process.length - 1 && (
+              {idx < steps.length - 1 && (
                 <ArrowRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-primary-soft md:block" />
               )}
             </div>
@@ -308,7 +325,7 @@ function Testimonials({ testimonials }: { testimonials: Testimonial[] }) {
 /* ============================================================
  * CTA Banner
  * ============================================================ */
-function CtaBanner() {
+function CtaBanner({ phoneTel }: { phoneTel: string }) {
   return (
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
@@ -332,7 +349,7 @@ function CtaBanner() {
             一通電話，專人為您現場評估，給您完整透明的報價。
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href={siteConfig.contact.phoneTel} className="btn-primary">
+            <a href={phoneTel} className="btn-primary">
               立即來電預約
               <ArrowRight className="h-4 w-4" />
             </a>

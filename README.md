@@ -57,7 +57,9 @@
 | `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
 | `/admin/inquiries/[id]` | 詢問單詳情（狀態切換） |
 | `/admin/testimonials` | 客人的好話 CRUD |
-| `/admin/why-us-sections` | ⭐ 首頁「為何選我們」多區塊 CRUD（標題 + 三張卡片為一組，可疊多組） |
+| `/admin/why-us-sections` | ⭐ 首頁「為何選我們」+ 關於頁「三項職人信仰」多區塊 CRUD（依 location 區分） |
+| `/admin/process-steps` | ⭐ 首頁「服務流程」步驟 CRUD（標準 4 步，可增減） |
+| `/admin/general-faqs` | ⭐ `/faq` 頁「一般問題」CRUD（非特定服務的常見問題） |
 | `/admin/content` | 首頁文字（進階，已不含 why-us，那組改由 `/admin/why-us-sections` 管理） |
 | `/admin/settings` | 站台設定（進階） |
 | `/admin/more` | 手機版「更多」入口（評價 + 進階摺疊區 + 登出） |
@@ -109,8 +111,12 @@ GET/PUT/DELETE  /api/admin/inquiries/[id]
 GET/POST        /api/admin/testimonials
 PUT/DELETE      /api/admin/testimonials/[id]
 
-GET/POST        /api/admin/why-us-sections        首頁「為何選我們」多區塊
-PUT/DELETE      /api/admin/why-us-sections/[id]   （排序用 PUT order swap，無獨立 move endpoint）
+GET/POST        /api/admin/why-us-sections        首頁/關於頁 WhyUs 多區塊（支援 ?location=home|about）
+PUT/DELETE      /api/admin/why-us-sections/[id]
+GET/POST        /api/admin/process-steps          首頁服務流程
+PUT/DELETE      /api/admin/process-steps/[id]
+GET/POST        /api/admin/general-faqs           /faq 一般問題
+PUT/DELETE      /api/admin/general-faqs/[id]
 
 GET             /api/admin/content
 GET/PUT         /api/admin/content/[key]
@@ -284,12 +290,26 @@ model BookingInquiry {                   // 取代 ContactMessage
   status     InquiryStatus              // NEW / CONTACTED / QUOTED / DONE / CLOSED
 }
 
-model WhyUsSection {                     // 首頁「為何選我們」多區塊
+model WhyUsSection {                     // 首頁/關於頁 WhyUs 多區塊
+  location    String                    // "home" 首頁、"about" 關於頁
   eyebrow     String?
   title       String                    // 例：「三項堅持，讓家人安心」
   description String?
   cards       Json                      // 固定 3 張：[{title, desc}, {title, desc}, {title, desc}]
   order       Int                       // 上下排序（兩筆 swap PUT 完成）
+}
+
+model ProcessStep {                      // 首頁「服務流程」四步驟
+  step  String                          // 顯示用編號，例如 "01"
+  title String
+  desc  String
+  order Int
+}
+
+model GeneralFaq {                       // /faq 頁一般問題（非特定服務）
+  question String
+  answer   String
+  order    Int
 }
 ```
 
@@ -411,6 +431,32 @@ model WhyUsSection {                     // 首頁「為何選我們」多區塊
 ---
 
 ## 變更記錄
+
+### 2026-05-12（全前台 DB 化：聯絡資訊、服務流程、FAQ、Belief 全部後台可改）
+
+審計後發現嚴重的「死資料連結」：後台 `/admin/settings` 寫進 `SiteSetting` 表，但前台 49 處讀的是 `lib/site-config.ts` 硬編碼——業主以為改了卻沒生效。同時也將其他純硬編碼區塊一併後台化。
+
+**B 級「死資料連結」修補**：
+- 全站 `siteConfig.contact.*` / `siteConfig.description` / `siteConfig.brandName` 等改讀 `getSiteSettings()`
+- `app/(site)/layout.tsx` 改為 server component，await `getSiteSettings()` 後透過 props 注入 `SiteNav` / `SiteFooter` / `FloatingCta`
+- root `app/layout.tsx` metadata 改為 `generateMetadata()` 從 DB 讀 siteName / tagline / description
+- seed.ts 把 siteConfig 中所有 contact / social / brand 資料補入 `SiteSetting`（不覆蓋既有值）
+
+**C 級「純硬編碼」後台化**：
+- 新增 `ProcessStep` model + `/admin/process-steps` + API CRUD → 首頁服務流程改讀 DB（grid 欄數依數量自動調整 1/2/3/4）
+- 新增 `GeneralFaq` model + `/admin/general-faqs` + API CRUD → `/faq` 一般問題改讀 DB
+- `WhyUsSection` 加 `location` 欄位（`home` / `about`），admin 介面以 tab 切換、新增/排序皆限定當前 location
+- `/about` 頁「三項職人信仰」改讀 `getWhyUsSections({ location: 'about' })`
+- seed.ts 補入 4 筆 ProcessStep、4 筆 GeneralFaq、1 筆 about WhyUsSection 作為初始假資料
+
+**保留**：
+- `lib/site-config.ts` 仍存在但僅作 seed 初始值來源；前台 0 處引用
+- 此次未動：Hero 主視覺文案、Navigation 順序、首頁 hero 內 4 條 checklist（這些 SEO/視覺結構性內容業主通常不會自行改）
+
+**路由速覽更新**：
+- 新增 admin：`/admin/process-steps`、`/admin/general-faqs`
+- 新增 API：`/api/admin/process-steps`、`/api/admin/general-faqs`
+- `/api/admin/why-us-sections` 支援 `?location=home|about` query
 
 ### 2026-05-12（首頁「為何選我們」改為後台可疊多組區塊）
 

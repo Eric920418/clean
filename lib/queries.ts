@@ -3,9 +3,23 @@
 
 import { prisma } from './prisma'
 
-// 首頁「為何選我們」多區塊（含 cards JSON）
-export async function getWhyUsSections() {
-  return prisma.whyUsSection.findMany({ orderBy: { order: 'asc' } })
+// 「為何選我們」多區塊（含 cards JSON），預設只取首頁 location
+// 若需要 about 頁的同型區塊，傳 { location: 'about' }
+export async function getWhyUsSections(opts?: { location?: string }) {
+  return prisma.whyUsSection.findMany({
+    where: { location: opts?.location ?? 'home' },
+    orderBy: { order: 'asc' },
+  })
+}
+
+// 首頁「服務流程」步驟
+export async function getProcessSteps() {
+  return prisma.processStep.findMany({ orderBy: { order: 'asc' } })
+}
+
+// /faq 一般問題
+export async function getGeneralFaqs() {
+  return prisma.generalFaq.findMany({ orderBy: { order: 'asc' } })
 }
 
 export async function getActiveServices() {
