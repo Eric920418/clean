@@ -14,6 +14,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import { mockServices, mockTestimonials } from '../lib/mock-data'
+import { siteConfig } from '../lib/site-config'
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
@@ -150,6 +151,29 @@ async function main() {
     console.log('  ✓ ContentBlock: about（含圖片）')
   } else {
     console.log('  ↷ ContentBlock: about 已存在，跳過（避免覆蓋業主編輯）')
+  }
+
+  // WhyUsSection：首頁「為何選我們」第一筆（從 siteConfig.promises 搬過來）
+  const whyUsExisting = await prisma.whyUsSection.findFirst({ where: { order: 0 } })
+  if (!whyUsExisting) {
+    await prisma.whyUsSection.create({
+      data: {
+        eyebrow: 'Why invisible care',
+        title: '三項堅持，讓家人安心',
+        description: '我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。',
+        cards: siteConfig.promises,
+        order: 0,
+      },
+    })
+    console.log('  ✓ WhyUsSection: 第一筆已建立')
+
+    // 既有 ContentBlock(key=why-us) 變成孤兒資料，清掉
+    const removed = await prisma.contentBlock.deleteMany({ where: { key: 'why-us' } })
+    if (removed.count > 0) {
+      console.log(`  ✓ 已清除孤兒 ContentBlock(key=why-us) × ${removed.count}`)
+    }
+  } else {
+    console.log('  ↷ WhyUsSection: 已有資料，跳過')
   }
 
   // Testimonials

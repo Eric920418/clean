@@ -12,29 +12,36 @@ export function AdminPageHeader({ title, description, breadcrumb, actions }: Pro
   return (
     <header className="mb-6 border-b border-hairline pb-5">
       {breadcrumb && breadcrumb.length > 0 && (
-        <nav className="mb-2 flex items-center gap-1 text-xs text-ink-muted">
+        <nav className="mb-3 flex flex-wrap items-center gap-1 text-base text-ink-soft">
           {breadcrumb.map((b, i) => (
             <span key={i} className="inline-flex items-center gap-1">
               {b.href ? (
-                <Link href={b.href} className="hover:text-primary-deep transition">
+                <Link
+                  href={b.href}
+                  className="rounded px-1.5 py-1 hover:bg-bg-tint hover:text-primary-deep transition"
+                >
                   {b.label}
                 </Link>
               ) : (
-                <span>{b.label}</span>
+                <span className="px-1.5 py-1 text-ink">{b.label}</span>
               )}
-              {i < breadcrumb.length - 1 && <ChevronRight className="h-3 w-3" />}
+              {i < breadcrumb.length - 1 && (
+                <ChevronRight className="h-4 w-4 text-ink-muted" />
+              )}
             </span>
           ))}
         </nav>
       )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">
+            {title}
+          </h1>
           {description && (
-            <p className="mt-1 text-sm text-ink-soft">{description}</p>
+            <p className="mt-2 text-base text-ink-soft leading-relaxed">{description}</p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
     </header>
   )

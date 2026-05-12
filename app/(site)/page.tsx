@@ -8,8 +8,10 @@ import {
   getActiveServices,
   getActiveTestimonials,
   getFeaturedBeforeAfters,
+  getWhyUsSections,
 } from '@/lib/queries'
 import { siteConfig } from '@/lib/site-config'
+import type { WhyUsCard } from '@/lib/why-us'
 import { JsonLd } from '@/components/json-ld'
 import { localBusinessJsonLd } from '@/lib/seo'
 
@@ -17,10 +19,11 @@ import { localBusinessJsonLd } from '@/lib/seo'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [services, testimonials, featured] = await Promise.all([
+  const [services, testimonials, featured, whyUsSections] = await Promise.all([
     getActiveServices(),
     getActiveTestimonials(),
     getFeaturedBeforeAfters(),
+    getWhyUsSections(),
   ])
 
   const ratingAvg =
@@ -37,7 +40,7 @@ export default async function HomePage() {
       <JsonLd data={businessJsonLd} />
       <Hero featured={featured[0]} />
       <ServicesGrid services={services} />
-      <WhyUs />
+      <WhyUs sections={whyUsSections} />
       <FeaturedWorks featured={featured} />
       <Process />
       <Testimonials testimonials={testimonials} />
@@ -49,6 +52,7 @@ export default async function HomePage() {
 type Featured = Awaited<ReturnType<typeof getFeaturedBeforeAfters>>[number]
 type Service = Awaited<ReturnType<typeof getActiveServices>>[number]
 type Testimonial = Awaited<ReturnType<typeof getActiveTestimonials>>[number]
+type WhyUsSectionData = Awaited<ReturnType<typeof getWhyUsSections>>[number]
 
 /* ============================================================
  * Hero
@@ -157,34 +161,42 @@ function ServicesGrid({ services }: { services: Service[] }) {
 }
 
 /* ============================================================
- * 為何選我們
+ * 為何選我們（後台多區塊，每組標題 + 三張卡片）
  * ============================================================ */
-function WhyUs() {
+function WhyUs({ sections }: { sections: WhyUsSectionData[] }) {
+  if (sections.length === 0) return null
   return (
-    <section className="bg-bg-soft py-16 md:py-24">
-      <div className="container-narrow">
-        <SectionHeading
-          align="center"
-          eyebrow="Why invisible care"
-          title="三項堅持，讓家人安心"
-          description="我們不追求低價競爭，追求的是「品質的極致」與「客戶的安心」。"
-        />
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {siteConfig.promises.map((p, idx) => (
-            <div
-              key={p.title}
-              className="rounded-xl border border-hairline bg-white p-8 text-center"
-            >
-              <span className="inline-flex h-10 w-20 items-center justify-center rounded-full bg-bg-tint font-display text-sm font-semibold tracking-widest text-primary-deep">
-                0{idx + 1}
-              </span>
-              <h3 className="mt-5 text-lg font-medium text-ink">{p.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">{p.desc}</p>
+    <>
+      {sections.map((section) => {
+        const cards = (section.cards as unknown as WhyUsCard[]) ?? []
+        return (
+          <section key={section.id} className="bg-bg-soft py-16 md:py-24">
+            <div className="container-narrow">
+              <SectionHeading
+                align="center"
+                eyebrow={section.eyebrow ?? undefined}
+                title={section.title}
+                description={section.description ?? undefined}
+              />
+              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+                {cards.map((card, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-hairline bg-white p-8 text-center"
+                  >
+                    <span className="inline-flex h-10 w-20 items-center justify-center rounded-full bg-bg-tint font-display text-sm font-semibold tracking-widest text-primary-deep">
+                      0{idx + 1}
+                    </span>
+                    <h3 className="mt-5 text-lg font-medium text-ink">{card.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-ink-soft">{card.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
+          </section>
+        )
+      })}
+    </>
   )
 }
 

@@ -167,13 +167,15 @@
     border-color: var(--primary-soft);
   }
 
-  /* 主 CTA 按鈕 */
+  /* 主 CTA 按鈕（老人友善：最小高度 48px、字級 16px）*/
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+    font-size: 1rem; /* 16px */
     background: var(--primary);
     color: var(--primary-fg);
     border-radius: var(--radius-md);
@@ -186,13 +188,19 @@
   .btn-primary:active {
     transform: scale(0.98);
   }
+  .btn-primary:focus-visible {
+    outline: 3px solid var(--primary-soft);
+    outline-offset: 2px;
+  }
 
   .btn-ghost {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+    font-size: 1rem;
     background: transparent;
     color: var(--ink);
     border: 1px solid var(--hairline);
@@ -203,6 +211,55 @@
   .btn-ghost:hover {
     background: var(--bg-soft);
     border-color: var(--ink-muted);
+  }
+  .btn-ghost:focus-visible {
+    outline: 3px solid var(--primary-soft);
+    outline-offset: 2px;
+  }
+
+  /* ============================================
+   * 老人友善後台 — 字級與觸控目標基礎
+   * 範圍：所有 .admin-friendly 容器底下的元素
+   * ============================================ */
+  .admin-friendly {
+    /* 全域最小字 16px：覆蓋 Tailwind 預設的 text-xs(12) / text-sm(14) */
+    font-size: 1rem;
+  }
+  .admin-friendly .text-xs,
+  .admin-friendly .text-sm {
+    font-size: 1rem !important; /* 16px 下限 */
+    line-height: 1.55;
+  }
+  .admin-friendly input,
+  .admin-friendly textarea,
+  .admin-friendly select {
+    min-height: 48px;
+    font-size: 1rem; /* 防止 iOS 自動 zoom（< 16px 會觸發） */
+  }
+  .admin-friendly textarea {
+    min-height: 96px;
+  }
+  .admin-friendly button,
+  .admin-friendly [role='button'],
+  .admin-friendly a.btn-primary,
+  .admin-friendly a.btn-ghost {
+    min-height: 44px;
+  }
+  /* 醒目的錯誤訊息（紅底白字卡片，老人不會錯過） */
+  .admin-friendly .error-text {
+    display: block;
+    background: var(--danger);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+  /* focus 加粗 ring（鍵盤導覽/視覺輔助友善） */
+  .admin-friendly *:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 
   /* Section 容器 */

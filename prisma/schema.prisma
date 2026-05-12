@@ -154,6 +154,22 @@ model ContentBlock {
 }
 
 // ============================================
+// 首頁「為何選我們」多區塊
+// 每筆 = 一組 section（標題 + 副標 + 三張卡片），可由後台新增/排序
+// cards 為固定 3 張的 JSON 陣列：[{title, desc}, {title, desc}, {title, desc}]
+// ============================================
+model WhyUsSection {
+  id          Int      @id @default(autoincrement())
+  eyebrow     String?
+  title       String
+  description String?
+  cards       Json
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================
 // 客戶評價（首頁見證區塊）
 // ============================================
 model Testimonial {

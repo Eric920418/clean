@@ -104,45 +104,45 @@ export function BeforeAfterModal({
     <AdminModal
       open={open}
       onClose={onClose}
-      title={editing ? '編輯對比圖' : '新增一組對比'}
-      description="左邊上傳清洗前、右邊上傳清洗後，並填寫案件資訊"
+      title={editing ? '修改這組照片' : '新增清潔前後照片'}
+      description="左邊上傳「清潔前」、右邊上傳「清潔後」，下面可以填日期跟區域"
       size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <ErrorBanner message={error} />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="清洗前（Before）" required>
+          <Field label="清潔前的照片" required>
             <ImageUploader
               value={form.beforeUrl}
               onChange={(url) => setForm({ ...form, beforeUrl: url })}
               folder="before-afters"
-              hint="點擊上傳 Before 照片"
+              hint="點這裡上傳「還沒清潔」的照片"
               className="w-full aspect-[4/3]"
             />
           </Field>
-          <Field label="清洗後（After）" required>
+          <Field label="清潔後的照片" required>
             <ImageUploader
               value={form.afterUrl}
               onChange={(url) => setForm({ ...form, afterUrl: url })}
               folder="before-afters"
-              hint="點擊上傳 After 照片"
+              hint="點這裡上傳「清潔完成」的照片"
               className="w-full aspect-[4/3]"
             />
           </Field>
         </div>
 
-        <Field label="案件描述（Caption）" hint="會顯示在對比圖下方，例：「8 年未深度清洗的冷氣風輪」">
+        <Field label="說明（給客人看的描述）" hint="可不填。網站上會顯示在照片下方">
           <input
             value={form.caption}
             onChange={(e) => setForm({ ...form, caption: e.target.value })}
             className={inputClass}
-            placeholder="8 年未深度清洗的冷氣風輪"
+            placeholder="例如：8 年沒洗的冷氣"
           />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="服務區域" hint="只到區、不留具體地址（隱私保護）">
+          <Field label="服務地區" hint="只寫到「區」就好，保護客人隱私">
             <input
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
@@ -150,7 +150,7 @@ export function BeforeAfterModal({
               placeholder="台北市信義區"
             />
           </Field>
-          <Field label="施作日期">
+          <Field label="清潔的日期">
             <input
               type="date"
               value={form.takenAt}
@@ -160,41 +160,41 @@ export function BeforeAfterModal({
           </Field>
         </div>
 
-        <div className="flex flex-wrap gap-4 pt-2 border-t border-hairline-soft">
-          <label className="inline-flex items-center gap-2 text-sm text-ink">
+        <div className="flex flex-col gap-3 pt-3 border-t border-hairline-soft sm:flex-row sm:gap-4">
+          <label className="inline-flex items-center gap-3 text-base text-ink cursor-pointer">
             <input
               type="checkbox"
               checked={form.isFeatured}
               onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
-              className="h-4 w-4 rounded border-hairline text-primary focus:ring-primary"
+              className="h-5 w-5 rounded border-hairline text-primary focus:ring-primary"
             />
-            設為首頁精選（首頁作品牆會顯示）
+            設為首頁精選（會顯示在首頁）
           </label>
-          <label className="inline-flex items-center gap-2 text-sm text-ink">
+          <label className="inline-flex items-center gap-3 text-base text-ink cursor-pointer">
             <input
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              className="h-4 w-4 rounded border-hairline text-primary focus:ring-primary"
+              className="h-5 w-5 rounded border-hairline text-primary focus:ring-primary"
             />
             上架顯示
           </label>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-hairline -mx-6 px-6 -mb-6 pb-4 sticky bottom-0 bg-white">
+        <div className="flex flex-col-reverse gap-3 pt-4 border-t border-hairline -mx-6 px-6 -mb-6 pb-4 sticky bottom-0 bg-white sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="btn-ghost !py-2 !px-4 !text-sm"
+            className="btn-ghost"
           >
-            取消
+            不要了
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="btn-primary !py-2 !px-4 !text-sm disabled:opacity-60"
+            className="btn-primary disabled:opacity-60"
           >
-            {submitting ? '儲存中…' : editing ? '更新' : '新增對比'}
+            {submitting ? '儲存中…' : editing ? '儲存修改' : '存好這組照片'}
           </button>
         </div>
       </form>

@@ -7,7 +7,7 @@ import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ImageUploader } from '@/components/admin/image-uploader'
 
-type BlockKey = 'hero' | 'about' | 'why-us' | 'process' | 'cta'
+type BlockKey = 'hero' | 'about' | 'process' | 'cta'
 
 type FieldType = 'text' | 'textarea' | 'image'
 
@@ -37,15 +37,6 @@ const BLOCK_DEFS: Record<
       { name: 'paragraph2', label: '段落 2', type: 'textarea' },
       { name: 'paragraph3', label: '段落 3', type: 'textarea' },
       { name: 'image', label: '故事區圖片', type: 'image', folder: 'about' },
-    ],
-  },
-  'why-us': {
-    title: 'Why Us（為何選我們）',
-    description: '首頁的「三項堅持」標題與副標',
-    fields: [
-      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
-      { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
     ],
   },
   process: {

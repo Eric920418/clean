@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import { useState } from 'react'
 import {
-  LayoutDashboard,
+  Home,
   Sparkles,
   Inbox,
   Quote,
@@ -12,98 +13,144 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
+  BadgeCheck,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useSidebar } from './sidebar-context'
+import { NAV_LABELS } from '@/lib/i18n/admin-zh'
 
-const menuItems = [
-  { title: '儀表板', href: '/admin/dashboard', icon: LayoutDashboard },
-  { title: '服務管理', href: '/admin/services', icon: Sparkles },
-  { title: '詢問單', href: '/admin/inquiries', icon: Inbox },
-  { title: '客戶評價', href: '/admin/testimonials', icon: Quote },
-  { title: '頁面內容', href: '/admin/content', icon: FileText },
-  { title: '站台設定', href: '/admin/settings', icon: Settings },
+/**
+ * Sidebar（桌機版）— 老人友善
+ * - 固定寬 w-64，不再收合（移除 collapsed 模式，icon-only 對老人不友善）
+ * - 永遠顯示 label
+ * - 字級 base/16px、選單項目 min-height 48px
+ * - 進階項目（content/settings）收進摺疊區，預設關
+ * - 手機版隱藏（md:flex），改用 MobileTabBar
+ */
+
+const PRIMARY_ITEMS = [
+  { title: NAV_LABELS.dashboard, href: '/admin/dashboard', icon: Home },
+  { title: NAV_LABELS.services, href: '/admin/services', icon: Sparkles },
+  { title: NAV_LABELS.inquiries, href: '/admin/inquiries', icon: Inbox },
+  { title: NAV_LABELS.testimonials, href: '/admin/testimonials', icon: Quote },
+  { title: NAV_LABELS.whyUs, href: '/admin/why-us-sections', icon: BadgeCheck },
+]
+
+const ADVANCED_ITEMS = [
+  { title: NAV_LABELS.content, href: '/admin/content', icon: FileText },
+  { title: NAV_LABELS.settings, href: '/admin/settings', icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { collapsed, setCollapsed } = useSidebar()
+  const [advancedOpen, setAdvancedOpen] = useState(() =>
+    ADVANCED_ITEMS.some(
+      (it) => pathname === it.href || pathname.startsWith(it.href + '/'),
+    ),
+  )
 
   return (
     <aside
-      className={cn(
-        'fixed left-0 top-0 h-full bg-ink text-white transition-all duration-300 z-50 border-r border-ink/40',
-        collapsed ? 'w-16' : 'w-64',
-      )}
+      className="fixed left-0 top-0 z-50 hidden h-full w-64 flex-col border-r border-ink/40 bg-ink text-white md:flex"
+      aria-label="後台主導覽"
     >
-      <div className="flex flex-col h-full">
-        {/* Logo */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <Link href="/admin/dashboard" className="flex items-center gap-2 min-w-0">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white shrink-0">
-              <ShieldCheck className="h-5 w-5" strokeWidth={2.2} />
-            </span>
-            {!collapsed && (
-              <span className="flex flex-col leading-none truncate">
-                <span className="text-sm font-semibold truncate">invisible care</span>
-                <span className="mt-0.5 text-[10px] tracking-widest text-white/60">後台管理</span>
-              </span>
-            )}
-          </Link>
+      {/* Logo */}
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+        <Link href="/admin/dashboard" className="flex items-center gap-3 min-w-0">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white shrink-0">
+            <ShieldCheck className="h-6 w-6" strokeWidth={2.2} />
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-base font-semibold">invisible care</span>
+            <span className="text-sm text-white/60">後台管理</span>
+          </span>
+        </Link>
+      </div>
+
+      {/* Primary 選單 */}
+      <nav className="flex-1 overflow-y-auto py-4">
+        <ul className="space-y-1 px-3">
+          {PRIMARY_ITEMS.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + '/')
+            const Icon = item.icon
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-4 py-3 text-base transition-colors',
+                    isActive
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white',
+                  )}
+                  style={{ minHeight: 48 }}
+                >
+                  <Icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                  <span className="font-medium">{item.title}</span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+
+        {/* 進階分組 */}
+        <div className="mt-4 border-t border-white/10 pt-3">
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
-            aria-label={collapsed ? '展開側欄' : '收合側欄'}
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            className="mx-3 flex w-[calc(100%-1.5rem)] items-center justify-between rounded-lg px-4 py-3 text-base text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+            style={{ minHeight: 48 }}
           >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            <span className="font-medium">{NAV_LABELS.advanced}</span>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 transition-transform',
+                advancedOpen && 'rotate-180',
+              )}
+            />
           </button>
+          {advancedOpen && (
+            <ul className="mt-1 space-y-1 px-3">
+              {ADVANCED_ITEMS.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + '/')
+                const Icon = item.icon
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-4 py-3 text-base transition-colors',
+                        isActive
+                          ? 'bg-primary/80 text-white'
+                          : 'text-white/70 hover:bg-white/10 hover:text-white',
+                      )}
+                      style={{ minHeight: 48 }}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" strokeWidth={2} />
+                      <span>{item.title}</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </div>
+      </nav>
 
-        {/* Menu */}
-        <nav className="flex-1 py-4 overflow-y-auto">
-          <ul className="space-y-1 px-2">
-            {menuItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + '/')
-              const Icon = item.icon
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm',
-                      isActive
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white',
-                    )}
-                    title={collapsed ? item.title : undefined}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={2} />
-                    {!collapsed && <span>{item.title}</span>}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-
-        {/* Footer */}
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={() => signOut({ callbackUrl: '/admin/login' })}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full text-sm',
-              collapsed && 'justify-center',
-            )}
-            title={collapsed ? '登出' : undefined}
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!collapsed && <span>登出</span>}
-          </button>
-        </div>
+      {/* 登出 */}
+      <div className="border-t border-white/10 p-3">
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: '/admin/login' })}
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-base text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+          style={{ minHeight: 48 }}
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span className="font-medium">{NAV_LABELS.logout}</span>
+        </button>
       </div>
     </aside>
   )

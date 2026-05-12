@@ -97,6 +97,17 @@ export type AdminTestimonial = {
   updatedAt: string
 }
 
+export type AdminWhyUsSection = {
+  id: number
+  eyebrow: string | null
+  title: string
+  description: string | null
+  cards: { title: string; desc: string }[]
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
 export type AdminContentBlock = {
   id: number
   key: string

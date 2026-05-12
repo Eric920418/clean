@@ -3,6 +3,11 @@
 
 import { prisma } from './prisma'
 
+// 首頁「為何選我們」多區塊（含 cards JSON）
+export async function getWhyUsSections() {
+  return prisma.whyUsSection.findMany({ orderBy: { order: 'asc' } })
+}
+
 export async function getActiveServices() {
   return prisma.service.findMany({
     where: { isActive: true },

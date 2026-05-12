@@ -22,6 +22,7 @@
 | **後台 CMS**（11 頁完整管理介面） | ✅ 已完成 |
 | NextAuth 登入 + middleware 保護 + R2 圖片上傳 | ✅ 已完成 |
 | 業主可自助操作：服務 CRUD / 對比圖 / 詢問單 / 評價 / 內容 / 設定 | ✅ 已完成 |
+| **後台老人友善 UI/UX**（mobile-first、底部 tab、字級 16px+、口語化措辭） | ✅ 已完成 |
 
 下一步：使用者填入 `.env`（DB / R2 / NEXTAUTH_SECRET），跑 `pnpm db:push && pnpm db:seed`，即可啟用整套後台。
 
@@ -48,18 +49,38 @@
 | 路由 | 用途 |
 |---|---|
 | `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
-| `/admin/dashboard` | 儀表板：4 張統計卡 + 最近 5 筆未讀詢問單 |
+| `/admin/dashboard` | 首頁：QuickActions 兩個大按鈕 + 4 張統計卡 + 最近 5 筆詢問 |
 | `/admin/services` | 六大服務 CRUD（modal 編輯主欄位、排序、上下架、刪除） |
 | `/admin/services/[id]/edit` | 服務子表（特色 / FAQ inline 編輯） |
-| `/admin/services/[id]/before-afters` | ⭐ 對比圖配對管理（每組 modal 上傳 Before / After + caption） |
+| `/admin/services/[id]/before-afters` | ⭐ 清潔前後照片管理（每組 modal 上傳） |
 | `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
-| `/admin/inquiries` | 詢問單列表（依狀態 / 已讀篩選） |
-| `/admin/inquiries/[id]` | 詢問單詳情（狀態切換 NEW → CONTACTED → QUOTED → DONE / CLOSED） |
-| `/admin/testimonials` | 客戶評價 CRUD |
-| `/admin/content` | 頁面內容（hero / about / why-us / process / cta JSON 結構化編輯） |
-| `/admin/settings` | 站台設定（電話、Line、社群、服務區域） |
+| `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
+| `/admin/inquiries/[id]` | 詢問單詳情（狀態切換） |
+| `/admin/testimonials` | 客人的好話 CRUD |
+| `/admin/why-us-sections` | ⭐ 首頁「為何選我們」多區塊 CRUD（標題 + 三張卡片為一組，可疊多組） |
+| `/admin/content` | 首頁文字（進階，已不含 why-us，那組改由 `/admin/why-us-sections` 管理） |
+| `/admin/settings` | 站台設定（進階） |
+| `/admin/more` | 手機版「更多」入口（評價 + 進階摺疊區 + 登出） |
 
 整個 `/admin/*` 由 `middleware.ts` 保護，未登入會自動導向 `/admin/login`。
+
+### 後台 UI 設計準則（老人友善）
+
+實際使用者為 55-65 歲老闆，主力裝置是手機。設計遵守以下硬底線：
+
+| 規則 | 數值 | 落實位置 |
+|---|---|---|
+| 最小字級 | **16px**（`text-base`） | `app/globals.css` `.admin-friendly` 容器自動覆蓋 `text-xs/text-sm` |
+| 主要按鈕高度 | **48px** | `.btn-primary` / `.btn-ghost` `min-height` |
+| 次要按鈕觸控目標 | **44px** | shared components `style={{ minHeight: 44 }}` |
+| 表單 input 高度 | **48px** | `.admin-friendly input` |
+| Error 訊息 | **紅底白字卡片 + ⚠ 圖示** | `components/admin/form-field.tsx` `Field` |
+| 危險動作 | **二次確認 modal**（取消在左主視覺、確認在右紅色） | `components/admin/confirm-dialog.tsx` + `useConfirm` hook |
+| 中文措辭 | **口語化字典**（「詢問單」→「客人問問題」、enum 加 emoji） | `lib/i18n/admin-zh.ts` 單一來源 |
+| 導覽 | **手機底部 4 tab + 桌機 sidebar**（永遠顯示文字標籤、不再純 icon） | `components/admin/mobile-tab-bar.tsx`、`sidebar.tsx` |
+| Mobile-first | 卡片版面取代密集表格、`tel:` 直接撥號、`env(safe-area-inset-bottom)` 避讓 home indicator | `app/admin/inquiries/page.tsx` 等 |
+
+**修改任何後台文字／enum 顯示，請從 `lib/i18n/admin-zh.ts` 改起，不要散落在各頁面。**
 
 ## API 路由
 
@@ -87,6 +108,9 @@ GET/PUT/DELETE  /api/admin/inquiries/[id]
 
 GET/POST        /api/admin/testimonials
 PUT/DELETE      /api/admin/testimonials/[id]
+
+GET/POST        /api/admin/why-us-sections        首頁「為何選我們」多區塊
+PUT/DELETE      /api/admin/why-us-sections/[id]   （排序用 PUT order swap，無獨立 move endpoint）
 
 GET             /api/admin/content
 GET/PUT         /api/admin/content/[key]
@@ -259,6 +283,14 @@ model BookingInquiry {                   // 取代 ContactMessage
   serviceIds Int[]                      // 客戶可多選想諮詢的服務
   status     InquiryStatus              // NEW / CONTACTED / QUOTED / DONE / CLOSED
 }
+
+model WhyUsSection {                     // 首頁「為何選我們」多區塊
+  eyebrow     String?
+  title       String                    // 例：「三項堅持，讓家人安心」
+  description String?
+  cards       Json                      // 固定 3 張：[{title, desc}, {title, desc}, {title, desc}]
+  order       Int                       // 上下排序（兩筆 swap PUT 完成）
+}
 ```
 
 完整 schema 見 `prisma/schema.prisma`。
@@ -379,6 +411,28 @@ model BookingInquiry {                   // 取代 ContactMessage
 ---
 
 ## 變更記錄
+
+### 2026-05-12（首頁「為何選我們」改為後台可疊多組區塊）
+
+原本 `app/(site)/page.tsx` 的 `WhyUs()` 區塊狀態混亂：
+
+- 標題/副標已存在 `ContentBlock(key="why-us")` 可後台編輯
+- 但**三張卡片內容硬編碼**在 `lib/site-config.ts` 的 `siteConfig.promises`，後台改不到
+- 整個 section 只能存「一組」，業主想新增第二段標題+三卡完全做不到
+
+本次改動：
+
+- 新增 Prisma model `WhyUsSection`（`cards Json` 固定 3 張、`order` 排序）
+- 新增 admin 頁 `/admin/why-us-sections`（仿 testimonials pattern，含 `useConfirm()` 二次確認）
+- 新增 API `/api/admin/why-us-sections`（POST 自動算 `order = max + 1`；排序沿用 services 的 swap-order pattern，無獨立 move endpoint）
+- 卡片驗證集中在 `lib/why-us.ts` 的 `parseCards()`（discriminated union 回 `{ok, error}`，API + 前端共用）
+- 首頁 `app/(site)/page.tsx` 改透過 `getWhyUsSections()` 從 DB 讀，迴圈渲染每組；`sections.length === 0` 不渲染空殼
+- 移除 `app/admin/content/page.tsx` 的 `why-us` BlockEditor（避免雙頭管理）；seed 順手清孤兒 `ContentBlock(key="why-us")`
+- Sidebar / `/admin/more` / `lib/i18n/admin-zh.ts` 同步加入「為何選我們」入口
+
+**Scope 取捨**：`app/(site)/about/page.tsx` L80 也讀 `siteConfig.promises`（包裝成「三項職人信仰」），暫保留靜態。`lib/site-config.ts` 的 `promises` 因此不刪，但已標註不再驅動首頁。日後若 about 也要後台化，可加 `location` 欄位區分。
+
+**ISR**：首頁 `revalidate = 60`，業主編輯後最多 60 秒首頁才反映，與 testimonials 行為一致，本次不引入 `revalidatePath`。
 
 ### 2026-05-12（首頁客戶評價拿掉 `.slice(0, 3)` 硬限制）
 
