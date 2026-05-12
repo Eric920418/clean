@@ -14,9 +14,9 @@ export const siteConfig = {
     /** LINE 好友 ID，會直接顯示給用戶看 */
     lineId: '',
     /** 加 LINE 好友連結（如 https://line.me/R/ti/p/@xxx） */
-    lineFriendUrl: '',
+    lineFriendUrl: 'https://lin.ee/WuFCNig',
     /** LINE 語音通話連結 */
-    lineCallUrl: '',
+    lineCallUrl: 'https://lin.ee/cQe8Hhz',
     serviceArea: '雙北・桃園・新竹',
     hours: '週一至週六 09:00 – 19:00',
   },

@@ -48,6 +48,10 @@ model Service {
   introParagraph3 String?  // 段落 3
   introImage      String?  // 故事區圖片 R2 URL
 
+  // 詳情頁「為什麼這項服務重要？」區塊的標題（主文使用 longDesc）
+  whyEyebrow      String?  // 小標籤，預設 fallback：Why this matters
+  whyTitle        String?  // 主標題，預設 fallback：為什麼這項服務重要？
+
   features      ServiceFeature[]
   faqs          ServiceFaq[]
   beforeAfters  BeforeAfterPair[]

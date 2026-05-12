@@ -20,6 +20,8 @@ export type AdminService = {
   introParagraph2: string | null
   introParagraph3: string | null
   introImage: string | null
+  whyEyebrow: string | null
+  whyTitle: string | null
   createdAt: string
   updatedAt: string
   features?: AdminServiceFeature[]

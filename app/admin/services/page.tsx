@@ -32,6 +32,8 @@ const emptyForm = {
   introParagraph2: '',
   introParagraph3: '',
   introImage: '',
+  whyEyebrow: '',
+  whyTitle: '',
 }
 
 type FormState = typeof emptyForm
@@ -91,6 +93,8 @@ export default function ServicesAdminPage() {
       introParagraph2: s.introParagraph2 ?? '',
       introParagraph3: s.introParagraph3 ?? '',
       introImage: s.introImage ?? '',
+      whyEyebrow: s.whyEyebrow ?? '',
+      whyTitle: s.whyTitle ?? '',
     })
     setError(null)
     setModalOpen(true)
@@ -389,7 +393,7 @@ export default function ServicesAdminPage() {
             />
           </Field>
 
-          <Field label="詳細描述" required hint="顯示在服務詳情頁主文">
+          <Field label="詳細描述" required hint="顯示在服務詳情頁「為什麼這項服務重要？」區塊主文">
             <textarea
               value={form.longDesc}
               onChange={(e) => setForm({ ...form, longDesc: e.target.value })}
@@ -398,6 +402,31 @@ export default function ServicesAdminPage() {
               required
             />
           </Field>
+
+          <div className="rounded-md bg-bg-tint/40 border border-primary-deep/20 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-primary-deep">「為什麼這項服務重要？」區塊標題（選填）</p>
+              <p className="text-xs text-ink-muted mt-0.5">主文沿用上方「詳細描述」。此處的小標籤與標題若留空，前台顯示預設值：Why this matters / 為什麼這項服務重要？</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Field label="Eyebrow（小標籤）" hint="預設：Why this matters">
+                <input
+                  value={form.whyEyebrow}
+                  onChange={(e) => setForm({ ...form, whyEyebrow: e.target.value })}
+                  className={inputClass}
+                  placeholder="Why this matters"
+                />
+              </Field>
+              <Field label="標題" hint="預設：為什麼這項服務重要？">
+                <input
+                  value={form.whyTitle}
+                  onChange={(e) => setForm({ ...form, whyTitle: e.target.value })}
+                  className={inputClass}
+                  placeholder="為什麼這項服務重要？"
+                />
+              </Field>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Lucide icon 名稱" hint="如 Wind / Droplets / Sparkles / ShieldCheck">

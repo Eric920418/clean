@@ -60,6 +60,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.introParagraph2 !== undefined && { introParagraph2: body.introParagraph2 || null }),
         ...(body.introParagraph3 !== undefined && { introParagraph3: body.introParagraph3 || null }),
         ...(body.introImage !== undefined && { introImage: body.introImage || null }),
+        ...(body.whyEyebrow !== undefined && { whyEyebrow: body.whyEyebrow || null }),
+        ...(body.whyTitle !== undefined && { whyTitle: body.whyTitle || null }),
       },
     })
 

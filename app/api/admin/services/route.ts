@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       introParagraph2,
       introParagraph3,
       introImage,
+      whyEyebrow,
+      whyTitle,
     } = body
 
     if (!slug || !name || !shortDesc || !longDesc) {
@@ -83,6 +85,8 @@ export async function POST(request: NextRequest) {
         introParagraph2: introParagraph2 || null,
         introParagraph3: introParagraph3 || null,
         introImage: introImage || null,
+        whyEyebrow: whyEyebrow || null,
+        whyTitle: whyTitle || null,
       },
     })
 

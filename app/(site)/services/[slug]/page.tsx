@@ -143,7 +143,10 @@ export default async function ServiceDetailPage({
       <section className="section">
         <div className="container-narrow grid grid-cols-1 gap-14 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <SectionHeading eyebrow="Why this matters" title="為什麼這項服務重要？" />
+            <SectionHeading
+              eyebrow={service.whyEyebrow ?? 'Why this matters'}
+              title={service.whyTitle ?? '為什麼這項服務重要？'}
+            />
             <p className="mt-6 whitespace-pre-line text-base leading-loose text-ink-soft md:text-lg">
               {service.longDesc}
             </p>

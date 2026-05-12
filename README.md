@@ -380,6 +380,42 @@ model BookingInquiry {                   // 取代 ContactMessage
 
 ## 變更記錄
 
+### 2026-05-12（首頁客戶評價拿掉 `.slice(0, 3)` 硬限制）
+
+原本首頁 `Testimonials` 區塊存在「雙層砍」：
+
+- `lib/queries.ts` 的 `getActiveTestimonials()` 已用 `take: 6` 限制取 6 筆
+- 但 `app/(site)/page.tsx:271` 又 `testimonials.slice(0, 3)` 再砍到 3 筆
+
+導致業主即使在後台 `/admin/testimonials` 新增第 4 筆評價（且 `isActive: true`），首頁也永遠看不到——必須把它 `order` 設成 0/1/2 之一才會「擠掉」現有的某一張上首頁。這對業主而言是**隱形行為**，沒有任何 UI 提示。
+
+本次改動：
+
+- 拿掉 `app/(site)/page.tsx:271` 的 `.slice(0, 3)`，改為 `testimonials.map(...)`
+- `take: 6` 保留作為硬上限（防止業主累積到 30+ 筆時首頁變超長一片牆）
+- 不動 grid（仍為 `md:grid-cols-3`）。4 / 5 筆會出現「3+1」「3+2」非滿格排版，這是刻意的視覺驅動——業主看到不齊就會去多收 2 筆評價，6 筆才會剛好滿一整面 3x2 grid
+
+設計取捨：曾考慮 carousel（embla-carousel-react 已安裝），但 Neon 實測只有 4 筆評價，carousel 在這個量級上反而顯得內容稀薄（第 2 頁只有 1 張卡片）。等評價累積到 9 筆以上再考慮。
+
+### 2026-05-11（服務詳情頁「為什麼這項服務重要？」標題納入 CMS）
+
+原本 `app/(site)/services/[slug]/page.tsx` 第二區塊的標題是**硬編碼**：
+
+```tsx
+<SectionHeading eyebrow="Why this matters" title="為什麼這項服務重要？" />
+```
+
+導致後台無法針對個別服務調整這兩行文字（主文 `longDesc` 本身一直都可編輯）。本次改動：
+
+- Prisma `Service` model 加 2 個 nullable 欄位：`whyEyebrow`、`whyTitle`（純 ADD COLUMN，不動現有資料）
+- API `POST /api/admin/services` 與 `PUT /api/admin/services/[id]` 白名單擴充 2 欄位
+- 後台 `/admin/services` 主編輯 modal 在「詳細描述」下方新增區塊「『為什麼這項服務重要？』區塊標題（選填）」，含兩個輸入框與預設值提示
+- 前台改成 `service.whyEyebrow ?? 'Why this matters'` 與 `service.whyTitle ?? '為什麼這項服務重要？'`——**有填用填的，沒填用預設**，現有資料完全相容
+- `lib/admin-types.ts` 的 `AdminService` 同步加 2 欄位
+- 用 `??` 而非 `||`：API 已把空字串轉 `null`，只有 `null/undefined` 才該 fallback，避免日後資料邏輯變動時 fallback 被誤觸發
+
+設計取捨：曾考慮做 `ServiceSection` 子表把所有 SectionHeading 標題全部 CMS 化（彈性最大），但服務頁區塊本質不同質（intro 有圖、why 有 features aside、works 是對比配對），統一 schema 會變成 EAV 反模式 + 高風險資料遷移。改採最小擴充。
+
 ### 2026-05-09（服務詳情頁故事區 + about CMS 完成接通）
 
 每個服務的詳情頁 `/services/[slug]` 在 hero 下方新增「圖文並排故事區」（對齊 about 頁面結構），且**每個服務的故事獨立**（per-service 內容，不是全站共用）：
@@ -398,6 +434,15 @@ model BookingInquiry {                   // 取代 ContactMessage
 - seed 補入 about ContentBlock（含圖片預設值）
 
 R2 folder 慣例：服務介紹圖 `services-intro/`、about 故事區圖 `about/`、ContentBlock 通用圖 `content/`。
+
+### 2026-05-09（填入 LINE 官方短網址）
+
+`siteConfig.contact` 填上業主提供的 lin.ee 短網址：
+
+- `lineFriendUrl` = `https://lin.ee/WuFCNig`（加賴諮詢／加好友）
+- `lineCallUrl` = `https://lin.ee/cQe8Hhz`（賴通話／LINE 通話）
+
+填入後既有 5 處 conditional render 的 LINE CTA 全部自動啟用（footer LINE@ 大按鈕、footer LINE 通話 outline 按鈕、FAB 綠色圓鈕、nav top bar 綠色圓鈕、nav menu drawer 諮詢 CTA）。
 
 ### 2026-05-09（手機 Navbar 加入 CTA 按鈕）
 

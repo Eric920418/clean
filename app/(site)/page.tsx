@@ -268,7 +268,7 @@ function Testimonials({ testimonials }: { testimonials: Testimonial[] }) {
           title="他們選擇了 invisible care"
         />
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {testimonials.slice(0, 3).map((t) => (
+          {testimonials.map((t) => (
             <figure
               key={t.id}
               className="flex h-full flex-col rounded-xl border border-hairline bg-white p-7"
