@@ -7,29 +7,93 @@ import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ImageUploader } from '@/components/admin/image-uploader'
 
-type BlockKey = 'hero' | 'about' | 'process' | 'cta'
-
 type FieldType = 'text' | 'textarea' | 'image'
 
-const BLOCK_DEFS: Record<
-  BlockKey,
-  { title: string; description: string; fields: { name: string; label: string; type: FieldType; hint?: string; folder?: string }[] }
-> = {
-  hero: {
-    title: 'Hero（首頁主視覺）',
-    description: '首屏的標題、副標、按鈕文字',
+type BlockDef = {
+  title: string
+  description: string
+  fields: { name: string; label: string; type: FieldType; hint?: string; folder?: string }[]
+}
+
+// 所有可後台編輯的內容區塊；保留現有 'about' key（業主已編過）
+const BLOCK_DEFS: Record<string, BlockDef> = {
+  // === 首頁 ===
+  'hero-home': {
+    title: '首頁 Hero（主視覺）',
+    description: '首頁最上方的標題、副標、按鈕文字、4 條 checklist',
     fields: [
-      { name: 'eyebrow', label: 'Eyebrow（小標籤）', type: 'text', hint: '例：Invisible Care · 居家健康守護' },
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：Invisible Care · 居家健康守護' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
       { name: 'description', label: '副標說明', type: 'textarea' },
-      { name: 'primaryCta', label: '主 CTA 文字', type: 'text' },
-      { name: 'secondaryCta', label: '副 CTA 文字', type: 'text' },
+      { name: 'primaryCta', label: '主 CTA 按鈕文字', type: 'text', hint: '例：立即來電預約' },
+      { name: 'secondaryCta', label: '副 CTA 按鈕文字', type: 'text', hint: '例：看清潔實績' },
+      { name: 'checklist1', label: 'Checklist 1', type: 'text' },
+      { name: 'checklist2', label: 'Checklist 2', type: 'text' },
+      { name: 'checklist3', label: 'Checklist 3', type: 'text' },
+      { name: 'checklist4', label: 'Checklist 4', type: 'text' },
+    ],
+  },
+  'section-services-home': {
+    title: '首頁・服務項目區塊標題',
+    description: 'Our Services 區塊的 eyebrow 與標題',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
+    ],
+  },
+  'section-works-home': {
+    title: '首頁・精選作品區塊標題',
+    description: 'Real Results 區塊的 eyebrow、標題與「查看全部」按鈕',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'viewAllLabel', label: '「查看全部實績」按鈕文字', type: 'text' },
+    ],
+  },
+  'section-process-home': {
+    title: '首頁・服務流程區塊標題',
+    description: 'How it works 區塊的 eyebrow 與標題（流程步驟在「服務流程」管理）',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
+    ],
+  },
+  'section-testimonials-home': {
+    title: '首頁・客戶評價區塊標題',
+    description: 'Customer Voices 區塊的 eyebrow 與標題（評價內容在「客人的好話」管理）',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
+    ],
+  },
+  'cta-home': {
+    title: '首頁・底部 CTA banner',
+    description: '首頁最底部深色預約 banner',
+    fields: [
+      { name: 'overline', label: '上方小標', type: 'text', hint: '例：BOOK YOUR HOME CARE TODAY' },
+      { name: 'titleLine1', label: '主標第一行', type: 'text' },
+      { name: 'titleLine2', label: '主標第二行', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'primaryCta', label: '按鈕文字', type: 'text' },
+    ],
+  },
+  // === About 頁 ===
+  'hero-about': {
+    title: '關於我們・Hero',
+    description: 'About 頁最上方的標題段',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：About invisible care' },
+      { name: 'titleLine1', label: '主標第一行', type: 'text' },
+      { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
+      { name: 'lead', label: '右側說明文', type: 'textarea' },
     ],
   },
   about: {
-    title: 'About（關於我們區塊）',
-    description: '關於頁的故事與品牌主張',
+    title: '關於我們・故事段',
+    description: 'About 頁中段的「Our story」與三段故事',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -39,22 +103,67 @@ const BLOCK_DEFS: Record<
       { name: 'image', label: '故事區圖片', type: 'image', folder: 'about' },
     ],
   },
-  process: {
-    title: 'Process（服務流程）',
-    description: '首頁四步驟區塊的標題',
+  'cta-about': {
+    title: '關於我們・底部 CTA',
+    description: 'About 頁底部的呼籲區塊',
+    fields: [
+      { name: 'title', label: '標題', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'primaryCta', label: '按鈕文字', type: 'text' },
+    ],
+  },
+  // === 其他頁面 Hero ===
+  'hero-contact': {
+    title: '預約諮詢・Hero',
+    description: 'Contact 頁最上方標題段',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
     ],
   },
-  cta: {
-    title: 'CTA（首頁底部呼籲）',
-    description: '首頁最底部的深色預約 banner',
+  'hero-faq': {
+    title: '常見問題・Hero 與區塊文字',
+    description: 'FAQ 頁的 Hero、「一般服務」標題、底部聯絡卡片文案',
     fields: [
-      { name: 'overline', label: '上方小標', type: 'text' },
-      { name: 'titleLine1', label: '主標第一行', type: 'text' },
-      { name: 'titleLine2', label: '主標第二行', type: 'text' },
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: 'Hero 標題', type: 'text' },
+      { name: 'description', label: 'Hero 副標', type: 'textarea' },
+      { name: 'generalHeading', label: '一般服務區塊標題', type: 'text' },
+      { name: 'contactBoxText', label: '底部聯絡卡片文字', type: 'text' },
+      { name: 'contactBoxButton', label: '底部聯絡按鈕文字', type: 'text' },
+    ],
+  },
+  'hero-services': {
+    title: '服務項目列表・Hero',
+    description: 'Services 列表頁的標題段',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
       { name: 'description', label: '副標', type: 'textarea' },
+    ],
+  },
+  'hero-works': {
+    title: '清潔實績・Hero',
+    description: 'Works 頁的標題段',
+    fields: [
+      { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
+      { name: 'title', label: '標題', type: 'text' },
+      { name: 'description', label: '副標', type: 'textarea' },
+    ],
+  },
+  // === 全站導覽（Header / Footer 文字） ===
+  navigation: {
+    title: '導覽列與 Footer 文字',
+    description: '導覽列的 5 個分頁 label、主要按鈕文字、Footer 法律聲明',
+    fields: [
+      { name: 'navServicesLabel', label: '導覽：服務項目', type: 'text' },
+      { name: 'navWorksLabel', label: '導覽：清潔實績', type: 'text' },
+      { name: 'navAboutLabel', label: '導覽：關於我們', type: 'text' },
+      { name: 'navFaqLabel', label: '導覽：常見問題', type: 'text' },
+      { name: 'navContactLabel', label: '導覽：預約諮詢', type: 'text' },
+      { name: 'navPrimaryCtaLabel', label: '導覽列主按鈕文字', type: 'text', hint: '例：立即來電預約' },
+      { name: 'footerLegalNote', label: 'Footer 法律聲明', type: 'textarea' },
     ],
   },
 }
@@ -64,10 +173,10 @@ export default function ContentAdminPage() {
     <>
       <AdminPageHeader
         title="頁面內容"
-        description="編輯首頁與關於頁的文案區塊（標題、描述、按鈕文字）"
+        description="編輯網站所有頁面的標題、副標、按鈕文字（動態資料如服務、評價、流程在各自的管理頁）"
       />
       <div className="space-y-6">
-        {(Object.keys(BLOCK_DEFS) as BlockKey[]).map((key) => (
+        {Object.keys(BLOCK_DEFS).map((key) => (
           <BlockEditor key={key} blockKey={key} />
         ))}
       </div>
@@ -75,7 +184,7 @@ export default function ContentAdminPage() {
   )
 }
 
-function BlockEditor({ blockKey }: { blockKey: BlockKey }) {
+function BlockEditor({ blockKey }: { blockKey: string }) {
   const def = BLOCK_DEFS[blockKey]
   const [values, setValues] = useState<Record<string, string>>({})
   const [original, setOriginal] = useState<Record<string, string>>({})

@@ -28,18 +28,26 @@ function LineIcon({ className }: { className?: string }) {
   )
 }
 
-const navItems = [
-  { href: '/services', label: '服務項目' },
-  { href: '/works', label: '清潔實績' },
-  { href: '/about', label: '關於我們' },
-  { href: '/faq', label: '常見問題' },
-  { href: '/contact', label: '預約諮詢' },
-]
-
-export function SiteNav({ settings }: { settings: Record<string, string> }) {
+export function SiteNav({
+  settings,
+  navigation,
+}: {
+  settings: Record<string, string>
+  navigation: Record<string, string>
+}) {
   const phoneTel = settings.phoneTel || ''
   const phone = settings.phone || ''
   const lineFriendUrl = settings.lineFriendUrl || ''
+  const primaryCtaLabel = navigation.navPrimaryCtaLabel || '立即來電預約'
+
+  // route 固定，label 由業主後台改
+  const navItems = [
+    { href: '/services', label: navigation.navServicesLabel || '服務項目' },
+    { href: '/works', label: navigation.navWorksLabel || '清潔實績' },
+    { href: '/about', label: navigation.navAboutLabel || '關於我們' },
+    { href: '/faq', label: navigation.navFaqLabel || '常見問題' },
+    { href: '/contact', label: navigation.navContactLabel || '預約諮詢' },
+  ]
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -85,7 +93,7 @@ export function SiteNav({ settings }: { settings: Record<string, string> }) {
             </Link>
           ))}
           <a href={phoneTel} className="btn-primary !py-2 !text-sm">
-            立即來電預約
+            {primaryCtaLabel}
           </a>
         </nav>
 
@@ -140,7 +148,7 @@ export function SiteNav({ settings }: { settings: Record<string, string> }) {
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-[#E53935] px-4 py-3 text-sm font-semibold text-white shadow-sm active:scale-[0.98] transition"
               >
                 <Phone className="h-4 w-4" strokeWidth={2.4} />
-                立即來電預約
+                {primaryCtaLabel}
                 <ArrowRight className="h-4 w-4" />
               </a>
               {lineFriendUrl && (

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Phone, Mail, Clock, MapPin, MessageCircle, PhoneCall } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { ContactForm } from '@/components/contact-form'
-import { getActiveServices, getSiteSettings } from '@/lib/queries'
+import { getActiveServices, getSiteSettings, getContentBlock } from '@/lib/queries'
 
 export const revalidate = 60
 
@@ -19,7 +19,11 @@ export default async function ContactPage() {
   } catch {
     services = []
   }
-  const settings = await getSiteSettings().catch(() => ({}) as Record<string, string>)
+  const [settings, heroBlock] = await Promise.all([
+    getSiteSettings().catch(() => ({}) as Record<string, string>),
+    getContentBlock('hero-contact').catch(() => null),
+  ])
+  const hero = heroBlock ?? {}
   const phone = settings.phone || ''
   const phoneTel = settings.phoneTel || ''
   const email = settings.email || ''
@@ -33,9 +37,12 @@ export default async function ContactPage() {
       <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
-            eyebrow="Contact"
-            title="預約諮詢"
-            description="填寫下方表單，30 分鐘內專人聯繫；或直接撥打專線、加入 LINE，我們將盡快為您服務。"
+            eyebrow={hero.eyebrow || 'Contact'}
+            title={hero.title || '預約諮詢'}
+            description={
+              hero.description ||
+              '填寫下方表單，30 分鐘內專人聯繫；或直接撥打專線、加入 LINE，我們將盡快為您服務。'
+            }
           />
         </div>
       </section>

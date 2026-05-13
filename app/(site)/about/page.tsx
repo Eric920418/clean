@@ -2,7 +2,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
-import { getContentBlock, getSiteSettings, getWhyUsSections } from '@/lib/queries'
+import { getContentBlock, getSiteSettings, getWhyUsSections, getAllContentBlocks } from '@/lib/queries'
 import type { WhyUsCard } from '@/lib/why-us'
 
 export const metadata: Metadata = {
@@ -15,12 +15,15 @@ export const metadata: Metadata = {
 export const revalidate = 60
 
 export default async function AboutPage() {
-  const [aboutBlock, settings, beliefSections] = await Promise.all([
+  const [aboutBlock, settings, beliefSections, blocks] = await Promise.all([
     getContentBlock('about'),
     getSiteSettings(),
     getWhyUsSections({ location: 'about' }),
+    getAllContentBlocks(),
   ])
   const phoneTel = settings.phoneTel || ''
+  const heroBlock = blocks['hero-about'] ?? {}
+  const ctaBlock = blocks['cta-about'] ?? {}
   const eyebrow = aboutBlock?.eyebrow || 'Our story'
   const title = aboutBlock?.title || '關於那些被遺忘的空間'
   const paragraphs = [
@@ -37,15 +40,16 @@ export default async function AboutPage() {
       <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
         <div className="container-narrow grid grid-cols-1 items-end gap-10 md:grid-cols-2">
           <div>
-            <span className="eyebrow">About invisible care</span>
+            <span className="eyebrow">{heroBlock.eyebrow || 'About invisible care'}</span>
             <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-ink md:text-5xl">
-              看不見的守護，<br />
-              <span className="text-primary-deep">才是家最頂級的豪華</span>
+              {heroBlock.titleLine1 || '看不見的守護，'}
+              <br />
+              <span className="text-primary-deep">{heroBlock.titleLine2 || '才是家最頂級的豪華'}</span>
             </h1>
           </div>
           <p className="text-base leading-relaxed text-ink-soft md:text-lg">
-            真正的居家品質，不該只存在於裝潢的華麗，而應體現在每一次深呼吸、每一寸觸摸到的布料，以及每一口入喉的水中。我們是
-            <strong className="font-medium text-ink"> 居家健康空間的修復師</strong>。
+            {heroBlock.lead ||
+              '真正的居家品質，不該只存在於裝潢的華麗，而應體現在每一次深呼吸、每一寸觸摸到的布料，以及每一口入喉的水中。我們是 居家健康空間的修復師。'}
           </p>
         </div>
       </section>
@@ -106,13 +110,13 @@ export default async function AboutPage() {
       <section className="container-narrow py-16 md:py-24">
         <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">
           <h2 className="text-3xl font-medium tracking-tight text-ink md:text-4xl">
-            您的家，值得被溫柔對待
+            {ctaBlock.title || '您的家，值得被溫柔對待'}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft">
-            讓專業的職人團隊，為您的愛家注入全新的生命力。
+            {ctaBlock.description || '讓專業的職人團隊，為您的愛家注入全新的生命力。'}
           </p>
           <a href={phoneTel} className="btn-primary mt-8">
-            立即來電預約
+            {ctaBlock.primaryCta || '立即來電預約'}
             <ArrowRight className="h-4 w-4" />
           </a>
         </div>

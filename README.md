@@ -432,6 +432,28 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
 
 ## 變更記錄
 
+### 2026-05-13（結構性品牌文案全面後台化：100% 無前台硬編碼文案）
+
+延續前一階段已動態化的內容，這次把剩下的「結構性品牌文案」也搬進 DB：
+
+- **6 個頁面 Hero**（首頁/about/contact/faq/services/works）標題、副標、Eyebrow
+- **6 個區塊標題**（Our Services/Real Results/How it works/Customer Voices/About hero/CTA banner）
+- **首頁 Hero 4 條 checklist**（歐盟認證環保洗劑 / 透明報價 / 30 天保固 / 雙北桃園新竹）
+- **首頁底部 CTA banner** 全文（BOOK YOUR HOME CARE TODAY / 把專業交給我們...）
+- **About 底部 CTA**（您的家，值得被溫柔對待...）
+- **Navigation 5 個分頁 label** + 主按鈕文字
+- **Footer 法律聲明**
+
+**設計取捨**：不增 schema，全部用既有 `ContentBlock`（key + Json payload），共 13 個新 keys：`hero-home`/`section-services-home`/`section-works-home`/`section-process-home`/`section-testimonials-home`/`cta-home`/`hero-about`/`cta-about`/`hero-contact`/`hero-faq`/`hero-services`/`hero-works`/`navigation`。`/admin/content` 統一編輯介面（既有 BLOCK_DEFS 機制擴 array 即可）。
+
+**fallback 設計**：每個欄位都有 hardcoded fallback（DB 缺鍵時用），避免業主清空某欄位後前台空白。代價：清乾淨某欄位仍會看到 fallback 字串，業主可能誤以為「沒清掉」。
+
+**新增 helper**：`lib/queries.ts:getAllContentBlocks()` 一次拿所有 blocks，省 round-trip。
+
+**SEO 警告**：業主若大幅修改 Hero 標題 / meta description，Google 重新爬蟲後排名可能波動。建議業主修改前先評估 SEO 影響，或保留原標題作為 H1，修改其他段落。
+
+**結果**：除了固定的 route 路徑（`/services` 等）與一些 fallback 預設字串外，**前台 100% 無硬編碼可顯示文案**。
+
 ### 2026-05-12（全前台 DB 化：聯絡資訊、服務流程、FAQ、Belief 全部後台可改）
 
 審計後發現嚴重的「死資料連結」：後台 `/admin/settings` 寫進 `SiteSetting` 表，但前台 49 處讀的是 `lib/site-config.ts` 硬編碼——業主以為改了卻沒生效。同時也將其他純硬編碼區塊一併後台化。

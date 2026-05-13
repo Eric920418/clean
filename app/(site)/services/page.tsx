@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { IconByName } from '@/components/icon-by-name'
-import { getActiveServices } from '@/lib/queries'
+import { getActiveServices, getContentBlock } from '@/lib/queries'
 
 export const revalidate = 60
 
@@ -15,15 +15,19 @@ export const metadata: Metadata = {
 }
 
 export default async function ServicesIndexPage() {
-  const services = await getActiveServices()
+  const [services, heroBlock] = await Promise.all([
+    getActiveServices(),
+    getContentBlock('hero-services').catch(() => null),
+  ])
+  const hero = heroBlock ?? {}
   return (
     <>
       <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
         <div className="container-narrow">
           <SectionHeading
-            eyebrow="Our Services"
-            title="服務項目"
-            description="點選下方服務查看完整介紹、清潔前後實績與常見問題。"
+            eyebrow={hero.eyebrow || 'Our Services'}
+            title={hero.title || '服務項目'}
+            description={hero.description || '點選下方服務查看完整介紹、清潔前後實績與常見問題。'}
           />
         </div>
       </section>

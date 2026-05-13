@@ -153,6 +153,109 @@ async function main() {
     console.log('  ↷ ContentBlock: about 已存在，跳過（避免覆蓋業主編輯）')
   }
 
+  // === 結構性品牌文案 ContentBlock 初始值（13 個 key）===
+  // 用 findUnique 短路避免覆蓋業主已編輯資料
+  const initialBlocks: Record<string, Record<string, string>> = {
+    'hero-home': {
+      eyebrow: 'Invisible Care · 居家健康守護',
+      titleLine1: '看不見的守護，',
+      titleLine2: '才是家最頂級的豪華',
+      description:
+        '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。',
+      primaryCta: '立即來電預約',
+      secondaryCta: '看清潔實績',
+      checklist1: '歐盟認證環保洗劑',
+      checklist2: '透明報價・絕不增項',
+      checklist3: '30 天無憂保固',
+      checklist4: '雙北・桃園・新竹到府',
+    },
+    'section-services-home': {
+      eyebrow: 'Our Services',
+      title: '服務項目，一站式守護',
+      description:
+        '從窗戶上的紗網，到家中每一滴用水，我們整合全方位居家維護技術，由內而外照顧您與家人的健康。',
+    },
+    'section-works-home': {
+      eyebrow: 'Real Results',
+      title: '親眼見證的反差',
+      description: '所有清洗前後對比圖均為實際施作案例，未經修飾濾鏡，已取得客戶授權。',
+      viewAllLabel: '查看全部實績',
+    },
+    'section-process-home': {
+      eyebrow: 'How it works',
+      title: '四步驟・讓您安心交付',
+    },
+    'section-testimonials-home': {
+      eyebrow: 'Customer Voices',
+      title: '他們選擇了 invisible care',
+    },
+    'cta-home': {
+      overline: 'BOOK YOUR HOME CARE TODAY',
+      titleLine1: '把專業交給我們，',
+      titleLine2: '把時間留給家人。',
+      description: '一次預約，到府全程服務，讓您看見每一個被細心對待的細節。',
+      primaryCta: '立即來電預約',
+    },
+    'hero-about': {
+      eyebrow: 'About invisible care',
+      titleLine1: '看不見的守護，',
+      titleLine2: '才是家最頂級的豪華',
+      lead:
+        '真正的居家品質，不該只存在於裝潢的華麗，而應體現在每一次深呼吸、每一寸觸摸到的布料，以及每一口入喉的水中。我們是 居家健康空間的修復師。',
+    },
+    'cta-about': {
+      title: '您的家，值得被溫柔對待',
+      description: '讓專業的職人團隊，為您的愛家注入全新的生命力。',
+      primaryCta: '立即來電預約',
+    },
+    'hero-contact': {
+      eyebrow: 'Contact',
+      title: '預約諮詢',
+      description:
+        '填寫下方表單，30 分鐘內專人聯繫；或直接撥打專線、加入 LINE，我們將盡快為您服務。',
+    },
+    'hero-faq': {
+      eyebrow: 'FAQ',
+      title: '常見問題',
+      description: '找不到答案？歡迎直接聯繫我們。',
+      generalHeading: '一般服務',
+      contactBoxText: '還有其他疑問？',
+      contactBoxButton: '聯絡我們',
+    },
+    'hero-services': {
+      eyebrow: 'Our Services',
+      title: '服務項目',
+      description: '點選下方服務查看完整介紹、清潔前後實績與常見問題。',
+    },
+    'hero-works': {
+      eyebrow: 'Real Results',
+      title: '清潔實績・前後對比',
+      description: '拖動中央分隔線，親眼見證 invisible care 帶來的改變。所有照片均為真實案例。',
+    },
+    navigation: {
+      navServicesLabel: '服務項目',
+      navWorksLabel: '清潔實績',
+      navAboutLabel: '關於我們',
+      navFaqLabel: '常見問題',
+      navContactLabel: '預約諮詢',
+      navPrimaryCtaLabel: '立即來電預約',
+      footerLegalNote: '本網站所有清洗前後對比圖均經客戶授權刊登',
+    },
+  }
+  let blocksCreated = 0
+  for (const [key, payload] of Object.entries(initialBlocks)) {
+    const existing = await prisma.contentBlock.findUnique({ where: { key } })
+    if (!existing) {
+      await prisma.contentBlock.create({ data: { key, payload } })
+      blocksCreated++
+    }
+  }
+  if (blocksCreated > 0) {
+    console.log(`  ✓ ContentBlock 結構文案: 補入 ${blocksCreated} 筆初始值`)
+  } else {
+    console.log('  ↷ ContentBlock 結構文案: 全部已存在，跳過')
+  }
+
   // WhyUsSection：首頁「為何選我們」第一筆（從 siteConfig.promises 搬過來）
   const whyUsHomeExisting = await prisma.whyUsSection.findFirst({
     where: { location: 'home', order: 0 },

@@ -1,22 +1,28 @@
 import { SiteNav } from '@/components/site-nav'
 import { SiteFooter } from '@/components/site-footer'
 import { FloatingCta } from '@/components/floating-cta'
-import { getSiteSettings } from '@/lib/queries'
+import { getSiteSettings, getContentBlock } from '@/lib/queries'
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  // 全站讀 SiteSetting（電話、Line、Email 等業主後台可改）
+  // 全站讀 SiteSetting + 導覽列文案 ContentBlock
   let settings: Record<string, string> = {}
+  let navigation: Record<string, string> = {}
   try {
     settings = await getSiteSettings()
   } catch {
     settings = {}
   }
+  try {
+    navigation = (await getContentBlock('navigation')) ?? {}
+  } catch {
+    navigation = {}
+  }
 
   return (
     <>
-      <SiteNav settings={settings} />
+      <SiteNav settings={settings} navigation={navigation} />
       <main>{children}</main>
-      <SiteFooter settings={settings} />
+      <SiteFooter settings={settings} navigation={navigation} />
       <FloatingCta settings={settings} />
     </>
   )

@@ -105,3 +105,14 @@ export async function getContentBlock(key: string) {
   const item = await prisma.contentBlock.findUnique({ where: { key } })
   return (item?.payload as Record<string, string> | null) ?? null
 }
+
+// 一次取所有 ContentBlock，回成 { key: { fieldName: value } }
+// 比每頁多次 await getContentBlock 省 round-trip
+export async function getAllContentBlocks(): Promise<Record<string, Record<string, string>>> {
+  const items = await prisma.contentBlock.findMany()
+  const map: Record<string, Record<string, string>> = {}
+  items.forEach((b) => {
+    map[b.key] = (b.payload as Record<string, string> | null) ?? {}
+  })
+  return map
+}

@@ -11,6 +11,7 @@ import {
   getWhyUsSections,
   getProcessSteps,
   getSiteSettings,
+  getAllContentBlocks,
 } from '@/lib/queries'
 import type { WhyUsCard } from '@/lib/why-us'
 import { JsonLd } from '@/components/json-ld'
@@ -20,7 +21,7 @@ import { localBusinessJsonLd } from '@/lib/seo'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [services, testimonials, featured, whyUsSections, processSteps, settings] =
+  const [services, testimonials, featured, whyUsSections, processSteps, settings, blocks] =
     await Promise.all([
       getActiveServices(),
       getActiveTestimonials(),
@@ -28,8 +29,15 @@ export default async function HomePage() {
       getWhyUsSections({ location: 'home' }),
       getProcessSteps(),
       getSiteSettings(),
+      getAllContentBlocks(),
     ])
   const phoneTel = settings.phoneTel || ''
+  const hero = blocks['hero-home'] ?? {}
+  const sectServices = blocks['section-services-home'] ?? {}
+  const sectWorks = blocks['section-works-home'] ?? {}
+  const sectProcess = blocks['section-process-home'] ?? {}
+  const sectTestimonials = blocks['section-testimonials-home'] ?? {}
+  const cta = blocks['cta-home'] ?? {}
 
   const ratingAvg =
     testimonials.length > 0
@@ -43,13 +51,13 @@ export default async function HomePage() {
   return (
     <>
       <JsonLd data={businessJsonLd} />
-      <Hero featured={featured[0]} phoneTel={phoneTel} />
-      <ServicesGrid services={services} />
+      <Hero featured={featured[0]} phoneTel={phoneTel} hero={hero} />
+      <ServicesGrid services={services} block={sectServices} />
       <WhyUs sections={whyUsSections} />
-      <FeaturedWorks featured={featured} />
-      <Process steps={processSteps} />
-      <Testimonials testimonials={testimonials} />
-      <CtaBanner phoneTel={phoneTel} />
+      <FeaturedWorks featured={featured} block={sectWorks} />
+      <Process steps={processSteps} block={sectProcess} />
+      <Testimonials testimonials={testimonials} block={sectTestimonials} />
+      <CtaBanner phoneTel={phoneTel} block={cta} />
     </>
   )
 }
@@ -62,39 +70,52 @@ type WhyUsSectionData = Awaited<ReturnType<typeof getWhyUsSections>>[number]
 /* ============================================================
  * Hero
  * ============================================================ */
-function Hero({ featured, phoneTel }: { featured?: Featured; phoneTel: string }) {
+function Hero({
+  featured,
+  phoneTel,
+  hero,
+}: {
+  featured?: Featured
+  phoneTel: string
+  hero: Record<string, string>
+}) {
+  const checklist = [hero.checklist1, hero.checklist2, hero.checklist3, hero.checklist4].filter(
+    (s): s is string => Boolean(s && s.trim()),
+  )
   return (
     <section className="relative overflow-hidden bg-medical-glow">
       <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-14 pb-16 md:grid-cols-2 md:gap-14 md:pt-20 md:pb-24">
         <div>
-          <span className="eyebrow">Invisible Care · 居家健康守護</span>
+          <span className="eyebrow">{hero.eyebrow || 'Invisible Care · 居家健康守護'}</span>
           <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-ink md:text-6xl">
-            看不見的守護，<br />
-            <span className="text-primary-deep">才是家最頂級的豪華</span>
+            {hero.titleLine1 || '看不見的守護，'}
+            <br />
+            <span className="text-primary-deep">{hero.titleLine2 || '才是家最頂級的豪華'}</span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
-            從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。
+            {hero.description ||
+              '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。'}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
-              立即來電預約
+              {hero.primaryCta || '立即來電預約'}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/works" className="btn-ghost">
-              看清潔實績
+              {hero.secondaryCta || '看清潔實績'}
             </Link>
           </div>
 
-          <ul className="mt-10 grid grid-cols-1 gap-3 text-sm text-ink-soft sm:grid-cols-2">
-            {['歐盟認證環保洗劑', '透明報價・絕不增項', '30 天無憂保固', '雙北・桃園・新竹到府'].map(
-              (t) => (
+          {checklist.length > 0 && (
+            <ul className="mt-10 grid grid-cols-1 gap-3 text-sm text-ink-soft sm:grid-cols-2">
+              {checklist.map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary-deep" />
                   <span>{t}</span>
                 </li>
-              ),
-            )}
-          </ul>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="relative">
@@ -130,14 +151,23 @@ function Hero({ featured, phoneTel }: { featured?: Featured; phoneTel: string })
 /* ============================================================
  * 服務項目
  * ============================================================ */
-function ServicesGrid({ services }: { services: Service[] }) {
+function ServicesGrid({
+  services,
+  block,
+}: {
+  services: Service[]
+  block: Record<string, string>
+}) {
   return (
     <section className="section">
       <div className="container-narrow">
         <SectionHeading
-          eyebrow="Our Services"
-          title="服務項目，一站式守護"
-          description="從窗戶上的紗網，到家中每一滴用水，我們整合全方位居家維護技術，由內而外照顧您與家人的健康。"
+          eyebrow={block.eyebrow || 'Our Services'}
+          title={block.title || '服務項目，一站式守護'}
+          description={
+            block.description ||
+            '從窗戶上的紗網，到家中每一滴用水，我們整合全方位居家維護技術，由內而外照顧您與家人的健康。'
+          }
         />
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {services.map((s) => (
@@ -208,19 +238,28 @@ function WhyUs({ sections }: { sections: WhyUsSectionData[] }) {
 /* ============================================================
  * 精選作品牆
  * ============================================================ */
-function FeaturedWorks({ featured }: { featured: Featured[] }) {
+function FeaturedWorks({
+  featured,
+  block,
+}: {
+  featured: Featured[]
+  block: Record<string, string>
+}) {
   if (featured.length === 0) return null
   return (
     <section className="section">
       <div className="container-narrow">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow="Real Results"
-            title="親眼見證的反差"
-            description="所有清洗前後對比圖均為實際施作案例，未經修飾濾鏡，已取得客戶授權。"
+            eyebrow={block.eyebrow || 'Real Results'}
+            title={block.title || '親眼見證的反差'}
+            description={
+              block.description ||
+              '所有清洗前後對比圖均為實際施作案例，未經修飾濾鏡，已取得客戶授權。'
+            }
           />
           <Link href="/works" className="btn-ghost shrink-0">
-            查看全部實績
+            {block.viewAllLabel || '查看全部實績'}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -246,7 +285,13 @@ function FeaturedWorks({ featured }: { featured: Featured[] }) {
  * ============================================================ */
 type ProcessStepData = Awaited<ReturnType<typeof getProcessSteps>>[number]
 
-function Process({ steps }: { steps: ProcessStepData[] }) {
+function Process({
+  steps,
+  block,
+}: {
+  steps: ProcessStepData[]
+  block: Record<string, string>
+}) {
   if (steps.length === 0) return null
   // 自動依 step 數量決定 grid 欄數，避免硬寫死 4 欄
   const gridClass =
@@ -262,8 +307,8 @@ function Process({ steps }: { steps: ProcessStepData[] }) {
       <div className="container-narrow">
         <SectionHeading
           align="center"
-          eyebrow="How it works"
-          title="四步驟・讓您安心交付"
+          eyebrow={block.eyebrow || 'How it works'}
+          title={block.title || '四步驟・讓您安心交付'}
         />
         <div className={`mt-10 grid grid-cols-1 gap-6 ${gridClass}`}>
           {steps.map((p, idx) => (
@@ -287,14 +332,20 @@ function Process({ steps }: { steps: ProcessStepData[] }) {
 /* ============================================================
  * 客戶評價
  * ============================================================ */
-function Testimonials({ testimonials }: { testimonials: Testimonial[] }) {
+function Testimonials({
+  testimonials,
+  block,
+}: {
+  testimonials: Testimonial[]
+  block: Record<string, string>
+}) {
   if (testimonials.length === 0) return null
   return (
     <section className="section">
       <div className="container-narrow">
         <SectionHeading
-          eyebrow="Customer Voices"
-          title="他們選擇了 invisible care"
+          eyebrow={block.eyebrow || 'Customer Voices'}
+          title={block.title || '他們選擇了 invisible care'}
         />
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {testimonials.map((t) => (
@@ -325,7 +376,7 @@ function Testimonials({ testimonials }: { testimonials: Testimonial[] }) {
 /* ============================================================
  * CTA Banner
  * ============================================================ */
-function CtaBanner({ phoneTel }: { phoneTel: string }) {
+function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string, string> }) {
   return (
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
@@ -340,17 +391,19 @@ function CtaBanner({ phoneTel }: { phoneTel: string }) {
         </div>
         <div className="relative max-w-2xl">
           <span className="text-xs font-medium tracking-[0.2em] text-primary-soft">
-            BOOK YOUR HOME CARE TODAY
+            {block.overline || 'BOOK YOUR HOME CARE TODAY'}
           </span>
           <h2 className="mt-4 text-3xl font-medium leading-tight md:text-4xl">
-            把專業交給我們，<br />把時間留給家人。
+            {block.titleLine1 || '把專業交給我們，'}
+            <br />
+            {block.titleLine2 || '把時間留給家人。'}
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
-            一通電話，專人為您現場評估，給您完整透明的報價。
+            {block.description || '一通電話，專人為您現場評估，給您完整透明的報價。'}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href={phoneTel} className="btn-primary">
-              立即來電預約
+              {block.primaryCta || '立即來電預約'}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link
