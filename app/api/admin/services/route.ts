@@ -3,8 +3,10 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 
-// GET 全部服務（後台 + 前台共用，不檢查 auth；前台只讀 isActive）
+// GET 全部服務（admin 用，需登入；前台讀資料走 lib/queries.ts）
 export async function GET(request: NextRequest) {
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const { searchParams } = new URL(request.url)
     const isActive = searchParams.get('isActive')

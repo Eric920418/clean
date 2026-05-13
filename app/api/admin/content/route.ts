@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { errorResponse, successResponse } from '@/lib/api-auth'
+import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 
 export async function GET() {
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const items = await prisma.contentBlock.findMany({ orderBy: { key: 'asc' } })
     return successResponse(items)

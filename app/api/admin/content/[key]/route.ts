@@ -6,6 +6,8 @@ type RouteParams = { params: Promise<{ key: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { key } = await params
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const item = await prisma.contentBlock.findUnique({ where: { key } })
     return successResponse(item)

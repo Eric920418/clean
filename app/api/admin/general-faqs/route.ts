@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 
 export async function GET() {
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const items = await prisma.generalFaq.findMany({
       orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],

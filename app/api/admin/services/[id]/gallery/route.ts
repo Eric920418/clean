@@ -7,6 +7,8 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const items = await prisma.serviceGalleryImage.findMany({
       where: { serviceId: parseInt(id) },

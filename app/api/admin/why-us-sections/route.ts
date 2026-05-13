@@ -4,6 +4,8 @@ import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { parseCards } from '@/lib/why-us'
 
 export async function GET(request: NextRequest) {
+  const auth = await checkAdminAuth()
+  if (!auth.authorized) return auth.response
   try {
     const url = new URL(request.url)
     const location = url.searchParams.get('location') ?? undefined
