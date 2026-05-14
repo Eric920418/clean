@@ -12,6 +12,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json()
+    // 先讀舊資料，等下 update 後比對是否需清 R2 舊圖
+    const before = await prisma.beforeAfterPair.findUnique({
+      where: { id: parseInt(bid) },
+      select: { beforeUrl: true, afterUrl: true },
+    })
+
     const item = await prisma.beforeAfterPair.update({
       where: { id: parseInt(bid) },
       data: {
@@ -27,6 +33,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.order !== undefined && { order: body.order }),
       },
     })
+
+    // 圖片 URL 有改變就 fire-and-forget 清舊 R2 物件（非 R2 URL 會被 guard 跳過）
+    if (before) {
+      const stale: string[] = []
+      if (before.beforeUrl && before.beforeUrl !== item.beforeUrl) stale.push(before.beforeUrl)
+      if (before.afterUrl && before.afterUrl !== item.afterUrl) stale.push(before.afterUrl)
+      if (stale.length > 0) {
+        Promise.all(stale.map((url) => deleteImageFromR2(url))).catch((e) =>
+          console.warn('R2 stale cleanup:', e),
+        )
+      }
+    }
+
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')

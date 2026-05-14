@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { deleteImageFromR2 } from '@/lib/r2'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -41,6 +42,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return errorResponse('slug 格式錯誤', 400)
     }
 
+    // 先讀舊圖 URL，update 後比對清 R2 孤兒檔
+    const before = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: { heroImage: true, cardImage: true, introImage: true },
+    })
+
     const service = await prisma.service.update({
       where: { id: serviceId },
       data: {
@@ -66,6 +73,20 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.whyTitle !== undefined && { whyTitle: body.whyTitle || null }),
       },
     })
+
+    // 圖片 URL 改變就清舊 R2（非 R2 URL 會被 guard 跳過）
+    if (before) {
+      const stale: string[] = []
+      if (before.heroImage && before.heroImage !== service.heroImage) stale.push(before.heroImage)
+      if (before.cardImage && before.cardImage !== service.cardImage) stale.push(before.cardImage)
+      if (before.introImage && before.introImage !== service.introImage)
+        stale.push(before.introImage)
+      if (stale.length > 0) {
+        Promise.all(stale.map((url) => deleteImageFromR2(url))).catch((e) =>
+          console.warn('R2 stale cleanup:', e),
+        )
+      }
+    }
 
     return successResponse(service)
   } catch (error) {

@@ -87,6 +87,15 @@ export async function uploadImageToR2(
 export async function deleteImageFromR2(
   url: string,
 ): Promise<{ success: boolean; error?: string }> {
+  // 空字串 / falsy URL 直接 no-op（呼叫端可放心傳）
+  if (!url) return { success: true }
+
+  // 只處理 R2 來源的 URL；外部 URL（如 unsplash seed 圖）跳過避免誤刪
+  const isR2Url =
+    (R2_PUBLIC_URL && url.startsWith(R2_PUBLIC_URL)) ||
+    (R2_BUCKET_NAME && url.includes(R2_BUCKET_NAME))
+  if (!isR2Url) return { success: true }
+
   if (!isR2Configured()) {
     return { success: false, error: 'R2 storage 未配置' }
   }
