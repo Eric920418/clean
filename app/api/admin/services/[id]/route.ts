@@ -16,8 +16,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       include: {
         features: { orderBy: { order: 'asc' } },
         faqs: { orderBy: { order: 'asc' } },
-        beforeAfters: { orderBy: { order: 'asc' } },
-        galleryImgs: { orderBy: { order: 'asc' } },
+        // beforeAfters / galleryImgs 完整資料由各自子頁面拿；edit 頁只顯示筆數
+        _count: { select: { beforeAfters: true, galleryImgs: true } },
       },
     })
 
