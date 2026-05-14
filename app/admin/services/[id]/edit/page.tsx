@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
-import { Plus, Trash2, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save } from 'lucide-react'
+import { Plus, Trash2, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
@@ -77,7 +77,20 @@ export default function ServiceEditPage({ params }: PageProps) {
       />
 
       {/* 子頁面快速連結 */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 mb-8">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 mb-8">
+        <Link
+          href={`/admin/services/${id}/sections`}
+          className="card-hover flex items-center gap-3 rounded-xl border border-primary-deep/30 bg-primary/5 p-5"
+        >
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white">
+            <LayoutTemplate className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-medium text-ink">頁面區塊管理</div>
+            <div className="text-xs text-ink-muted">調整顯示順序、新增同類型區塊</div>
+          </div>
+          <span className="text-primary-deep text-sm">前往 →</span>
+        </Link>
         <Link
           href={`/admin/services/${id}/before-afters`}
           className="card-hover flex items-center gap-3 rounded-xl border border-hairline bg-white p-5"

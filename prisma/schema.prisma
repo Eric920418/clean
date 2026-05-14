@@ -30,7 +30,7 @@ model Service {
   slug        String   @unique
   name        String
   shortDesc   String   // 卡片摘要（建議 80 字內）
-  longDesc    String   // 詳情頁主文（可長段）
+  longDesc   String   // 詳情頁主文（可長段）
   icon        String?  // Lucide icon 名稱（如 "Wind", "Droplet"）
   heroImage   String?  // 詳情頁 Hero 大圖 R2 URL
   cardImage   String?  // 卡片縮圖
@@ -40,58 +40,69 @@ model Service {
   seoTitle    String?
   seoDesc     String?
 
-  // 詳情頁故事區（hero 下方圖文並排介紹），對齊 about 故事區結構
-  introEyebrow    String?  // 故事區小標籤，例：Our Story
-  introTitle      String?  // 故事區標題
-  introParagraph1 String?  // 段落 1
-  introParagraph2 String?  // 段落 2
-  introParagraph3 String?  // 段落 3
-  introImage      String?  // 故事區圖片 R2 URL
-
-  // 詳情頁「為什麼這項服務重要？」區塊的標題（主文使用 longDesc）
-  whyEyebrow      String?  // 小標籤，預設 fallback：Why this matters
-  whyTitle        String?  // 主標題，預設 fallback：為什麼這項服務重要？
-
-  features      ServiceFeature[]
-  faqs          ServiceFaq[]
-  beforeAfters  BeforeAfterPair[]
-  galleryImgs   ServiceGalleryImage[]
+  sections    ServiceSection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 // ============================================
-// 服務特色 bullet（可排序）
+// Section CMS (Phase 2 C1)
+// 業主可在後台動態加 section、控制顯示順序、同類型加多個。
+// type 列舉：hero / intro / why_with_features / before_after / gallery / faq / cta / more_services / text_block
+// config 為 JSON：依 type 不同存不同欄位（eyebrow, title, image, paragraphs...）
 // ============================================
-model ServiceFeature {
+model ServiceSection {
   id        Int     @id @default(autoincrement())
   serviceId Int
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  type      String
+  order     Int     @default(0)
+  isVisible Boolean @default(true)
+  config    Json    @default("{}")
+
+  features     ServiceFeature[]
+  faqs         ServiceFaq[]
+  beforeAfters BeforeAfterPair[]
+  galleryImgs  ServiceGalleryImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId, order])
+}
+
+// ============================================
+// 服務特色 bullet（可排序）— C4b 後 sectionId-only
+// ============================================
+model ServiceFeature {
+  id        Int     @id @default(autoincrement())
+  sectionId Int
+  section   ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   text      String
   order     Int     @default(0)
 }
 
 // ============================================
-// 服務 FAQ
+// 服務 FAQ — C4b 後 sectionId-only
 // ============================================
 model ServiceFaq {
   id        Int     @id @default(autoincrement())
-  serviceId Int
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  sectionId Int
+  section   ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   question  String
   answer    String
   order     Int     @default(0)
 }
 
 // ============================================
-// 前後對比圖（核心：drink 專案沒有此 model）
+// 前後對比圖（核心：drink 專案沒有此 model）— C4b 後 sectionId-only
 // 一組 = 一個 before + 一個 after，可附 caption 與拍攝資訊
 // ============================================
 model BeforeAfterPair {
   id         Int      @id @default(autoincrement())
-  serviceId  Int
-  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  sectionId  Int
+  section    ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   beforeUrl  String
   afterUrl   String
   caption    String?  // 例：「30 年老屋冷氣風輪深度清洗」
@@ -105,12 +116,12 @@ model BeforeAfterPair {
 }
 
 // ============================================
-// 服務一般圖庫（非對比，純展示）
+// 服務一般圖庫（非對比，純展示）— C4b 後 sectionId-only
 // ============================================
 model ServiceGalleryImage {
   id        Int     @id @default(autoincrement())
-  serviceId Int
-  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  sectionId Int
+  section   ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   url       String
   alt       String?
   order     Int     @default(0)

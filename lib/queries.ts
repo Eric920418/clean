@@ -23,67 +23,77 @@ export async function getGeneralFaqs() {
 }
 
 export async function getActiveServices() {
-  return prisma.service.findMany({
+  // 服務列表 + 每個服務透過 sections 拉子表（features/faqs 用於卡片摘要 / FAQ 頁；
+  // _count 用於 /admin/services 列表的「N 組對比 / N 圖」顯示）
+  const services = await prisma.service.findMany({
     where: { isActive: true },
     orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     include: {
-      features: { orderBy: { order: 'asc' } },
-      faqs: { orderBy: { order: 'asc' } },
-      _count: {
-        select: { beforeAfters: { where: { isActive: true } }, galleryImgs: true },
+      sections: {
+        orderBy: { order: 'asc' },
+        include: {
+          features: { orderBy: { order: 'asc' } },
+          faqs: { orderBy: { order: 'asc' } },
+          _count: {
+            select: { beforeAfters: { where: { isActive: true } }, galleryImgs: true },
+          },
+        },
       },
     },
   })
+  // 攤平 sections 內子表為 service 層級（向下相容 callers 像 /faq /services 頁）
+  return services.map((s) => ({
+    ...s,
+    features: s.sections.flatMap((sec) => sec.features),
+    faqs: s.sections.flatMap((sec) => sec.faqs),
+    _count: {
+      beforeAfters: s.sections.reduce((sum, sec) => sum + sec._count.beforeAfters, 0),
+      galleryImgs: s.sections.reduce((sum, sec) => sum + sec._count.galleryImgs, 0),
+    },
+  }))
 }
 
 export async function getServiceBySlugFull(slug: string) {
   return prisma.service.findUnique({
     where: { slug },
     include: {
-      features: { orderBy: { order: 'asc' } },
-      faqs: { orderBy: { order: 'asc' } },
-      beforeAfters: {
-        where: { isActive: true },
+      sections: {
         orderBy: { order: 'asc' },
+        include: {
+          features: { orderBy: { order: 'asc' } },
+          faqs: { orderBy: { order: 'asc' } },
+          beforeAfters: { where: { isActive: true }, orderBy: { order: 'asc' } },
+          galleryImgs: { orderBy: { order: 'asc' } },
+        },
       },
-      galleryImgs: { orderBy: { order: 'asc' } },
     },
   })
 }
 
 export async function getFeaturedBeforeAfters() {
-  const services = await prisma.service.findMany({
-    where: { isActive: true },
-    select: {
-      slug: true,
-      name: true,
-      beforeAfters: {
-        where: { isFeatured: true, isActive: true },
-        orderBy: { order: 'asc' },
-      },
-    },
+  const pairs = await prisma.beforeAfterPair.findMany({
+    where: { isFeatured: true, isActive: true, section: { service: { isActive: true } } },
+    orderBy: { order: 'asc' },
+    include: { section: { select: { service: { select: { slug: true, name: true } } } } },
   })
-  return services.flatMap((s) =>
-    s.beforeAfters.map((p) => ({ ...p, serviceSlug: s.slug, serviceName: s.name })),
-  )
+  return pairs.map((p) => ({
+    ...p,
+    serviceSlug: p.section.service.slug,
+    serviceName: p.section.service.name,
+  }))
 }
 
 export async function getAllBeforeAfters() {
-  const services = await prisma.service.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
-    select: {
-      slug: true,
-      name: true,
-      beforeAfters: {
-        where: { isActive: true },
-        orderBy: { order: 'asc' },
-      },
-    },
+  const pairs = await prisma.beforeAfterPair.findMany({
+    where: { isActive: true, section: { service: { isActive: true } } },
+    orderBy: [{ section: { service: { order: 'asc' } } }, { order: 'asc' }],
+    include: { section: { select: { service: { select: { slug: true, name: true } } } } },
   })
-  return services.flatMap((s) =>
-    s.beforeAfters.map((p) => ({ ...p, serviceSlug: s.slug, serviceName: s.name })),
-  )
+  return pairs.map((p) => ({
+    ...p,
+    serviceSlug: p.section.service.slug,
+    serviceName: p.section.service.name,
+  }))
 }
 
 export async function getActiveTestimonials() {

@@ -14,14 +14,6 @@ export type AdminService = {
   isFeatured: boolean
   seoTitle: string | null
   seoDesc: string | null
-  introEyebrow: string | null
-  introTitle: string | null
-  introParagraph1: string | null
-  introParagraph2: string | null
-  introParagraph3: string | null
-  introImage: string | null
-  whyEyebrow: string | null
-  whyTitle: string | null
   createdAt: string
   updatedAt: string
   features?: AdminServiceFeature[]
@@ -33,14 +25,14 @@ export type AdminService = {
 
 export type AdminServiceFeature = {
   id: number
-  serviceId: number
+  sectionId: number
   text: string
   order: number
 }
 
 export type AdminServiceFaq = {
   id: number
-  serviceId: number
+  sectionId: number
   question: string
   answer: string
   order: number
@@ -48,7 +40,7 @@ export type AdminServiceFaq = {
 
 export type AdminBeforeAfter = {
   id: number
-  serviceId: number
+  sectionId: number
   beforeUrl: string
   afterUrl: string
   caption: string | null
@@ -63,7 +55,7 @@ export type AdminBeforeAfter = {
 
 export type AdminGalleryImage = {
   id: number
-  serviceId: number
+  sectionId: number
   url: string
   alt: string | null
   order: number
@@ -95,6 +87,34 @@ export type AdminTestimonial = {
   order: number
   createdAt: string
   updatedAt: string
+}
+
+export type ServiceSectionType =
+  | 'hero'
+  | 'intro'
+  | 'why_with_features'
+  | 'before_after'
+  | 'gallery'
+  | 'faq'
+  | 'cta'
+  | 'more_services'
+  | 'text_block'
+
+export type AdminServiceSection = {
+  id: number
+  serviceId: number
+  type: ServiceSectionType
+  order: number
+  isVisible: boolean
+  config: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    features: number
+    faqs: number
+    beforeAfters: number
+    galleryImgs: number
+  }
 }
 
 export type AdminWhyUsSection = {

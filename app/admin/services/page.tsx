@@ -14,7 +14,6 @@ import { cn } from '@/lib/utils'
 import type { AdminService } from '@/lib/admin-types'
 
 const emptyForm = {
-  slug: '',
   name: '',
   shortDesc: '',
   longDesc: '',
@@ -26,14 +25,6 @@ const emptyForm = {
   order: 0,
   seoTitle: '',
   seoDesc: '',
-  introEyebrow: '',
-  introTitle: '',
-  introParagraph1: '',
-  introParagraph2: '',
-  introParagraph3: '',
-  introImage: '',
-  whyEyebrow: '',
-  whyTitle: '',
 }
 
 type FormState = typeof emptyForm
@@ -75,7 +66,6 @@ export default function ServicesAdminPage() {
   function openEdit(s: AdminService) {
     setEditing(s)
     setForm({
-      slug: s.slug,
       name: s.name,
       shortDesc: s.shortDesc,
       longDesc: s.longDesc,
@@ -87,14 +77,6 @@ export default function ServicesAdminPage() {
       order: s.order,
       seoTitle: s.seoTitle ?? '',
       seoDesc: s.seoDesc ?? '',
-      introEyebrow: s.introEyebrow ?? '',
-      introTitle: s.introTitle ?? '',
-      introParagraph1: s.introParagraph1 ?? '',
-      introParagraph2: s.introParagraph2 ?? '',
-      introParagraph3: s.introParagraph3 ?? '',
-      introImage: s.introImage ?? '',
-      whyEyebrow: s.whyEyebrow ?? '',
-      whyTitle: s.whyTitle ?? '',
     })
     setError(null)
     setModalOpen(true)
@@ -210,7 +192,6 @@ export default function ServicesAdminPage() {
             <tr>
               <th className="px-4 py-3 font-medium w-20">排序</th>
               <th className="px-4 py-3 font-medium">服務</th>
-              <th className="px-4 py-3 font-medium">slug</th>
               <th className="px-4 py-3 font-medium text-center">狀態</th>
               <th className="px-4 py-3 font-medium text-center">內容</th>
               <th className="px-4 py-3 font-medium text-right">操作</th>
@@ -219,14 +200,14 @@ export default function ServicesAdminPage() {
           <tbody className="divide-y divide-hairline">
             {loading && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-ink-muted">
+                <td colSpan={5} className="px-4 py-12 text-center text-ink-muted">
                   載入中…
                 </td>
               </tr>
             )}
             {!loading && services.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-ink-muted">
+                <td colSpan={5} className="px-4 py-12 text-center text-ink-muted">
                   尚未建立任何服務 — 點右上「新增服務」開始
                 </td>
               </tr>
@@ -277,11 +258,6 @@ export default function ServicesAdminPage() {
                         </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <code className="rounded bg-bg-soft px-2 py-0.5 text-xs text-ink-soft">
-                      {s.slug}
-                    </code>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button
@@ -349,6 +325,7 @@ export default function ServicesAdminPage() {
       <AdminModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        size="xl"
         title={editing ? `編輯：${editing.name}` : '新增服務'}
         description={
           editing ? '修改主欄位後存檔。特色、FAQ 在「編輯詳細」頁管理。' : '建立後可進入「編輯詳細」維護特色與 FAQ'
@@ -357,31 +334,19 @@ export default function ServicesAdminPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <ErrorBanner message={error} />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="服務名稱" required>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className={inputClass}
-                placeholder="冷氣機深度清洗"
-                required
-              />
-            </Field>
-            <Field
-              label="slug"
+          <Field
+            label="服務名稱"
+            required
+            hint={editing ? undefined : '存檔後系統會自動依名稱產生網址（之後不可改）'}
+          >
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={inputClass}
+              placeholder="冷氣機深度清洗"
               required
-              hint="URL 路徑，僅小寫英文/數字/連字號，如 aircon-cleaning"
-            >
-              <input
-                value={form.slug}
-                onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                className={inputClass}
-                placeholder="aircon-cleaning"
-                required
-                disabled={!!editing}
-              />
-            </Field>
-          </div>
+            />
+          </Field>
 
           <Field label="卡片摘要" required hint="顯示在首頁與列表卡片，建議 80 字內">
             <textarea
@@ -402,31 +367,6 @@ export default function ServicesAdminPage() {
               required
             />
           </Field>
-
-          <div className="rounded-md bg-bg-tint/40 border border-primary-deep/20 p-4 space-y-3">
-            <div>
-              <p className="text-sm font-semibold text-primary-deep">「為什麼這項服務重要？」區塊標題（選填）</p>
-              <p className="text-xs text-ink-muted mt-0.5">主文沿用上方「詳細描述」。此處的小標籤與標題若留空，前台顯示預設值：Why this matters / 為什麼這項服務重要？</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <Field label="Eyebrow（小標籤）" hint="預設：Why this matters">
-                <input
-                  value={form.whyEyebrow}
-                  onChange={(e) => setForm({ ...form, whyEyebrow: e.target.value })}
-                  className={inputClass}
-                  placeholder="Why this matters"
-                />
-              </Field>
-              <Field label="標題" hint="預設：為什麼這項服務重要？">
-                <input
-                  value={form.whyTitle}
-                  onChange={(e) => setForm({ ...form, whyTitle: e.target.value })}
-                  className={inputClass}
-                  placeholder="為什麼這項服務重要？"
-                />
-              </Field>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Lucide icon 名稱" hint="如 Wind / Droplets / Sparkles / ShieldCheck">
@@ -462,65 +402,6 @@ export default function ServicesAdminPage() {
                 value={form.heroImage}
                 onChange={(url) => setForm({ ...form, heroImage: url })}
                 folder="services"
-              />
-            </Field>
-          </div>
-
-          <div className="rounded-md bg-bg-tint/40 border border-primary-deep/20 p-4 space-y-3">
-            <div>
-              <p className="text-sm font-semibold text-primary-deep">服務介紹（詳情頁故事區）</p>
-              <p className="text-xs text-ink-muted mt-0.5">顯示在 hero 之下，圖文並排介紹這項服務的理念。所有欄位選填，未填則前台不顯示故事區。</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <Field label="Eyebrow（小標籤）" hint="例：Our Story / 為何重要">
-                <input
-                  value={form.introEyebrow}
-                  onChange={(e) => setForm({ ...form, introEyebrow: e.target.value })}
-                  className={inputClass}
-                  placeholder="Why this matters"
-                />
-              </Field>
-              <Field label="標題">
-                <input
-                  value={form.introTitle}
-                  onChange={(e) => setForm({ ...form, introTitle: e.target.value })}
-                  className={inputClass}
-                  placeholder="冷氣不只是冷，更是空氣的入口"
-                />
-              </Field>
-            </div>
-
-            <Field label="段落 1">
-              <textarea
-                value={form.introParagraph1}
-                onChange={(e) => setForm({ ...form, introParagraph1: e.target.value })}
-                className={textareaClass}
-                rows={3}
-              />
-            </Field>
-            <Field label="段落 2">
-              <textarea
-                value={form.introParagraph2}
-                onChange={(e) => setForm({ ...form, introParagraph2: e.target.value })}
-                className={textareaClass}
-                rows={3}
-              />
-            </Field>
-            <Field label="段落 3">
-              <textarea
-                value={form.introParagraph3}
-                onChange={(e) => setForm({ ...form, introParagraph3: e.target.value })}
-                className={textareaClass}
-                rows={3}
-              />
-            </Field>
-
-            <Field label="故事區圖片">
-              <ImageUploader
-                value={form.introImage}
-                onChange={(url) => setForm({ ...form, introImage: url })}
-                folder="services-intro"
               />
             </Field>
           </div>

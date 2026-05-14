@@ -10,7 +10,7 @@
  * 執行：pnpm db:seed
  */
 import 'dotenv/config'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import { mockServices, mockTestimonials } from '../lib/mock-data'
@@ -20,30 +20,30 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
-// 只示範 2 個服務的故事區，其他 4 個留空讓業主自己寫
-const introMap: Record<string, {
-  introEyebrow: string
-  introTitle: string
-  introParagraph1: string
-  introParagraph2: string
-  introParagraph3: string
-  introImage: string
+// 示範 intro section config（C4a：直接寫入 ServiceSection.config，不再經過 Service.intro* 欄位）
+const introSectionConfig: Record<string, {
+  eyebrow: string
+  title: string
+  paragraph1: string
+  paragraph2: string
+  paragraph3: string
+  image: string
 }> = {
   'aircon-cleaning': {
-    introEyebrow: 'Why this matters',
-    introTitle: '冷氣不只是冷，更是空氣的入口',
-    introParagraph1: '夏季長時間運轉的冷氣，蒸發器與導風葉常年潮濕，是黴菌與細菌最愛的繁殖場。一台沒清過的冷氣，吹出來的空氣可能比戶外還髒。',
-    introParagraph2: '我們採用整機拆卸式深度清洗，把蒸發器、貫流扇、外殼通通卸下來進高壓水柱清洗，搭配生物可分解洗劑，敏感肌、寵物、嬰幼兒環境一樣安全。',
-    introParagraph3: '每一台冷氣施作前後都會錄影、拍照，讓您清楚看見「黑水變清水」的真實過程。我們相信，看不見的潔淨，才是最頂級的居家品質。',
-    introImage: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=900&q=80',
+    eyebrow: 'Why this matters',
+    title: '冷氣不只是冷，更是空氣的入口',
+    paragraph1: '夏季長時間運轉的冷氣，蒸發器與導風葉常年潮濕，是黴菌與細菌最愛的繁殖場。一台沒清過的冷氣，吹出來的空氣可能比戶外還髒。',
+    paragraph2: '我們採用整機拆卸式深度清洗，把蒸發器、貫流扇、外殼通通卸下來進高壓水柱清洗，搭配生物可分解洗劑，敏感肌、寵物、嬰幼兒環境一樣安全。',
+    paragraph3: '每一台冷氣施作前後都會錄影、拍照，讓您清楚看見「黑水變清水」的真實過程。我們相信，看不見的潔淨，才是最頂級的居家品質。',
+    image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=900&q=80',
   },
   'washer-deep-clean': {
-    introEyebrow: 'The hidden truth',
-    introTitle: '看似乾淨的洗衣機，其實藏著厚厚一層黑垢',
-    introParagraph1: '洗衣機內筒與外筒之間的夾層，是您每天洗衣時看不到的地方。長年累積的洗劑殘渣、衣物纖維、發霉黴斑，讓洗出來的衣服看似乾淨、實則沾滿微生物。',
-    introParagraph2: '我們的洗衣機拆解清潔，是把整台洗衣機翻過來、拆下內筒做物理清洗，而不是丟一顆清潔錠就交差。整個過程拍照記錄，您能看見原本藏在縫隙裡的東西。',
-    introParagraph3: '滾筒式、直立式、變頻、雙槽，我們都能處理。每一次拆洗都搭配抗菌處理，讓您下一批衣服真正洗得乾淨。',
-    introImage: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
+    eyebrow: 'The hidden truth',
+    title: '看似乾淨的洗衣機，其實藏著厚厚一層黑垢',
+    paragraph1: '洗衣機內筒與外筒之間的夾層，是您每天洗衣時看不到的地方。長年累積的洗劑殘渣、衣物纖維、發霉黴斑，讓洗出來的衣服看似乾淨、實則沾滿微生物。',
+    paragraph2: '我們的洗衣機拆解清潔，是把整台洗衣機翻過來、拆下內筒做物理清洗，而不是丟一顆清潔錠就交差。整個過程拍照記錄，您能看見原本藏在縫隙裡的東西。',
+    paragraph3: '滾筒式、直立式、變頻、雙槽，我們都能處理。每一次拆洗都搭配抗菌處理，讓您下一批衣服真正洗得乾淨。',
+    image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=900&q=80',
   },
 }
 
@@ -51,9 +51,6 @@ async function main() {
   console.log('🌱 開始 seed…')
 
   for (const m of mockServices) {
-    const intro = introMap[m.slug] ?? null
-    const existing = await prisma.service.findUnique({ where: { slug: m.slug } })
-
     const service = await prisma.service.upsert({
       where: { slug: m.slug },
       create: {
@@ -67,33 +64,32 @@ async function main() {
         order: m.order,
         isActive: m.isActive,
         isFeatured: m.isFeatured,
-        ...(intro ?? {}),
       },
       update: {
         // 已存在則只補名稱（避免覆蓋業主自訂的圖片與設定）
         name: m.name,
-        // 只在業主還沒填過 intro 時才補示範文案，不會覆蓋業主編輯
-        ...(intro && existing && existing.introTitle === null ? intro : {}),
       },
     })
 
-    // 子表：features / faqs / beforeAfters / gallery 全部以 service 為單位 reset
-    await prisma.serviceFeature.deleteMany({ where: { serviceId: service.id } })
+    // C4b 後：子表 reset 必須先確保對應 type 的 section 存在，再 scope 到 sectionId
+    const sectionIds = await ensureDefaultSectionsForService(service.id, service.name, m)
+
+    await prisma.serviceFeature.deleteMany({ where: { sectionId: sectionIds.why } })
     if (m.features.length > 0) {
       await prisma.serviceFeature.createMany({
         data: m.features.map((f) => ({
-          serviceId: service.id,
+          sectionId: sectionIds.why,
           text: f.text,
           order: f.order,
         })),
       })
     }
 
-    await prisma.serviceFaq.deleteMany({ where: { serviceId: service.id } })
+    await prisma.serviceFaq.deleteMany({ where: { sectionId: sectionIds.faq } })
     if (m.faqs.length > 0) {
       await prisma.serviceFaq.createMany({
         data: m.faqs.map((f) => ({
-          serviceId: service.id,
+          sectionId: sectionIds.faq,
           question: f.question,
           answer: f.answer,
           order: f.order,
@@ -101,27 +97,27 @@ async function main() {
       })
     }
 
-    await prisma.beforeAfterPair.deleteMany({ where: { serviceId: service.id } })
+    await prisma.beforeAfterPair.deleteMany({ where: { sectionId: sectionIds.before_after } })
     if (m.beforeAfters.length > 0) {
       await prisma.beforeAfterPair.createMany({
         data: m.beforeAfters.map((p) => ({
-          serviceId: service.id,
+          sectionId: sectionIds.before_after,
           beforeUrl: p.beforeUrl,
           afterUrl: p.afterUrl,
           caption: p.caption,
           location: p.location,
           takenAt: p.takenAt ? new Date(p.takenAt) : null,
           isFeatured: p.isFeatured,
-          order: p.id, // 用 id 作為 seed 的 order
+          order: p.id,
         })),
       })
     }
 
-    await prisma.serviceGalleryImage.deleteMany({ where: { serviceId: service.id } })
+    await prisma.serviceGalleryImage.deleteMany({ where: { sectionId: sectionIds.gallery } })
     if (m.galleryImgs.length > 0) {
       await prisma.serviceGalleryImage.createMany({
         data: m.galleryImgs.map((g, i) => ({
-          serviceId: service.id,
+          sectionId: sectionIds.gallery,
           url: g.url,
           alt: g.alt,
           order: i,
@@ -406,7 +402,102 @@ async function main() {
   }
   console.log(`  ✓ ${mockTestimonials.length} 則客戶評價`)
 
+  // C4b 後：子表 reset 期間已透過 ensureDefaultSectionsForService 建立 sections
+  // 這裡再補入 intro section 的示範文案（idempotent，業主編過就跳過）
+  await seedIntroSectionConfigs()
+
   console.log('✅ seed 完成')
+}
+
+async function seedIntroSectionConfigs() {
+  let updated = 0
+  for (const [slug, cfg] of Object.entries(introSectionConfig)) {
+    const service = await prisma.service.findUnique({
+      where: { slug },
+      include: { sections: { where: { type: 'intro' } } },
+    })
+    const introSection = service?.sections[0]
+    if (!introSection) continue
+    const current = introSection.config as Record<string, unknown>
+    if (current.title) continue // 已被業主編輯過，跳過
+    await prisma.serviceSection.update({
+      where: { id: introSection.id },
+      data: { config: cfg as Prisma.InputJsonValue, isVisible: true },
+    })
+    updated++
+  }
+  if (updated > 0) console.log(`  ✓ Intro section config 補入 ${updated} 筆示範文案`)
+}
+
+// === Section CMS helper（C4b 之後）===
+// 確保 service 有 8 個 default section（idempotent），回傳對應 sectionId map
+const SECTION_ORDER = [
+  'hero',
+  'intro',
+  'why_with_features',
+  'before_after',
+  'gallery',
+  'faq',
+  'cta',
+  'more_services',
+] as const
+
+type DefaultSectionIds = {
+  hero: number
+  intro: number
+  why_with_features: number
+  before_after: number
+  gallery: number
+  faq: number
+  cta: number
+  more_services: number
+  why: number
+}
+
+async function ensureDefaultSectionsForService(
+  serviceId: number,
+  serviceName: string,
+  mock: { features: unknown[]; faqs: unknown[]; beforeAfters: unknown[]; galleryImgs: unknown[] },
+): Promise<DefaultSectionIds> {
+  const existing = await prisma.serviceSection.findMany({ where: { serviceId } })
+  const byType = new Map(existing.map((s) => [s.type, s.id]))
+
+  for (let i = 0; i < SECTION_ORDER.length; i++) {
+    const type = SECTION_ORDER[i]
+    if (byType.has(type)) continue
+    const config: Prisma.InputJsonValue =
+      type === 'before_after'
+        ? { eyebrow: 'Real Results', title: `${serviceName}・實際施作前後` }
+        : type === 'gallery'
+        ? { eyebrow: 'Gallery', title: '施作過程' }
+        : type === 'faq'
+        ? { eyebrow: 'FAQ', title: '常見問題' }
+        : {}
+    const visible =
+      type === 'before_after'
+        ? mock.beforeAfters.length > 0
+        : type === 'gallery'
+        ? mock.galleryImgs.length > 0
+        : type === 'faq'
+        ? mock.faqs.length > 0
+        : true
+    const created = await prisma.serviceSection.create({
+      data: { serviceId, type, order: i + 1, isVisible: visible, config },
+    })
+    byType.set(type, created.id)
+  }
+
+  return {
+    hero: byType.get('hero')!,
+    intro: byType.get('intro')!,
+    why_with_features: byType.get('why_with_features')!,
+    why: byType.get('why_with_features')!,
+    before_after: byType.get('before_after')!,
+    gallery: byType.get('gallery')!,
+    faq: byType.get('faq')!,
+    cta: byType.get('cta')!,
+    more_services: byType.get('more_services')!,
+  }
 }
 
 main()

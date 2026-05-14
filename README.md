@@ -13,7 +13,16 @@
 | 項目 | 狀態 |
 |---|---|
 | 前台 7 頁（首頁 / 服務 / 服務詳情 / 作品集 / 關於 / 預約 / FAQ） | ✅ 已串接 Prisma |
-| Before/After 並排對比元件（純 Server Component） | ✅ 已完成 |
+| Before/After 並排對比元件（Server Component 外殼 + Lightbox 放大） | ✅ 已完成 |
+| 前台圖片點擊放大（整頁 gallery：對比圖 / 服務 Intro / Gallery，支援手機 swipe & pinch zoom） | ✅ 已完成 |
+| 服務 slug 完全自動產生（業主只填中文 name，系統 pinyin 化 + 撞名 `-2 / -3`） | ✅ 已完成 |
+| Section CMS — Phase 2 C1：schema + 資料 migration（schema 新增、子表向下相容） | ✅ 已完成 |
+| Section CMS — Phase 2 C2：後台 sections 管理頁（重排、開關、新增、刪除） | ✅ 已完成 |
+| Section CMS — Phase 2 C3a：前台動態渲染（C2 重排/開關終於對客戶生效）| ✅ 已完成 |
+| Section CMS — Phase 2 C3b：簡單 type 編輯 modal（hero / intro / cta / text_block）| ✅ 已完成 |
+| Section CMS — Phase 2 C3c：列表 type section-scoped 子頁（features / faq / gallery / before_after）| ✅ 已完成 |
+| Section CMS — Phase 2 C4a：移除所有 fallback、邏輯切換到 section（schema 保留）| ✅ 已完成 |
+| Section CMS — Phase 2 C4b：物理 drop 12 個冗餘欄位、schema 清理完畢 | ✅ 已完成 |
 | 設計系統（純淨醫療感配色） | ✅ 已完成 |
 | Prisma schema + seed.ts | ✅ 已完成 |
 | 預約諮詢表單（前端 → 公開 API → DB） | ✅ 已完成 |
@@ -145,7 +154,9 @@ clean/
 │   └── globals.css                 設計系統 CSS（純淨醫療感）
 │
 ├── components/
-│   ├── before-after-pair.tsx      🎯 並排對比元件（左 Before / 右 After，純 Server Component）
+│   ├── before-after-pair.tsx      🎯 並排對比元件（左 Before / 右 After，Server Component 外殼）
+│   ├── lightbox-provider.tsx       🆕 全頁圖片相簿 Provider（yet-another-react-lightbox）
+│   ├── lightbox-image.tsx          🆕 點擊放大版 next/image（自動串入 Provider gallery）
 │   ├── site-nav.tsx                Sticky 上方導航
 │   ├── site-footer.tsx             頁尾
 │   ├── section-heading.tsx         章節標題（eyebrow + title + desc）
@@ -257,7 +268,7 @@ pnpm db:studio            # 開啟 Prisma Studio
 ```prisma
 model Service {
   id           Int     @id @default(autoincrement())
-  slug         String  @unique          // SEO 友善：aircon-cleaning, water-tank-cleaning, ...
+  slug         String  @unique          // SEO 友善 URL；新增時由系統自動拼音化（lib/slug.ts），業主只填 name
   name         String
   shortDesc    String                   // 卡片摘要（80 字內）
   longDesc     String                   // 詳情頁長文
@@ -365,9 +376,10 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
 
 - **桌面**：左 Before、右 After，兩張圖等寬並排，各自帶清楚標籤
 - **手機**：自動上下堆疊（CSS grid `grid-cols-1 md:grid-cols-2`）
-- **零 client JS**：純 Server Component，無 useState、無事件處理，每組 pair 不增加 bundle
+- **外殼是 Server Component**：BeforeAfterPair 本身不含 client state，只是把每張圖交給 `LightboxImage`（Client）處理點擊放大
 - **效能**：`next/image` + 鎖定 aspect-ratio 避免 CLS，預設 `4/3`
 - **微互動**：hover 時兩張圖一同放大 2%（`group-hover:scale-[1.02]`），保留品味但不喧賓奪主
+- **點擊放大**：每張圖都可點開全螢幕檢視（見下方 Lightbox 段落）
 - **語意**：Before 標籤用 `bg-ink/80`（深色），After 用 `bg-primary/95`（emerald），形成色彩對比
 - **配置**：作品牆統一單欄 `max-w-4xl mx-auto`，每組 pair 滿版顯示，視覺反差最大化
 
@@ -385,6 +397,247 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
 ```
 
 **首頁 Hero 例外**：Hero 不放 pair（避免縮成迷你尺寸）。改用單張「清洗後實況」大圖搭配 `aspect-[4/5]` 海報感框；對比展示交給下方「親眼見證的反差」區塊滿版呈現。
+
+---
+
+## 前台圖片放大（Lightbox）
+
+採用 [`yet-another-react-lightbox`](https://yet-another-react-lightbox.com/) v3 + 自家 Provider 架構，**整頁所有圖片自動串成一個相簿**：點任一張就能用左右翻頁、滑動手勢、pinch zoom 看完同頁所有圖。
+
+### 架構
+
+```
+app/(site)/layout.tsx
+└─ <LightboxProvider>                ← 全站包一次，掛 yet-another-react-lightbox
+    └─ <main>{children}</main>
+       └─ ... <LightboxImage> ...    ← 各處圖片用這個包，自動 register 進 Provider
+```
+
+| 檔案 | 職責 |
+|---|---|
+| `components/lightbox-provider.tsx` | Client Component。提供 `register / open` API、渲染 `<Lightbox>`、依 DOM 順序排序 slides |
+| `components/lightbox-image.tsx` | `next/image` 包裝。掛載時 register 自己，點擊呼叫 `open(id)` |
+
+### 使用方式
+
+對外 props 鏡像 `next/image`，任何要可點擊放大的圖換成 `<LightboxImage>` 即可：
+
+```tsx
+<LightboxImage
+  src={url}
+  alt="清洗前 · 冷氣風輪"
+  fill
+  sizes="(min-width: 768px) 50vw, 100vw"
+  className="object-cover"
+  unoptimized        // R2 直連圖必傳
+  caption="清洗前 · 冷氣風輪"
+/>
+```
+
+### 套用範圍
+
+| 位置 | 元件 | 狀態 |
+|---|---|---|
+| 對比圖（首頁 / 服務詳情 / works 頁） | `BeforeAfterPair` 內部 | ✅ 自動套用 |
+| 服務詳情頁 Intro 故事圖 | `app/(site)/services/[slug]/page.tsx` | ✅ 已套用 |
+| 服務詳情頁 Gallery 縮圖 | 同上 | ✅ 已套用 |
+| 服務詳情頁 Hero 半透明背景圖 | — | ❌ 跳過（裝飾用，放大會破壞遮罩設計）|
+| 首頁 Hero / CTA Banner 背景 | — | ❌ 跳過（同上） |
+
+### 互動規格
+
+- **整頁 gallery**：同一頁所有 `<LightboxImage>` 自動串成一個相簿，依 DOM 順序排序（`compareDocumentPosition`）
+- **翻頁**：左右箭頭按鈕、鍵盤 ←/→、**手機 swipe**、`carousel.finite = true` 到最後一張就停（不無限循環）
+- **縮放**：滾輪 + pinch zoom（Zoom plugin），最大 4 倍像素比
+- **caption**：顯示在底部置中，Captions plugin（隱藏 toggle 按鈕）
+- **關閉**：ESC / 點黑色背景 / 右上角 X / **手機下拉手勢（`closeOnPullDown`）**
+- **z-index 9999**：蓋過 SiteNav (z-50) 與 FloatingCta (z-40)
+- **手機友善徽章**：每張縮圖右下角有半透明黑底 + 白色 maximize 圖示，明確暗示可點（彌補手機無 hover 的問題）
+- **a11y**：用 `<button>` 包圖，aria-label 為「放大檢視：{alt}」；YARL 內建 focus trap、ARIA roles
+- **Next/Image 整合**：放大版用 `render.slide` 自訂渲染為 `<NextImage fill object-contain>`，R2 圖透過 `unoptimized` 直連
+
+---
+
+## Service Section CMS（Phase 2，進行中）
+
+業主可在後台動態加 section、控制顯示順序、同類型加多個。Phase 2 拆 4 個 commit 漸進交付。
+
+### C1（已完成）— schema + migration，純新增、向下相容
+
+新增 `ServiceSection` model，每個 service 預設 8 個 section（依 `hero / intro / why_with_features / before_after / gallery / faq / cta / more_services` 順序）。`ServiceFeature / ServiceFaq / BeforeAfterPair / ServiceGalleryImage` 各加 nullable `sectionId`，舊 `serviceId` 保留 — 既有功能完全不受影響。
+
+執行記錄：
+
+```bash
+pnpm db:push                                        # 純新增、無 data-loss
+pnpm exec tsx prisma/section-cms-c1-migrate.ts      # 為現有資料填 sections
+pnpm exec tsx prisma/section-cms-c1-verify.ts       # 驗證每 service 8 個 section + 子表無孤兒
+```
+
+當前資料狀態：8 services × 8 sections = 64 sections，所有 features/faqs/beforeAfters/galleryImgs 都有 sectionId。
+
+### C2（已完成）— 後台 sections 管理頁
+
+新增頁面 `/admin/services/[id]/sections`：
+- 列出該 service 全部 sections（依 order）
+- **上下移**：沿用 `app/admin/why-us-sections/page.tsx:137-160` swap-order 模式
+- **隱藏 / 顯示**：toggle `isVisible`
+- **新增**：modal 顯示 9 種 type 卡片（hero / intro / why_with_features / before_after / gallery / faq / cta / more_services / text_block），點一下即建立空 section
+- **刪除**：confirm dialog，安全閥防止刪到最後一個（須留至少一個）
+- **編輯內容**：留到 C3（圖片、FAQ、特色 bullet 等子表編輯）
+
+API：
+
+| 動作 | Endpoint |
+|---|---|
+| GET 列表（依 order）| `/api/admin/services/[id]/sections` |
+| POST 新增 | 同上 |
+| PUT 更新（order swap / isVisible toggle / config）| `/api/admin/services/[id]/sections/[sectionId]` |
+| DELETE 刪除 | 同上（最後一個會拒絕） |
+
+> C2 完全不動前台、不動子表 API、不動舊資料 — 完全 backwards-compatible。
+
+### C3a（已完成）— 前台動態渲染
+
+`app/(site)/services/[slug]/page.tsx` 從 270 行硬編碼 JSX 改成 30 行動態渲染：
+
+```tsx
+const visibleSections = service.sections
+  .filter((s) => s.isVisible)
+  .sort((a, b) => a.order - b.order)
+
+return visibleSections.map((section) => (
+  <SectionRenderer section={section} service={service} others={others} phoneTel={phoneTel} />
+))
+```
+
+9 個 Server Component 拆到 `components/service-sections/`：
+- `HeroSection` / `IntroSection` / `WhyWithFeaturesSection` / `BeforeAfterSection` /
+  `GallerySection` / `FaqSection` / `CtaSection` / `MoreServicesSection` / `TextBlockSection`
+- 各自從 `section.config` 讀自訂內容，fallback 到 Service 主表舊欄位（C4 才會 drop 舊欄位）
+
+`lib/queries.ts` 的 `getServiceBySlugFull` 改成 `include: { sections: { include: { features, faqs, beforeAfters, galleryImgs } } }`，子表透過 section 取（C1 migration 已填好 sectionId）。
+
+**業主感受到的改變**：在 C2 sections 管理頁的「隱藏 / 重排」現在會在 60 秒（ISR revalidate）內反映在前台。
+
+**視覺零回歸驗證**：aircon-cleaning（8 sections）/ anti-haze-screen（6 sections）/ home-cleaning（7 sections）/ water-tank-cleaning（6 sections）全部跟 migration 前一致。
+
+### C3b（已完成）— 簡單 type 編輯 modal
+
+`components/admin/section-config-modal.tsx` 提供 generic 編輯 modal，根據 section.type 渲染對應 form 欄位：
+
+| Type | 可編輯欄位 |
+|---|---|
+| `hero` | heroImage（覆寫 service.heroImage）、eyebrow、title、description、ctaText |
+| `intro` | eyebrow、title、image、paragraph1/2/3 |
+| `why_with_features` | eyebrow、title（主文沿用 service.longDesc） |
+| `cta` | title、description |
+| `text_block` | eyebrow、title、body |
+
+業主在 sections 管理頁點某行的 ✏️ → 開 modal → 改完按儲存 → PUT `/api/admin/services/[id]/sections/[sectionId]` body `{config: {...}}` → 前台 60 秒 ISR 後反映。**空欄位儲存為 `null`**，前台 fallback 到 service 主表舊欄位（C4 之前的過渡）。
+
+> 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
+
+### C3c（已完成）— 列表 type section-scoped 子頁
+
+業主新增「第二個 Gallery / FAQ / Before-After / 重點清單 section」現在可以加自己的內容、跟其他同類型 section 完全獨立。
+
+**API 改動**（**最小侵入**：沿用既有 POST，只多接 `sectionId` 參數）：
+
+| Endpoint | 改動 |
+|---|---|
+| `POST /api/admin/services/[id]/features` | body 加 `sectionId?: number`，寫入 ServiceFeature.sectionId |
+| `POST /api/admin/services/[id]/faqs` | 同上（ServiceFaq）|
+| `POST /api/admin/services/[id]/before-afters` | 同上（BeforeAfterPair）|
+| `POST /api/admin/services/[id]/gallery` | 同上（ServiceGalleryImage）|
+| `GET /api/admin/sections/[sectionId]` | **新增**：一次拿 section + service.{id,name,slug} + 所有子表 items |
+
+PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
+
+**子頁**：`/admin/services/[id]/sections/[sectionId]/items/page.tsx`，依 `section.type` 條件渲染：
+
+| Type | Editor 元件 | 功能 |
+|---|---|---|
+| `why_with_features` | `FeaturesEditor` | inline 列表 + 加入框新增 + 刪除 |
+| `faq` | `FaqsEditor` | 展開式新增表單、inline edit、刪除 |
+| `gallery` | `GalleryEditor` | 多檔批量上傳 R2、改 alt（onBlur 自動存）、刪除（同時清 R2）|
+| `before_after` | `BeforeAfterEditor` | 沿用 `<BeforeAfterModal>`（多接 `sectionId` prop）、首頁精選 toggle、刪除 |
+
+**sections 管理頁**：簡單 type 仍開 modal、列表 type ✏️ 改成 `router.push` 導向子頁；`more_services` 顯示 toast「自動帶入無需編輯」。
+
+業主感受到的改變：
+- 第一個 Gallery 跟第二個 Gallery 的圖完全分開
+- features 重點清單可以為「不同的 section」各自設一份
+- FAQ section 可以多組，例如「服務 FAQ」+「保固 FAQ」
+
+### C4a（已完成）— 邏輯切換到 section，移除所有 fallback
+
+前台 / 後台 / queries 不再讀 `Service.intro* / why* / heroImage` 之外的舊欄位，也不再從 service-level 子表 fallback：
+
+| 檔案 | 動作 |
+|---|---|
+| `components/service-sections/IntroSection.tsx` | 移除 `?? service.intro*` fallback |
+| `components/service-sections/WhyWithFeaturesSection.tsx` | 移除 `?? service.why* / service.features` fallback |
+| `components/service-sections/BeforeAfterSection.tsx` | 移除 service.beforeAfters fallback |
+| `components/service-sections/GallerySection.tsx` | 移除 service.galleryImgs fallback |
+| `components/service-sections/FaqSection.tsx` | 移除 service.faqs fallback |
+| `lib/queries.ts` `getServiceBySlugFull` | 不再頂層 include features/faqs/beforeAfters/galleryImgs |
+| `prisma/seed.ts` | Service.upsert 不再寫 `intro*`/`why*`；改用 `introSectionConfig` 寫入 intro section.config |
+| `components/admin/section-editors/SectionConfigInline.tsx` | **新增**：list-type 子頁上方加 inline config 編輯（eyebrow / title / description for before_after），onBlur 自動 PUT — 解決 C3c 遺留的 why_with_features title 無法編輯問題 |
+
+### C4b（已完成）— 物理 drop 12 個冗餘欄位
+
+業主在 Neon Console 建好 backup branch `pre-c4b-2026-05-15` 後明確授權執行。
+
+已 drop：
+- `Service` 表：`introEyebrow / introTitle / introParagraph1 / introParagraph2 / introParagraph3 / introImage / whyEyebrow / whyTitle`（8 欄）
+- 子表：`ServiceFeature.serviceId / ServiceFaq.serviceId / BeforeAfterPair.serviceId / ServiceGalleryImage.serviceId`（4 個 FK）
+- 子表 `sectionId` 從 nullable 改成 not null（schema 強制無孤兒記錄）
+
+執行流程：
+1. `pnpm exec tsx prisma/section-cms-c4b-precheck.ts` — 確認 0 孤兒
+2. 改 `prisma/schema.prisma`：drop 8 欄 + drop 4 個 service relation + sectionId not null
+3. `pnpm exec prisma db push --accept-data-loss` — Neon 列出將 drop 的欄位，全部資料 C1 已搬到 section.config / section relations
+4. 跑 verify 確認筆數不變（8 services, 64 sections, 27 features, 7 faqs, 15 beforeAfters, 7 gallery — drop 前後完全相同）
+5. 清掉所有 code 對舊欄位的 reference（API routes / queries / admin pages / seed.ts）
+
+連帶清理：
+- 刪除 `prisma/section-cms-c1-migrate.ts`（一次性 migration，已執行完畢）
+- 子表 service-scoped API（`/api/admin/services/[id]/features` 等）的 GET/POST：改成 `where: { section: { serviceId } }`（透過 section 反向關聯），POST 強制要求 body.sectionId
+- `lib/queries.ts` `getActiveServices` / `getFeaturedBeforeAfters` / `getAllBeforeAfters` 改成從 sections 拉子表後攤平
+- `prisma/seed.ts` 子表 reset 改成 sectionId-scoped；新增 `ensureDefaultSectionsForService` helper
+
+### Phase 2 全程完工
+
+業主行為與前台呈現 100% 走 section CMS。schema 乾淨無冗餘。可以正常上線給業主使用。
+
+---
+
+## 服務 Slug 自動產生
+
+`lib/slug.ts` 提供 `slugify(name)` 與 `uniqueSlug(base, existing)`，業主新增服務時**不填 slug**，由系統依中文 `name` 自動產生 URL 友善的 slug。
+
+### 行為
+
+| 情境 | 輸入 | 輸出 |
+|---|---|---|
+| 中文名稱 | `冷氣深度清洗` | `leng-qi-shen-du-qing-xi` |
+| 中英混合 | `防霾紗網 Pro` | `fang-mai-sha-wang-pro` |
+| 純英文 | `Air Conditioner Cleaning` | `air-conditioner-cleaning` |
+| 撞名 | name = `家事清潔`（slug 已存在） | `jia-shi-qing-jie-2`（後綴遞增）|
+| 純符號 fallback | `!!!@@@` | `service` |
+
+### 規則
+
+- 拼音化用 `pinyin-pro`（無聲調、非中文連續保留、純 JS）
+- 上限 60 字元（避免過長 URL）
+- 撞名加 `-2 / -3 / -4` 後綴（不用 nanoid，URL 可讀、業主辨識度高）
+- **編輯時 slug 鎖定**：`PUT /api/admin/services/[id]` 忽略 `body.slug`，避免改名破壞已分享連結與 SEO 索引
+- 既有 6 個 service 的 slug 保留現狀，不做 migration
+
+### 為什麼這樣設計？
+
+業主非技術人員，要他「把『冷氣深度清洗』翻成英文 + 用連字號連接 + 確認沒撞名」太難了。slug 是技術細節，**業主應該無感**。
 
 ---
 

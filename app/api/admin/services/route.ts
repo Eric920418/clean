@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { slugify, uniqueSlug } from '@/lib/slug'
 
 // GET 全部服務（admin 用，需登入；前台讀資料走 lib/queries.ts）
 export async function GET(request: NextRequest) {
@@ -17,12 +18,27 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       include: {
-        features: { orderBy: { order: 'asc' } },
-        faqs: { orderBy: { order: 'asc' } },
-        _count: { select: { beforeAfters: true, galleryImgs: true } },
+        sections: {
+          include: {
+            features: { orderBy: { order: 'asc' } },
+            faqs: { orderBy: { order: 'asc' } },
+            _count: { select: { beforeAfters: true, galleryImgs: true } },
+          },
+        },
       },
     })
-    return successResponse(services)
+    // 攤平給 admin client 用
+    return successResponse(
+      services.map((s) => ({
+        ...s,
+        features: s.sections.flatMap((sec) => sec.features),
+        faqs: s.sections.flatMap((sec) => sec.faqs),
+        _count: {
+          beforeAfters: s.sections.reduce((sum, sec) => sum + sec._count.beforeAfters, 0),
+          galleryImgs: s.sections.reduce((sum, sec) => sum + sec._count.galleryImgs, 0),
+        },
+      })),
+    )
   } catch (error) {
     console.error('Get services error:', error)
     return errorResponse(error instanceof Error ? error.message : '獲取服務失敗')
@@ -37,7 +53,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
-      slug,
       name,
       shortDesc,
       longDesc,
@@ -49,23 +64,16 @@ export async function POST(request: NextRequest) {
       order,
       seoTitle,
       seoDesc,
-      introEyebrow,
-      introTitle,
-      introParagraph1,
-      introParagraph2,
-      introParagraph3,
-      introImage,
-      whyEyebrow,
-      whyTitle,
     } = body
 
-    if (!slug || !name || !shortDesc || !longDesc) {
-      return errorResponse('slug、名稱、卡片摘要、長描述為必填', 400)
+    if (!name || !shortDesc || !longDesc) {
+      return errorResponse('名稱、卡片摘要、長描述為必填', 400)
     }
 
-    if (!/^[a-z0-9-]+$/.test(slug)) {
-      return errorResponse('slug 只能含小寫英文、數字與連字號（如 aircon-cleaning）', 400)
-    }
+    const existing = new Set(
+      (await prisma.service.findMany({ select: { slug: true } })).map((s) => s.slug),
+    )
+    const slug = uniqueSlug(slugify(name), existing)
 
     const service = await prisma.service.create({
       data: {
@@ -81,21 +89,13 @@ export async function POST(request: NextRequest) {
         order: order || 0,
         seoTitle: seoTitle || null,
         seoDesc: seoDesc || null,
-        introEyebrow: introEyebrow || null,
-        introTitle: introTitle || null,
-        introParagraph1: introParagraph1 || null,
-        introParagraph2: introParagraph2 || null,
-        introParagraph3: introParagraph3 || null,
-        introImage: introImage || null,
-        whyEyebrow: whyEyebrow || null,
-        whyTitle: whyTitle || null,
       },
     })
 
     return successResponse(service, 201)
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return errorResponse('slug 已存在，請改用其他 slug', 400)
+      return errorResponse('服務名稱衝突，請稍後重試或微調名稱', 400)
     }
     console.error('Create service error:', error)
     return errorResponse(error instanceof Error ? error.message : '建立服務失敗')

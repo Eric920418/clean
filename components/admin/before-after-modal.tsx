@@ -17,6 +17,8 @@ type Props = {
   onSaved: () => void
   /** 新建時帶入 order */
   defaultOrder?: number
+  /** 若新建時提供，會把 pair 寫入此 section（C3c：section-scoped 模式） */
+  sectionId?: number
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -38,6 +40,7 @@ export function BeforeAfterModal({
   editing,
   onSaved,
   defaultOrder = 0,
+  sectionId,
 }: Props) {
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState<string | null>(null)
@@ -83,6 +86,7 @@ export function BeforeAfterModal({
         body: JSON.stringify({
           ...form,
           order: editing?.order ?? defaultOrder,
+          ...(sectionId !== undefined && !editing ? { sectionId } : {}),
         }),
       })
       const data = await r.json()

@@ -10,7 +10,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
   try {
     const items = await prisma.beforeAfterPair.findMany({
-      where: { serviceId: parseInt(id) },
+      where: { section: { serviceId: parseInt(id) } },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     })
     return successResponse(items)
@@ -26,15 +26,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json()
-    const { beforeUrl, afterUrl, caption, location, takenAt, isFeatured, isActive, order } = body
+    const { beforeUrl, afterUrl, caption, location, takenAt, isFeatured, isActive, order, sectionId } = body
 
     if (!beforeUrl || !afterUrl) {
       return errorResponse('Before 與 After 兩張圖皆為必填', 400)
     }
+    if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
 
     const item = await prisma.beforeAfterPair.create({
       data: {
-        serviceId: parseInt(id),
+        sectionId,
         beforeUrl,
         afterUrl,
         caption: caption || null,

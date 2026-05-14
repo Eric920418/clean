@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import { LightboxImage } from './lightbox-image'
 import { cn } from '@/lib/utils'
 
 type BeforeAfterPairProps = {
@@ -69,17 +69,18 @@ function Pane({
         aspectClass,
       )}
     >
-      <Image
+      <LightboxImage
         src={url}
         alt={`${label}${caption ? ` · ${caption}` : ''}`}
         fill
         sizes="(min-width: 768px) 50vw, 100vw"
         className="object-cover transition duration-500 group-hover:scale-[1.02]"
         priority={priority}
+        caption={caption ? `${label} · ${caption}` : label}
       />
       <span
         className={cn(
-          'pointer-events-none absolute left-3 top-3 rounded-md px-2.5 py-1 text-xs font-medium tracking-wide text-white shadow-sm',
+          'pointer-events-none absolute left-3 top-3 z-10 rounded-md px-2.5 py-1 text-xs font-medium tracking-wide text-white shadow-sm',
           tone === 'ink' ? 'bg-ink/80 backdrop-blur-sm' : 'bg-primary/95',
         )}
       >

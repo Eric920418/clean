@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
   try {
     const items = await prisma.serviceGalleryImage.findMany({
-      where: { serviceId: parseInt(id) },
+      where: { section: { serviceId: parseInt(id) } },
       orderBy: { order: 'asc' },
     })
     return successResponse(items)
@@ -26,12 +26,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { url, alt, order } = await request.json()
+    const { url, alt, order, sectionId } = await request.json()
     if (!url) return errorResponse('url 為必填', 400)
+    if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
 
     const item = await prisma.serviceGalleryImage.create({
       data: {
-        serviceId: parseInt(id),
+        sectionId,
         url,
         alt: alt || null,
         order: order ?? 0,

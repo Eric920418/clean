@@ -10,7 +10,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
   try {
     const items = await prisma.serviceFaq.findMany({
-      where: { serviceId: parseInt(id) },
+      where: { section: { serviceId: parseInt(id) } },
       orderBy: { order: 'asc' },
     })
     return successResponse(items)
@@ -25,12 +25,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { question, answer, order } = await request.json()
+    const { question, answer, order, sectionId } = await request.json()
     if (!question || !answer) return errorResponse('問題與答案為必填', 400)
+    if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
 
     const item = await prisma.serviceFaq.create({
       data: {
-        serviceId: parseInt(id),
+        sectionId,
         question,
         answer,
         order: order ?? 0,
