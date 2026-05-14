@@ -67,13 +67,8 @@ export function ImageUploader({
   return (
     <div className="space-y-2">
       {value ? (
-        <div className="relative inline-block">
-          <div
-            className={cn(
-              'relative overflow-hidden rounded-lg border border-hairline bg-bg-soft',
-              className ?? 'w-40 h-40',
-            )}
-          >
+        <div className={cn('relative', className ?? 'w-40 h-40')}>
+          <div className="relative w-full h-full overflow-hidden rounded-lg border border-hairline bg-bg-soft">
             <Image
               src={value}
               alt="已上傳圖片"
