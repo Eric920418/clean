@@ -307,7 +307,7 @@ function Process({
           ? 'md:grid-cols-2'
           : 'md:grid-cols-1'
   return (
-    <section className="bg-gradient-to-b from-white to-bg-tint/40 py-16 md:py-24">
+    <section className="bg-gradient-to-b from-white to-bg-tint/40 py-6 md:py-10">
       <div className="container-narrow">
         <SectionHeading
           align="center"
