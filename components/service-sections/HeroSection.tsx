@@ -36,7 +36,7 @@ export function HeroSection({ section, service, phoneTel }: Props) {
         </div>
       )}
       <div className="container-narrow relative grid min-h-[340px] py-14 md:min-h-[420px] md:py-20">
-        <div className="max-w-2xl text-white">
+        <div className="max-w-3xl text-white">
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/15 text-white backdrop-blur-sm">
             <IconByName name={service.icon ?? 'Sparkles'} className="h-5 w-5" />
           </span>

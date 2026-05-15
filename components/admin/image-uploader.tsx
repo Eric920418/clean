@@ -33,6 +33,17 @@ export function ImageUploader({
     setLoading(true)
     setError('')
 
+    // 提前擋掉 > 4MB：Vercel serverless function payload 硬上限約 4.5MB，超過會回 413 HTML
+    // 而非 JSON，造成前端看到無意義的 SyntaxError。在 client 先擋，給人看得懂的訊息。
+    const MAX_BYTES = 4 * 1024 * 1024
+    if (file.size > MAX_BYTES) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(2)
+      setError(`檔案 ${sizeMB} MB 超過 4 MB 上限，請先壓縮（手機照片可用內建編輯→「壓縮」或 squoosh.app）`)
+      setLoading(false)
+      if (inputRef.current) inputRef.current.value = ''
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -43,10 +54,25 @@ export function ImageUploader({
         body: formData,
       })
 
-      const data = await response.json()
+      // Vercel 在 payload 過大時直接回 413 HTML（不是 JSON）；先用 text 取出再嘗試解析
+      const raw = await response.text()
+      let data: { url?: string; error?: string } = {}
+      try {
+        data = raw ? JSON.parse(raw) : {}
+      } catch {
+        data = {
+          error:
+            response.status === 413
+              ? `檔案太大（Vercel 4.5 MB 上限），請先壓縮再上傳`
+              : `伺服器回應非 JSON（HTTP ${response.status} ${response.statusText}）：${raw.slice(0, 200)}`,
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || '上傳失敗')
+        throw new Error(data.error || `上傳失敗（HTTP ${response.status}）`)
+      }
+      if (!data.url) {
+        throw new Error('伺服器未回傳圖片網址')
       }
 
       onChange(data.url)
@@ -110,7 +136,7 @@ export function ImageUploader({
               <span className="text-sm text-ink-soft">{hint}</span>
               <span className="text-[11px] text-ink-muted mt-1">
                 <Upload className="w-3 h-3 inline mr-0.5" />
-                JPG/PNG/WebP，最大 5MB
+                JPG/PNG/WebP，最大 4 MB（Vercel 限制）
               </span>
             </>
           )}

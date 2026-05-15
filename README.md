@@ -103,7 +103,7 @@ POST   /api/auth/[...nextauth]              認證
 POST   /api/inquiries                       前台預約諮詢提交（公開）
 
 # 受保護（需要 admin session）
-POST   /api/admin/upload                    R2 圖片上傳
+POST   /api/admin/upload                    R2 圖片上傳（client 4 MB / server 5 MB；上限受 Vercel 4.5 MB serverless payload 硬上限）
 
 GET    /api/admin/services                  服務列表（亦供前台使用）
 POST   /api/admin/services
