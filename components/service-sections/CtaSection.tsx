@@ -19,7 +19,7 @@ export function CtaSection({ section, service, phoneTel }: Props) {
     <section className="container-narrow py-16 md:py-24">
       <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-8 text-center md:p-12">
         <h2 className="text-3xl font-medium tracking-tight text-ink md:text-4xl">{title}</h2>
-        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft">{description}</p>
+        <p className="mx-auto mt-4 max-w-xl whitespace-pre-line text-base leading-relaxed text-ink-soft">{description}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a href={phoneTel} className="btn-primary">
             立即來電預約

@@ -545,6 +545,8 @@ return visibleSections.map((section) => (
 
 > 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
 
+**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、faq answer、text_block body、why_with_features longDesc）後台輸入的 `\n` 都會在前台以實際換行渲染。實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。例外：`before_after` 的 `caption` 後台是單行 `<input>`，且 `MoreServicesSection.shortDesc` 用於小卡片，刻意不支援換行。
+
 ### C3c（已完成）— 列表 type section-scoped 子頁
 
 業主新增「第二個 Gallery / FAQ / Before-After / 重點清單 section」現在可以加自己的內容、跟其他同類型 section 完全獨立。

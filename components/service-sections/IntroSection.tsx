@@ -43,7 +43,7 @@ export function IntroSection({ section, service }: Props) {
           {paragraphs.length > 0 && (
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
               {paragraphs.map((p, i) => (
-                <p key={i}>{p}</p>
+                <p key={i} className="whitespace-pre-line">{p}</p>
               ))}
             </div>
           )}

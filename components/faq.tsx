@@ -21,7 +21,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="overflow-hidden text-sm leading-relaxed text-ink-soft data-[state=open]:animate-[fade-down_0.2s_ease]">
-            <div className="px-6 pb-5">{item.answer}</div>
+            <div className="whitespace-pre-line px-6 pb-5">{item.answer}</div>
           </Accordion.Content>
         </Accordion.Item>
       ))}
