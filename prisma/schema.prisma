@@ -137,6 +137,7 @@ model BookingInquiry {
   phone      String
   lineId     String?       // 客戶 LINE ID（新表單必填，舊資料為 null）
   email      String?
+  serviceIds Int[]         // legacy：舊表單服務多選欄位，新表單已不再寫入；保留以避免歷史資料遺失
   preferDate DateTime?     // 希望服務日期
   address    String?       // 概略區域（隱私保護用）
   message    String?       // 補充訊息

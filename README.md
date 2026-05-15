@@ -300,13 +300,20 @@ model BeforeAfterPair {                 // 🎯 核心
   isFeatured Boolean                    // 首頁作品牆主推
 }
 
+model ServiceGalleryImage {              // 施作過程相簿（gallery type）
+  url       String
+  alt       String?                     // SEO / 無障礙用
+  caption   String?                     // 顯示在照片下方的說明文字（2026-05-16 新增）
+  order     Int
+}
+
 model BookingInquiry {                   // 取代 ContactMessage
   lineId     String?                    // 客戶 LINE ID（新表單必填，舊資料為 null）
+  serviceIds Int[]                      // legacy：舊表單服務多選，保留以避免歷史資料遺失
   status     InquiryStatus              // NEW / CONTACTED / QUOTED / DONE / CLOSED
 }
-// 2026-05-15：contact 表單從 serviceIds 改為 lineId
-// schema.prisma 已移除 serviceIds，DB 欄位保留（nullable）→ prisma 不會 SELECT，舊資料保留
-// 若未來要徹底清欄位：ALTER TABLE "BookingInquiry" DROP COLUMN "serviceIds";
+// 2026-05-15：contact 表單從 serviceIds 改為 lineId（新表單不再寫入此欄）
+// 2026-05-16：schema 把 serviceIds 加回（型別與 DB 同步），避免 db push 觸發 data loss
 
 model WhyUsSection {                     // 首頁/關於頁 WhyUs 多區塊
   location    String                    // "home" 首頁、"about" 關於頁

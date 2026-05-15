@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { url, alt, order, sectionId } = await request.json()
+    const { url, alt, caption, order, sectionId } = await request.json()
     if (!url) return errorResponse('url 為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
 
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         sectionId,
         url,
         alt: alt || null,
+        caption: caption || null,
         order: order ?? 0,
       },
     })
@@ -44,19 +45,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PATCH 用來改 order / alt（單筆）
+// PATCH 用來改 order / alt / caption（單筆）
 export async function PATCH(request: NextRequest) {
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
   try {
-    const { imageId, alt, order } = await request.json()
+    const { imageId, alt, caption, order } = await request.json()
     if (!imageId) return errorResponse('imageId 為必填', 400)
 
     const item = await prisma.serviceGalleryImage.update({
       where: { id: parseInt(imageId) },
       data: {
         ...(alt !== undefined && { alt: alt || null }),
+        ...(caption !== undefined && { caption: caption || null }),
         ...(order !== undefined && { order }),
       },
     })

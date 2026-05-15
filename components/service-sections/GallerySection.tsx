@@ -21,20 +21,24 @@ export function GallerySection({ section, service }: Props) {
         <SectionHeading eyebrow={eyebrow} title={title} />
         <div className="mt-9 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {images.map((img) => (
-            <div
-              key={img.id}
-              className="relative aspect-square overflow-hidden rounded-lg border border-hairline"
-            >
-              <LightboxImage
-                src={img.url}
-                alt={img.alt ?? service.name}
-                fill
-                sizes="(min-width: 1024px) 25vw, 50vw"
-                className="object-cover"
-                unoptimized
-                caption={img.alt ?? service.name}
-              />
-            </div>
+            <figure key={img.id} className="space-y-2">
+              <div className="relative aspect-square overflow-hidden rounded-lg border border-hairline">
+                <LightboxImage
+                  src={img.url}
+                  alt={img.alt ?? img.caption ?? service.name}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, 50vw"
+                  className="object-cover"
+                  unoptimized
+                  caption={img.caption ?? img.alt ?? service.name}
+                />
+              </div>
+              {img.caption && (
+                <figcaption className="text-sm text-ink-soft text-center leading-relaxed">
+                  {img.caption}
+                </figcaption>
+              )}
+            </figure>
           ))}
         </div>
       </div>

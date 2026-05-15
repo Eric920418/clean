@@ -43,6 +43,7 @@ export function GalleryEditor({ serviceId, sectionId, images, onChange }: Props)
           body: JSON.stringify({
             url: upData.data?.url ?? upData.url,
             alt: '',
+            caption: '',
             order: startOrder + i,
             sectionId,
           }),
@@ -66,6 +67,21 @@ export function GalleryEditor({ serviceId, sectionId, images, onChange }: Props)
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId: id, alt }),
+      })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || '更新失敗')
+      onChange()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '更新失敗')
+    }
+  }
+
+  async function updateCaption(id: number, caption: string) {
+    try {
+      const r = await fetch(`/api/admin/services/${serviceId}/gallery`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId: id, caption }),
       })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '更新失敗')
@@ -134,12 +150,20 @@ export function GalleryEditor({ serviceId, sectionId, images, onChange }: Props)
                 />
               </div>
               <input
+                defaultValue={img.caption ?? ''}
+                onBlur={(e) => {
+                  if (e.target.value !== (img.caption ?? '')) updateCaption(img.id, e.target.value)
+                }}
+                className={`${inputClass} !text-xs !py-1.5`}
+                placeholder="照片下方顯示文字（例：客廳天花板除塵）"
+              />
+              <input
                 defaultValue={img.alt ?? ''}
                 onBlur={(e) => {
                   if (e.target.value !== (img.alt ?? '')) updateAlt(img.id, e.target.value)
                 }}
                 className={`${inputClass} !text-xs !py-1.5`}
-                placeholder="圖片說明（alt 文字，SEO 用）"
+                placeholder="SEO alt（選填）"
               />
               <button
                 onClick={() => remove(img.id)}
