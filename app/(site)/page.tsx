@@ -96,7 +96,7 @@ function Hero({
               {hero.titleLine2 || "才是家最頂級的豪華"}
             </span>
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
+          <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base">
             {hero.description ||
               "從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。"}
           </p>
