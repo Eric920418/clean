@@ -43,10 +43,12 @@
 |---|---|
 | Framework | Next.js 15.5（App Router）+ React 18 |
 | ORM / DB | Prisma 7 + PostgreSQL（Neon） |
+| DB Driver | `@neondatabase/serverless` + `@prisma/adapter-neon`（WebSocket，serverless 場景） |
 | 認證 | NextAuth 4 + Credentials + bcryptjs |
 | UI | Tailwind CSS 4（CSS-first config）+ Radix UI primitives |
-| 動畫 / 互動 | Motion 11（Framer Motion 後繼）+ Embla Carousel（保留） |
 | 圖床 | Cloudflare R2（S3 SDK） |
+| Lightbox | `yet-another-react-lightbox`（dynamic import，僅用戶點圖才載入） |
+| 觀測 | Vercel Analytics + Speed Insights（部署後自動收 Web Vitals） |
 | 通知 | Sonner toast |
 | 套件管理 | **pnpm（強制）** |
 | 字體 | Noto Sans TC + Inter（next/font/google） |
@@ -189,7 +191,9 @@ clean/
 
 ```bash
 # Database — 必須與 drink 專案使用「不同」的 Neon 資料庫
-DATABASE_URL="postgresql://user:password@host/db?sslmode=require"
+# 重要：URL 必須使用 Neon Pooler endpoint（含 -pooler 字樣），serverless driver 才會走 PgBouncer
+# 範例：postgresql://user:pwd@ep-xxx-pooler.ap-southeast-1.aws.neon.tech/db?sslmode=require
+DATABASE_URL="postgresql://user:password@host-pooler/db?sslmode=require"
 
 # NextAuth
 NEXTAUTH_SECRET=""                # openssl rand -base64 32
@@ -653,12 +657,21 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 部署（Vercel + Neon + R2）
 
-1. **Neon**：建立新的 PostgreSQL 專案（不要與 drink 共用），複製 connection string
+1. **Neon**：建立新的 PostgreSQL 專案（不要與 drink 共用），region 必須選 **AWS Asia Pacific (Singapore) `ap-southeast-1`**（與 Vercel function region 對齊）。複製 **Pooled connection string**（URL 含 `-pooler`）
 2. **Cloudflare R2**：建立新 bucket `invisible-care`，啟用 public 子網域，產生 API token
-3. **Vercel**：連結 GitHub repo
+3. **Vercel**：連結 GitHub repo（需 Pro plan 才能 pin region）
 4. 在 Vercel 專案設定中填入所有 `.env.example` 列出的環境變數
 5. 推送到 main 觸發部署，build 流程：`prisma generate && next build`
-6. 第一次部署完成後，造訪 `/admin/login`（待後台實作完成後）
+6. 第一次部署完成後，造訪 `/admin/login`
+
+### 效能關鍵設定（已內建在 repo）
+
+- `vercel.json` 將 function region 釘在 **`sin1`**（新加坡），與 Neon DB 同機房 → 跨服務 RTT < 2ms
+- `lib/prisma.ts` 使用 Neon WebSocket serverless driver（無 TCP cold start handshake）
+- `next.config.ts` 設定 AVIF/WebP、30 天 image cache、`serverExternalPackages` 排除 `ws` 不被 webpack bundle
+- `app/layout.tsx` 已掛 Speed Insights + Analytics，部署後 24h 內可在 Vercel Dashboard 看 Web Vitals
+
+**驗證 region 是否正確**：deploy 後在瀏覽器 DevTools Network → 任一請求 → response header `x-vercel-id` 開頭應為 `sin1::`
 
 ---
 
@@ -670,6 +683,7 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 - 後台無操作 audit log
 - 後台無草稿 / 排程發布（直接 `isActive` 切換）
 - 對比圖採「一次新增一組 modal」UX；未做拖拉批次上傳
+- **TODO（資料新鮮度）**：所有 admin 寫入 API（`app/api/admin/**/route.ts` 的 POST/PUT/DELETE）目前都沒呼叫 `revalidatePath` 或 `revalidateTag`。後果：在後台改完資料，前台要等 ISR 60 秒才會看到。修正方向：在每個寫入 handler 成功回傳前，根據 entity 類型呼叫對應的 `revalidatePath`（services → `/services` + `/services/[slug]`；testimonials → `/`；general-faqs → `/faq`；content/settings → `revalidatePath('/', 'layout')`）。
 
 ## 第一次啟動完整步驟
 
@@ -684,6 +698,27 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-15（效能優化：region 對齊 + Neon serverless driver + bundle 瘦身）
+
+**根本問題**：Vercel function 跑在 `iad1`（美東預設），Neon DB 在新加坡，使用者在台灣 → 每個 SSR query 跨太平洋來回 ~225ms，TTFB 與 admin 操作都被網路延遲吃掉。
+
+**改動**：
+
+- **`vercel.json`（新建）**：`regions: ["sin1"]`，function 與 Neon DB 同機房，跨服務 RTT 從 ~225ms 降到 < 2ms
+- **`lib/prisma.ts`**：`@prisma/adapter-pg` + `pg.Pool` → `@prisma/adapter-neon` + Neon Serverless Driver（WebSocket，無 TCP cold start handshake）
+- **`prisma/seed.ts` / `prisma/section-cms-c1-verify.ts` / `prisma/section-cms-c4b-precheck.ts`**：同步換成 Neon adapter
+- **`next.config.ts`**：
+  - 加 `serverExternalPackages: ['@neondatabase/serverless', 'ws', '@prisma/adapter-neon']`（避免 webpack bundle `ws` 導致 build 時 prerender 出 `b.mask is not a function`）
+  - `images.formats: ['image/avif', 'image/webp']`、`minimumCacheTTL: 30 天`、收斂 `deviceSizes` / `imageSizes`
+- **`components/lightbox-renderer.tsx`（新建）+ `components/lightbox-provider.tsx`**：拆出 lightbox 重邏輯，用 `next/dynamic({ ssr: false })` 懶載入 → `yet-another-react-lightbox` + 兩個 plugin + CSS 不再進初始 bundle，僅用戶第一次點圖才下載
+- **`app/layout.tsx`**：加 `@vercel/speed-insights` + `@vercel/analytics`，部署後自動收 LCP / FCP / TTFB / INP / CLS
+- **依賴清理**：`pnpm remove @prisma/adapter-pg pg @types/pg embla-carousel-react motion react-hook-form`（後三個專案完全沒用到，純 dead deps），`pnpm add @prisma/adapter-neon @neondatabase/serverless ws @vercel/speed-insights @vercel/analytics @types/ws`
+- **README**：環境變數區段補充 `DATABASE_URL` 必須走 `-pooler` endpoint，部署章節新增「效能關鍵設定」與 `x-vercel-id` 驗證步驟
+
+**預期影響**：台灣使用者首頁 cold path TTFB 從 ~500–700ms 降到 ~120–180ms；admin 後台每次操作從 ~1s+ 卡頓降到 ~150ms 內。
+
+**未做**：admin GET 加快取（P0 後不一定還需要）、admin 寫入加 `revalidatePath`（列為「已知限制 → TODO」），等 Speed Insights 收 24h 真實數據再決定。
 
 ### 2026-05-13（結構性品牌文案全面後台化：100% 無前台硬編碼文案）
 

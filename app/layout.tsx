@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Noto_Sans_TC, Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { getSiteSettings } from '@/lib/queries'
 import './globals.css'
 
@@ -57,6 +59,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans antialiased">
         {children}
         <Toaster position="top-center" richColors closeButton />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

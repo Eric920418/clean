@@ -11,13 +11,15 @@
  */
 import 'dotenv/config'
 import { PrismaClient, Prisma } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
+import { PrismaNeon } from '@prisma/adapter-neon'
+import { neonConfig } from '@neondatabase/serverless'
+import ws from 'ws'
 import { mockServices, mockTestimonials } from '../lib/mock-data'
 import { siteConfig } from '../lib/site-config'
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const adapter = new PrismaPg(pool)
+neonConfig.webSocketConstructor = ws
+
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
 
 // 示範 intro section config（C4a：直接寫入 ServiceSection.config，不再經過 Service.intro* 欄位）

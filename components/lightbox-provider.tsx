@@ -8,12 +8,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import NextImage from 'next/image'
-import Lightbox, { type RenderSlideProps, type SlideImage } from 'yet-another-react-lightbox'
-import Captions from 'yet-another-react-lightbox/plugins/captions'
-import Zoom from 'yet-another-react-lightbox/plugins/zoom'
-import 'yet-another-react-lightbox/styles.css'
-import 'yet-another-react-lightbox/plugins/captions.css'
+import dynamic from 'next/dynamic'
+import type { SlideImage } from 'yet-another-react-lightbox'
+
+const LightboxRenderer = dynamic(() => import('./lightbox-renderer'), {
+  ssr: false,
+})
 
 type SlideData = {
   src: string
@@ -70,40 +70,14 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   return (
     <ctx.Provider value={{ register, open }}>
       {children}
-      <Lightbox
-        open={openState !== null}
-        close={() => setOpenState(null)}
-        slides={openState?.slides ?? []}
-        index={openState?.index ?? 0}
-        plugins={[Captions, Zoom]}
-        captions={{ descriptionTextAlign: 'center', showToggle: false }}
-        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
-        carousel={{ finite: true, padding: 0 }}
-        controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
-        styles={{
-          root: { zIndex: 9999 },
-          container: { backgroundColor: '#000' },
-        }}
-        render={{
-          slide: ({ slide, rect }: RenderSlideProps) => {
-            const s = slide as CustomSlide
-            if (!s.src) return null
-            return (
-              <div style={{ position: 'relative', width: rect.width, height: rect.height }}>
-                <NextImage
-                  src={s.src}
-                  alt={s.alt ?? ''}
-                  fill
-                  sizes="100vw"
-                  unoptimized={s.unoptimized}
-                  style={{ objectFit: 'contain' }}
-                  priority
-                />
-              </div>
-            )
-          },
-        }}
-      />
+      {openState !== null && (
+        <LightboxRenderer
+          open
+          close={() => setOpenState(null)}
+          slides={openState.slides}
+          index={openState.index}
+        />
+      )}
     </ctx.Provider>
   )
 }
