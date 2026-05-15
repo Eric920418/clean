@@ -30,6 +30,7 @@ import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { SectionConfigModal } from '@/components/admin/section-config-modal'
 import type { AdminService, AdminServiceSection, ServiceSectionType } from '@/lib/admin-types'
+import { swapOrderByIndex } from '@/lib/admin-reorder'
 
 // 可在 modal 內編輯純 config 的「簡單 type」
 const SIMPLE_TYPES = new Set<ServiceSectionType>(['hero', 'intro', 'cta', 'text_block'])

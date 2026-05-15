@@ -20,6 +20,7 @@ export type AdminService = {
   faqs?: AdminServiceFaq[]
   beforeAfters?: AdminBeforeAfter[]
   galleryImgs?: AdminGalleryImage[]
+  sections?: AdminServiceSection[]
   _count?: { beforeAfters: number; galleryImgs: number }
 }
 

@@ -12,6 +12,7 @@ import { ErrorBanner } from '@/components/admin/error-banner'
 import { ImageUploader } from '@/components/admin/image-uploader'
 import { cn } from '@/lib/utils'
 import type { AdminService } from '@/lib/admin-types'
+import { swapOrderByIndex, nextOrder } from '@/lib/admin-reorder'
 
 const emptyForm = {
   name: '',
@@ -56,7 +57,7 @@ export default function ServicesAdminPage() {
   }, [])
 
   function openCreate() {
-    setForm(emptyForm)
+    setForm({ ...emptyForm, order: nextOrder(services) })
     setError(null)
     setModalOpen(true)
   }
@@ -108,27 +109,16 @@ export default function ServicesAdminPage() {
   }
 
   async function move(service: AdminService, dir: 'up' | 'down') {
-    const sorted = [...services].sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((s) => s.id === service.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
-
     try {
-      await Promise.all([
-        fetch(`/api/admin/services/${service.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swap.order }),
-        }),
-        fetch(`/api/admin/services/${swap.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: service.order }),
-        }),
-      ])
-      fetchServices()
+      const moved = await swapOrderByIndex(
+        services,
+        service.id,
+        dir,
+        (id) => `/api/admin/services/${id}`,
+      )
+      if (moved) fetchServices()
     } catch (err) {
-      toast.error('排序失敗')
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
   }
 

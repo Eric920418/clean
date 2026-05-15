@@ -129,11 +129,13 @@ export default function ServiceEditPage({ params }: PageProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <FeaturesPanel
           serviceId={service.id}
+          sectionId={service.sections?.find((s) => s.type === 'why_with_features')?.id ?? null}
           features={service.features ?? []}
           onChange={fetchService}
         />
         <FaqsPanel
           serviceId={service.id}
+          sectionId={service.sections?.find((s) => s.type === 'faq')?.id ?? null}
           faqs={service.faqs ?? []}
           onChange={fetchService}
         />
@@ -145,10 +147,12 @@ export default function ServiceEditPage({ params }: PageProps) {
 /* ================================================================ */
 function FeaturesPanel({
   serviceId,
+  sectionId,
   features,
   onChange,
 }: {
   serviceId: number
+  sectionId: number | null
   features: AdminServiceFeature[]
   onChange: () => void
 }) {
@@ -157,12 +161,16 @@ function FeaturesPanel({
 
   async function add() {
     if (!newText.trim()) return
+    if (sectionId === null) {
+      toast.error('此服務尚無「服務重點」區塊，請先到「頁面區塊管理」新增 why_with_features 區塊')
+      return
+    }
     setBusy(true)
     try {
       const r = await fetch(`/api/admin/services/${serviceId}/features`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newText.trim(), order: features.length }),
+        body: JSON.stringify({ text: newText.trim(), order: features.length, sectionId }),
       })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '新增失敗')
@@ -225,22 +233,35 @@ function FeaturesPanel({
         ))}
       </ul>
 
-      <div className="flex gap-2 pt-3 border-t border-hairline-soft">
-        <input
-          value={newText}
-          onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
-          className={inputClass}
-          placeholder="新增特色，如：全拆解清洗風輪、鋁片、排水盤"
-        />
-        <button
-          onClick={add}
-          disabled={busy || !newText.trim()}
-          className="btn-primary !py-2 !px-3 !text-sm disabled:opacity-60 shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
+      {sectionId === null ? (
+        <div className="pt-3 border-t border-hairline-soft text-sm leading-relaxed text-ink-soft">
+          此服務尚未建立「服務重點」區塊（why_with_features），請先到{' '}
+          <Link
+            href={`/admin/services/${serviceId}/sections`}
+            className="text-primary-deep underline underline-offset-2 hover:no-underline"
+          >
+            頁面區塊管理
+          </Link>{' '}
+          新增該區塊才能加特色。
+        </div>
+      ) : (
+        <div className="flex gap-2 pt-3 border-t border-hairline-soft">
+          <input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
+            className={inputClass}
+            placeholder="新增特色，如：全拆解清洗風輪、鋁片、排水盤"
+          />
+          <button
+            onClick={add}
+            disabled={busy || !newText.trim()}
+            className="btn-primary !py-2 !px-3 !text-sm disabled:opacity-60 shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </section>
   )
 }
@@ -287,10 +308,12 @@ function FeatureRow({
 /* ================================================================ */
 function FaqsPanel({
   serviceId,
+  sectionId,
   faqs,
   onChange,
 }: {
   serviceId: number
+  sectionId: number | null
   faqs: AdminServiceFaq[]
   onChange: () => void
 }) {
@@ -301,6 +324,10 @@ function FaqsPanel({
 
   async function add() {
     if (!q.trim() || !a.trim()) return
+    if (sectionId === null) {
+      toast.error('此服務尚無「常見問題」區塊，請先到「頁面區塊管理」新增 faq 區塊')
+      return
+    }
     setBusy(true)
     try {
       const r = await fetch(`/api/admin/services/${serviceId}/faqs`, {
@@ -310,6 +337,7 @@ function FaqsPanel({
           question: q.trim(),
           answer: a.trim(),
           order: faqs.length,
+          sectionId,
         }),
       })
       const data = await r.json()
@@ -375,7 +403,18 @@ function FaqsPanel({
         ))}
       </ul>
 
-      {open ? (
+      {sectionId === null ? (
+        <div className="pt-3 border-t border-hairline-soft text-sm leading-relaxed text-ink-soft">
+          此服務尚未建立「常見問題」區塊（faq），請先到{' '}
+          <Link
+            href={`/admin/services/${serviceId}/sections`}
+            className="text-primary-deep underline underline-offset-2 hover:no-underline"
+          >
+            頁面區塊管理
+          </Link>{' '}
+          新增該區塊才能加 FAQ。
+        </div>
+      ) : open ? (
         <div className="space-y-2 pt-3 border-t border-hairline-soft">
           <Field label="問題">
             <input
@@ -520,7 +559,6 @@ function MainFieldsPanel({
     shortDesc: service.shortDesc,
     longDesc: service.longDesc,
     icon: service.icon ?? '',
-    heroImage: service.heroImage ?? '',
     cardImage: service.cardImage ?? '',
     isActive: service.isActive,
     isFeatured: service.isFeatured,
@@ -624,13 +662,19 @@ function MainFieldsPanel({
               folder="services"
             />
           </Field>
-          <Field label="Hero 大圖（詳情頁頂部）">
-            <ImageUploader
-              value={form.heroImage}
-              onChange={(url) => setForm({ ...form, heroImage: url })}
-              folder="services"
-            />
-          </Field>
+          <div className="rounded-lg border border-dashed border-hairline bg-bg-soft p-4 text-sm leading-relaxed">
+            <div className="font-medium text-ink mb-1">Hero 背景圖在哪改？</div>
+            <p className="text-ink-soft">
+              詳情頁頂部 Hero 區塊的大圖請至{' '}
+              <Link
+                href={`/admin/services/${service.id}/sections`}
+                className="text-primary-deep underline underline-offset-2 hover:no-underline"
+              >
+                頁面區塊管理 → Hero 區塊 ✏️
+              </Link>{' '}
+              設定，避免兩個入口設定不一致。
+            </p>
+          </div>
         </div>
 
         <div className="rounded-md bg-bg-soft border border-hairline p-3 space-y-2">

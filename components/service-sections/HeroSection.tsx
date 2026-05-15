@@ -46,7 +46,7 @@ export function HeroSection({ section, service, phoneTel }: Props) {
             </div>
           )}
           <h1 className="mt-5 text-white! text-4xl font-medium tracking-tight md:text-5xl">{title}</h1>
-          <p className="mt-5 max-w-xl whitespace-pre-line text-base leading-relaxed text-white/85 md:text-lg">
+          <p className="mt-5 max-w-2xl whitespace-pre-line text-base leading-relaxed text-white/85 md:text-lg">
             {description}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

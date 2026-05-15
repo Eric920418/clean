@@ -556,6 +556,10 @@ return visibleSections.map((section) => (
 
 **服務主欄位編輯入口統一**：原 `/admin/services` 列表的 Sparkles modal（編輯 11 個主欄位：name / shortDesc / longDesc / icon / order / cardImage / heroImage / seoTitle / seoDesc / isActive / isFeatured）已合併進 `/admin/services/[id]/edit` 的 `MainFieldsPanel`，列表只保留 Pencil 一個編輯入口，避免「同一個服務有兩個編輯入口」的認知負擔。列表頁的 `AdminModal` 縮編為 create-only（新增服務），編輯走獨立頁面。後端 API 零變動（`PUT /api/admin/services/[id]` 既有 schema 已支援）。
 
+**Hero 背景圖：唯一入口在 sections > Hero modal**：因為 `HeroSection.tsx` 的 fallback 順序是 `section.config.heroImage ?? service.heroImage`（section 層級優先），如果使用者在 MainFieldsPanel 改 service.heroImage，會被 hero section 的 config 覆蓋而看不到變化。**修法**：MainFieldsPanel 移除 heroImage 欄位（PUT body 也不送，原 Service.heroImage 不動，仍當 fallback），改為指向「頁面區塊管理 → Hero 區塊」的提示卡。新增服務的 create modal **仍保留** heroImage 欄位作為「初始 fallback」用（新建 service 尚無 sections，這時 Service.heroImage 是唯一管道；之後若使用者在 sections 設了 Hero config.heroImage，那邊優先）。`cardImage` 因屬於列表卡片用、與 section 無關，繼續留在 MainFieldsPanel。
+
+**FeaturesPanel / FaqsPanel 補 sectionId（修 400 Bad Request）**：C4b 後 `ServiceFeature.sectionId` 與 `ServiceFaq.sectionId` 必填，API `POST /api/admin/services/[id]/features|faqs` 強制驗證。但 `/admin/services/[id]/edit` 的兩個 panel 是 C4b 前的舊 UI，POST body 缺 `sectionId` 必然回 400。**修法**：兩個 panel 加 `sectionId: number | null` prop，由父層 edit page 從 `service.sections` 自動找對應型別（`why_with_features` 給 features，`faq` 給 faqs）；POST body 帶上 sectionId。**若該型 section 不存在**，panel 不顯示輸入框，改顯示「請先到頁面區塊管理新增此區塊」的提示，連結到 sections 頁。同時 `AdminService` 型別加 `sections?: AdminServiceSection[]`（GET API 一直有回，只是型別沒宣告）。
+
 ### C3c（已完成）— 列表 type section-scoped 子頁
 
 業主新增「第二個 Gallery / FAQ / Before-After / 重點清單 section」現在可以加自己的內容、跟其他同類型 section 完全獨立。

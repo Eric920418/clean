@@ -1,39 +1,28 @@
 import { prisma } from '../lib/prisma'
 
 async function main() {
-  const services = await prisma.service.findMany({
-    select: { id: true, slug: true, name: true },
-    orderBy: { id: 'asc' },
+  const service = await prisma.service.findUnique({
+    where: { id: 4 },
+    select: { id: true, slug: true, name: true, heroImage: true, cardImage: true },
   })
-  console.log('--- All services ---')
-  for (const s of services) {
-    const count = await prisma.serviceFeature.count({
-      where: { section: { serviceId: s.id } },
-    })
-    console.log(`service id=${s.id} slug=${s.slug} name="${s.name}" total_features=${count}`)
+  console.log('=== Service 主欄位 ===')
+  console.log(`id=${service?.id} slug=${service?.slug}`)
+  console.log(`name=${service?.name}`)
+  console.log(`heroImage=${service?.heroImage ?? '(null)'}`)
+  console.log(`cardImage=${service?.cardImage ?? '(null)'}`)
+
+  console.log('\n=== Hero section config ===')
+  const hero = await prisma.serviceSection.findFirst({
+    where: { serviceId: 4, type: 'hero' },
+    select: { id: true, type: true, isVisible: true, config: true },
+  })
+  if (hero) {
+    console.log(`section id=${hero.id} type=${hero.type} visible=${hero.isVisible}`)
+    console.log('config =', JSON.stringify(hero.config, null, 2))
+  } else {
+    console.log('(no hero section)')
   }
 
-  console.log('\n--- service id=4 sections detail ---')
-  const sections = await prisma.serviceSection.findMany({
-    where: { serviceId: 4 },
-    include: { features: { orderBy: { order: 'asc' } } },
-    orderBy: { order: 'asc' },
-  })
-  for (const s of sections) {
-    console.log(`section id=${s.id} type=${s.type} order=${s.order} visible=${s.isVisible} features=${s.features.length}`)
-    for (const f of s.features) {
-      console.log(`   - [${f.id}] order=${f.order} text="${f.text.slice(0, 50)}"`)
-    }
-  }
-
-  console.log('\n--- ALL features across DB (any service) ---')
-  const all = await prisma.serviceFeature.findMany({
-    include: { section: { select: { id: true, type: true, serviceId: true } } },
-    orderBy: { id: 'asc' },
-  })
-  for (const f of all) {
-    console.log(`feature id=${f.id} sectionId=${f.sectionId} (type=${f.section.type}, serviceId=${f.section.serviceId}) text="${f.text.slice(0, 40)}"`)
-  }
   await prisma.$disconnect()
 }
 main().catch((e) => {
