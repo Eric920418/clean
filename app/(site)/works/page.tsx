@@ -41,14 +41,14 @@ export default async function WorksPage() {
 
   return (
     <>
-      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
+      <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading
-            eyebrow={hero.eyebrow || 'Real Results'}
-            title={hero.title || '服務案例・前後對比'}
+            eyebrow={hero.eyebrow || "Real Results"}
+            title={hero.title || "服務案例・前後對比"}
             description={
               hero.description ||
-              '拖動中央分隔線，親眼見證 invisible care 帶來的改變。所有照片均為真實案例。'
+              "拖動中央分隔線，親眼見證 invisible care 帶來的改變。所有照片均為真實案例。"
             }
           />
         </div>
@@ -60,5 +60,5 @@ export default async function WorksPage() {
         </div>
       </section>
     </>
-  )
+  );
 }

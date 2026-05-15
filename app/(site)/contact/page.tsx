@@ -28,14 +28,14 @@ export default async function ContactPage() {
   const serviceArea = settings.serviceArea || ''
   return (
     <>
-      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
+      <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
-            eyebrow={hero.eyebrow || 'Contact'}
-            title={hero.title || '預約諮詢'}
+            eyebrow={hero.eyebrow || "Contact"}
+            title={hero.title || "預約諮詢"}
             description={
               hero.description ||
-              '填寫下方表單，30 分鐘內專人聯繫；或直接撥打專線、加入 LINE，我們將盡快為您服務。'
+              "填寫下方表單，30 分鐘內專人聯繫；或直接撥打專線、加入 LINE，我們將盡快為您服務。"
             }
           />
         </div>
@@ -91,8 +91,7 @@ export default async function ContactPage() {
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition w-full"
                       >
-                        <MessageCircle className="h-4 w-4" />
-                        加 LINE 好友
+                        <MessageCircle className="h-4 w-4" />加 LINE 好友
                       </a>
                     )}
                     {lineCallUrl && (
@@ -133,5 +132,5 @@ export default async function ContactPage() {
         </div>
       </section>
     </>
-  )
+  );
 }

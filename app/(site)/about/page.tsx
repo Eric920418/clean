@@ -37,7 +37,7 @@ export default async function AboutPage() {
 
   return (
     <>
-      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
+      <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow grid grid-cols-1 items-end gap-10 md:grid-cols-2">
           <div>
             <span className="eyebrow">{heroBlock.eyebrow || 'About invisible care'}</span>

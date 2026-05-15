@@ -22,12 +22,15 @@ export default async function ServicesIndexPage() {
   const hero = heroBlock ?? {}
   return (
     <>
-      <section className="bg-medical-glow pt-14 pb-8 md:pt-20 md:pb-12">
+      <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading
-            eyebrow={hero.eyebrow || 'Our Services'}
-            title={hero.title || '服務項目'}
-            description={hero.description || '點選下方服務查看完整介紹、清潔前後實績與常見問題。'}
+            eyebrow={hero.eyebrow || "Our Services"}
+            title={hero.title || "服務項目"}
+            description={
+              hero.description ||
+              "點選下方服務查看完整介紹、清潔前後實績與常見問題。"
+            }
           />
         </div>
       </section>
@@ -40,7 +43,7 @@ export default async function ServicesIndexPage() {
               href={`/services/${s.slug}`}
               className="card-hover group grid grid-cols-1 overflow-hidden rounded-xl border border-hairline bg-white md:grid-cols-2"
             >
-              <div className={idx % 2 === 1 ? 'order-2 md:order-1' : ''}>
+              <div className={idx % 2 === 1 ? "order-2 md:order-1" : ""}>
                 <div className="relative aspect-[4/3] md:aspect-auto md:h-full bg-bg-soft">
                   {s.cardImage ? (
                     <Image
@@ -56,9 +59,11 @@ export default async function ServicesIndexPage() {
                   )}
                 </div>
               </div>
-              <div className={`p-8 md:p-12 ${idx % 2 === 1 ? 'order-1 md:order-2' : ''}`}>
+              <div
+                className={`p-8 md:p-12 ${idx % 2 === 1 ? "order-1 md:order-2" : ""}`}
+              >
                 <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-bg-tint text-primary-deep">
-                  <IconByName name={s.icon ?? 'Sparkles'} className="h-5 w-5" />
+                  <IconByName name={s.icon ?? "Sparkles"} className="h-5 w-5" />
                 </span>
                 <h3 className="mt-4 text-2xl font-medium tracking-tight text-ink md:text-3xl">
                   {s.name}
@@ -84,5 +89,5 @@ export default async function ServicesIndexPage() {
         </div>
       </section>
     </>
-  )
+  );
 }
