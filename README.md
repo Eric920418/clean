@@ -560,6 +560,8 @@ return visibleSections.map((section) => (
 
 **FeaturesPanel / FaqsPanel 補 sectionId（修 400 Bad Request）**：C4b 後 `ServiceFeature.sectionId` 與 `ServiceFaq.sectionId` 必填，API `POST /api/admin/services/[id]/features|faqs` 強制驗證。但 `/admin/services/[id]/edit` 的兩個 panel 是 C4b 前的舊 UI，POST body 缺 `sectionId` 必然回 400。**修法**：兩個 panel 加 `sectionId: number | null` prop，由父層 edit page 從 `service.sections` 自動找對應型別（`why_with_features` 給 features，`faq` 給 faqs）；POST body 帶上 sectionId。**若該型 section 不存在**，panel 不顯示輸入框，改顯示「請先到頁面區塊管理新增此區塊」的提示，連結到 sections 頁。同時 `AdminService` 型別加 `sections?: AdminServiceSection[]`（GET API 一直有回，只是型別沒宣告）。
 
+**所有 admin 寫入動作主動觸發 ISR revalidate（修「存了沒看到」）**：前台 `/services` 與 `/services/[slug]` 用 `export const revalidate = 60`，預設要等 60 秒。新增 `lib/revalidate-service.ts` 提供 `revalidateService(serviceId)` helper：查 slug → `revalidatePath('/services/${slug}')` + `/services` + `/`。所有 admin write routes（services POST/PUT/DELETE、sections POST/PUT/DELETE、features POST/PUT/DELETE、faqs POST/PUT/DELETE、before-afters POST/PUT/DELETE、gallery POST/PATCH/DELETE）在 DB commit 後呼叫此 helper。`revalidatePath` 是 fire-and-forget，不延遲 API response，但下次前台請求就會立即 regenerate。業主存檔後 hard refresh 就看得到變化、不用再等 60 秒。
+
 ### C3c（已完成）— 列表 type section-scoped 子頁
 
 業主新增「第二個 Gallery / FAQ / Before-After / 重點清單 section」現在可以加自己的內容、跟其他同類型 section 完全獨立。

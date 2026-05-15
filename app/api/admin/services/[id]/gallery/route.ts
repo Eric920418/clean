@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { deleteImageFromR2 } from '@/lib/r2'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         order: order ?? 0,
       },
     })
+    await revalidateService(parseInt(id))
     return successResponse(item, 201)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '建立失敗')
@@ -46,7 +48,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 }
 
 // PATCH 用來改 order / alt / caption（單筆）
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -62,6 +65,7 @@ export async function PATCH(request: NextRequest) {
         ...(order !== undefined && { order }),
       },
     })
+    await revalidateService(parseInt(id))
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -69,7 +73,8 @@ export async function PATCH(request: NextRequest) {
 }
 
 // DELETE 接 ?imageId=
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -85,6 +90,7 @@ export async function DELETE(request: NextRequest) {
 
     deleteImageFromR2(item.url).catch((e) => console.warn('R2 cleanup:', e))
     await prisma.serviceGalleryImage.delete({ where: { id: parseInt(imageId) } })
+    await revalidateService(parseInt(id))
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

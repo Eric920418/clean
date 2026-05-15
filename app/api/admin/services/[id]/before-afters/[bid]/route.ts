@@ -2,11 +2,12 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { deleteImageFromR2 } from '@/lib/r2'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string; bid: string }> }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { bid } = await params
+  const { id, bid } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -46,6 +47,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    await revalidateService(parseInt(id))
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -53,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { bid } = await params
+  const { id, bid } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -71,6 +73,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     ]).catch((e) => console.warn('R2 cleanup warning:', e))
 
     await prisma.beforeAfterPair.delete({ where: { id: parseInt(bid) } })
+    await revalidateService(parseInt(id))
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

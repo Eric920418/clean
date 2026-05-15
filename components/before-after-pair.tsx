@@ -31,8 +31,8 @@ export function BeforeAfterPair({
   return (
     <figure className={cn('group', className)}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-        <Pane url={beforeUrl} label="清洗前" tone="ink" aspectClass={aspectClass} priority={priority} caption={caption} />
-        <Pane url={afterUrl} label="清洗後" tone="primary" aspectClass={aspectClass} priority={priority} caption={caption} />
+        <Pane url={beforeUrl} label="服務前" tone="ink" aspectClass={aspectClass} priority={priority} caption={caption} />
+        <Pane url={afterUrl} label="服務後" tone="primary" aspectClass={aspectClass} priority={priority} caption={caption} />
       </div>
 
       {(caption || location) && (
