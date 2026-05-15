@@ -84,7 +84,7 @@ function Hero({
   )
   return (
     <section className="relative overflow-hidden bg-medical-glow">
-      <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-8 pb-8 md:grid-cols-2 md:gap-14 md:pt-12 md:pb-12">
+      <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-6 pb-6 md:grid-cols-2 md:gap-14 md:pt-10 md:pb-10">
         <div>
           <span className="eyebrow">
             {hero.eyebrow || "Invisible Care · 居家健康守護"}
