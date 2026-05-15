@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string; fid: string }> }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { fid } = await params
+  const { id, fid } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -19,6 +20,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.order !== undefined && { order: body.order }),
       },
     })
+    await revalidateService(parseInt(id))
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -26,12 +28,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { fid } = await params
+  const { id, fid } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
   try {
     await prisma.serviceFaq.delete({ where: { id: parseInt(fid) } })
+    await revalidateService(parseInt(id))
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

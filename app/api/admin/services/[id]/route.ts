@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { deleteImageFromR2 } from '@/lib/r2'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -89,6 +91,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
+    await revalidateService(serviceId)
     return successResponse(service)
   } catch (error) {
     console.error('Update service error:', error)
@@ -102,7 +105,15 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
+    // 拿 slug 給 revalidatePath 用（delete 完 prisma 查不到，所以先查再刪）
+    const service = await prisma.service.findUnique({
+      where: { id: parseInt(id) },
+      select: { slug: true },
+    })
     await prisma.service.delete({ where: { id: parseInt(id) } })
+    if (service) revalidatePath(`/services/${service.slug}`)
+    revalidatePath('/services')
+    revalidatePath('/')
     return successResponse({ message: '刪除成功' })
   } catch (error) {
     console.error('Delete service error:', error)

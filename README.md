@@ -321,7 +321,7 @@ model WhyUsSection {                     // 首頁/關於頁 WhyUs 多區塊
   title       String                    // 例：「三項堅持，讓家人安心」
   description String?
   cards       Json                      // 固定 3 張：[{title, desc}, {title, desc}, {title, desc}]
-  order       Int                       // 上下排序（兩筆 swap PUT 完成）
+  order       Int                       // 上下排序（lib/admin-reorder swapOrderByIndex）
 }
 
 model ProcessStep {                      // 首頁「服務流程」四步驟
@@ -494,7 +494,7 @@ pnpm exec tsx prisma/section-cms-c1-verify.ts       # 驗證每 service 8 個 se
 
 新增頁面 `/admin/services/[id]/sections`：
 - 列出該 service 全部 sections（依 order）
-- **上下移**：沿用 `app/admin/why-us-sections/page.tsx:137-160` swap-order 模式
+- **上下移**：呼叫 `lib/admin-reorder.ts` 的 `swapOrderByIndex`（按 sorted index 重算 order，不依賴 order 唯一性）
 - **隱藏 / 顯示**：toggle `isVisible`
 - **新增**：modal 顯示 9 種 type 卡片（hero / intro / why_with_features / before_after / gallery / faq / cta / more_services / text_block），點一下即建立空 section
 - **刪除**：confirm dialog，安全閥防止刪到最後一個（須留至少一個）
@@ -716,6 +716,38 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-16（admin 排序箭頭失效：order 碰撞修復）
+
+**症狀**：`/admin/services` 等列表頁的上下箭頭點了不動。
+
+**根因**：
+1. 多筆 service 的 `order` 都是 `0`（新增 form 預設 0、沒人手動改），DB 內排序 key 大量碰撞
+2. `move()` 邏輯是「互換兩筆 order 數字」— 當兩筆 order 相同時，互換 = 沒動，UI 看起來「箭頭沒用」
+3. `fetch` 沒檢查 `r.ok`，API 失敗也 silent fail（違反「所有錯誤完整顯示前端」）
+
+**修法**：
+- **`prisma/normalize-orders.ts`**（新檔，一次性 script）：把 `Service / GeneralFaq / ProcessStep / WhyUsSection / ServiceSection / BeforeAfterPair / ServiceFeature / ServiceFaq / ServiceGalleryImage` 的 `order` 全部重編為 0..n-1，分組鍵分別為「全表 / serviceId / sectionId / location」。已執行
+- **`lib/admin-reorder.ts`**（新檔）：
+  - `swapOrderByIndex(items, id, dir, putUrl)` — 按 sorted index 重算 order，**不依賴 order 唯一性**也能正確
+  - `nextOrder(items)` — 算 `max(order)+1`，新增 form 用，避免再生 dup
+  - 內建 `r.ok` 檢查 + 解析 error message，失敗 throw 讓 caller toast
+- **6 個 admin page** 全改成呼叫 helper：`app/admin/services/page.tsx`、`app/admin/services/[id]/sections/page.tsx`、`app/admin/services/[id]/before-afters/page.tsx`、`app/admin/general-faqs/page.tsx`、`app/admin/process-steps/page.tsx`、`app/admin/why-us-sections/page.tsx`
+- **`app/admin/services/page.tsx`** 新增 form 的 `order` 預設改用 `nextOrder(services)`
+
+**未來新增列表 admin page** 必須沿用 `swapOrderByIndex` + `nextOrder`，不要再寫 swap 數字版本。
+
+### 2026-05-16（施作過程相簿照片下方文字）
+
+**動機**：甲方希望 `gallery` type section 的圖片下方能顯示說明文字。
+
+**改動**：
+- **`prisma/schema.prisma`** `ServiceGalleryImage`：新增 `caption String?`（顯示用，alt 改純 SEO）
+- **`prisma/backfill-gallery-caption.ts`**（新檔，一次性）：把現有 `alt` 內容複製到 `caption`，已執行回填 7 筆
+- **`app/api/admin/services/[id]/gallery/route.ts`**：POST/PATCH 接受 `caption`
+- **`components/admin/section-editors/GalleryEditor.tsx`**：拆兩欄 input（顯示文字 + SEO alt）
+- **`components/service-sections/GallerySection.tsx`**：用 `<figure>` + `<figcaption>` 渲染 caption；caption 為空時不渲染 `<figcaption>`，舊版視覺零回歸
+- **`prisma/schema.prisma`** `BookingInquiry`：補回 `serviceIds Int[]` 標記 legacy，避免 `db push` 觸發 data loss（CLAUDE.md 禁用 `--accept-data-loss`）
 
 ### 2026-05-15（contact 表單：移除「想諮詢的服務」，改填 LINE ID）
 
