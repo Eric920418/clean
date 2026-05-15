@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
+import { ImageUploader } from '@/components/admin/image-uploader'
 import type { AdminService, AdminServiceFeature, AdminServiceFaq } from '@/lib/admin-types'
 
 type PageProps = { params: Promise<{ id: string }> }
@@ -75,6 +76,8 @@ export default function ServiceEditPage({ params }: PageProps) {
           </Link>
         }
       />
+
+      <MainFieldsPanel service={service} onChange={fetchService} />
 
       {/* 子頁面快速連結 */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 mb-8">
@@ -501,5 +504,187 @@ function FaqRow({
         </button>
       </div>
     </li>
+  )
+}
+
+/* ================================================================ */
+function MainFieldsPanel({
+  service,
+  onChange,
+}: {
+  service: AdminService
+  onChange: () => void
+}) {
+  const [form, setForm] = useState({
+    name: service.name,
+    shortDesc: service.shortDesc,
+    longDesc: service.longDesc,
+    icon: service.icon ?? '',
+    heroImage: service.heroImage ?? '',
+    cardImage: service.cardImage ?? '',
+    isActive: service.isActive,
+    isFeatured: service.isFeatured,
+    order: service.order,
+    seoTitle: service.seoTitle ?? '',
+    seoDesc: service.seoDesc ?? '',
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    try {
+      const r = await fetch(`/api/admin/services/${service.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || '儲存失敗')
+      toast.success('已更新')
+      onChange()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '儲存失敗'
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="mb-8 rounded-xl border border-hairline bg-white p-6">
+      <header className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-ink">主欄位</h2>
+          <p className="text-xs text-ink-muted mt-0.5">服務名稱、描述、圖片、SEO、上下架</p>
+        </div>
+        <span className="text-xs text-ink-muted font-mono">slug: {service.slug}</span>
+      </header>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <ErrorBanner message={error} />
+
+        <Field label="服務名稱" required>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className={inputClass}
+            placeholder="冷氣機深度清洗"
+            required
+          />
+        </Field>
+
+        <Field label="卡片摘要" required hint="顯示在首頁與列表卡片，建議 80 字內">
+          <textarea
+            value={form.shortDesc}
+            onChange={(e) => setForm({ ...form, shortDesc: e.target.value })}
+            className={textareaClass}
+            rows={2}
+            required
+          />
+        </Field>
+
+        <Field label="詳細描述" required hint="顯示在服務詳情頁「為什麼這項服務重要？」區塊主文">
+          <textarea
+            value={form.longDesc}
+            onChange={(e) => setForm({ ...form, longDesc: e.target.value })}
+            className={textareaClass}
+            rows={5}
+            required
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Lucide icon 名稱" hint="如 Wind / Droplets / Sparkles / ShieldCheck">
+            <input
+              value={form.icon}
+              onChange={(e) => setForm({ ...form, icon: e.target.value })}
+              className={inputClass}
+              placeholder="Wind"
+            />
+          </Field>
+          <Field label="排序" hint="數字越小越前面">
+            <input
+              type="number"
+              value={form.order}
+              onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="卡片圖（首頁/列表用）">
+            <ImageUploader
+              value={form.cardImage}
+              onChange={(url) => setForm({ ...form, cardImage: url })}
+              folder="services"
+            />
+          </Field>
+          <Field label="Hero 大圖（詳情頁頂部）">
+            <ImageUploader
+              value={form.heroImage}
+              onChange={(url) => setForm({ ...form, heroImage: url })}
+              folder="services"
+            />
+          </Field>
+        </div>
+
+        <div className="rounded-md bg-bg-soft border border-hairline p-3 space-y-2">
+          <p className="text-xs font-medium text-ink-soft">SEO（選填）</p>
+          <Field label="SEO 標題">
+            <input
+              value={form.seoTitle}
+              onChange={(e) => setForm({ ...form, seoTitle: e.target.value })}
+              className={inputClass}
+              placeholder="冷氣機深度清洗 | invisible care"
+            />
+          </Field>
+          <Field label="SEO 描述">
+            <input
+              value={form.seoDesc}
+              onChange={(e) => setForm({ ...form, seoDesc: e.target.value })}
+              className={inputClass}
+              placeholder="專業冷氣拆洗，提升 30% 冷房效能..."
+            />
+          </Field>
+        </div>
+
+        <div className="flex flex-wrap gap-4 pt-2">
+          <label className="inline-flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="h-4 w-4 rounded border-hairline text-primary focus:ring-primary"
+            />
+            上架
+          </label>
+          <label className="inline-flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={form.isFeatured}
+              onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+              className="h-4 w-4 rounded border-hairline text-primary focus:ring-primary"
+            />
+            首頁精選
+          </label>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t border-hairline-soft">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-primary !py-2 !px-4 !text-sm disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
+            {submitting ? '儲存中…' : '儲存主欄位'}
+          </button>
+        </div>
+      </form>
+    </section>
   )
 }

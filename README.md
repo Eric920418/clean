@@ -61,8 +61,8 @@
 |---|---|
 | `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
 | `/admin/dashboard` | 首頁：QuickActions 兩個大按鈕 + 4 張統計卡 + 最近 5 筆詢問 |
-| `/admin/services` | 六大服務 CRUD（modal 編輯主欄位、排序、上下架、刪除） |
-| `/admin/services/[id]/edit` | 服務子表（特色 / FAQ inline 編輯） |
+| `/admin/services` | 服務列表（新增 modal、排序、上下架、刪除、進入詳細編輯） |
+| `/admin/services/[id]/edit` | 服務主欄位 + 子表（主欄位 panel / 特色 / FAQ）統一編輯頁 |
 | `/admin/services/[id]/before-afters` | ⭐ 清潔前後照片管理（每組 modal 上傳） |
 | `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
 | `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
@@ -546,6 +546,8 @@ return visibleSections.map((section) => (
 > 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
 
 **Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、faq answer、text_block body、why_with_features longDesc）後台輸入的 `\n` 都會在前台以實際換行渲染。實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。例外：`before_after` 的 `caption` 後台是單行 `<input>`，且 `MoreServicesSection.shortDesc` 用於小卡片，刻意不支援換行。
+
+**服務主欄位編輯入口統一**：原 `/admin/services` 列表的 Sparkles modal（編輯 11 個主欄位：name / shortDesc / longDesc / icon / order / cardImage / heroImage / seoTitle / seoDesc / isActive / isFeatured）已合併進 `/admin/services/[id]/edit` 的 `MainFieldsPanel`，列表只保留 Pencil 一個編輯入口，避免「同一個服務有兩個編輯入口」的認知負擔。列表頁的 `AdminModal` 縮編為 create-only（新增服務），編輯走獨立頁面。後端 API 零變動（`PUT /api/admin/services/[id]` 既有 schema 已支援）。
 
 ### C3c（已完成）— 列表 type section-scoped 子頁
 

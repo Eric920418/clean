@@ -33,7 +33,6 @@ export default function ServicesAdminPage() {
   const [services, setServices] = useState<AdminService[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<AdminService | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,27 +56,7 @@ export default function ServicesAdminPage() {
   }, [])
 
   function openCreate() {
-    setEditing(null)
     setForm(emptyForm)
-    setError(null)
-    setModalOpen(true)
-  }
-
-  function openEdit(s: AdminService) {
-    setEditing(s)
-    setForm({
-      name: s.name,
-      shortDesc: s.shortDesc,
-      longDesc: s.longDesc,
-      icon: s.icon ?? '',
-      heroImage: s.heroImage ?? '',
-      cardImage: s.cardImage ?? '',
-      isActive: s.isActive,
-      isFeatured: s.isFeatured,
-      order: s.order,
-      seoTitle: s.seoTitle ?? '',
-      seoDesc: s.seoDesc ?? '',
-    })
     setError(null)
     setModalOpen(true)
   }
@@ -88,24 +67,19 @@ export default function ServicesAdminPage() {
     setSubmitting(true)
 
     try {
-      const url = editing
-        ? `/api/admin/services/${editing.id}`
-        : '/api/admin/services'
-      const method = editing ? 'PUT' : 'POST'
-
-      const r = await fetch(url, {
-        method,
+      const r = await fetch('/api/admin/services', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '儲存失敗')
+      if (!r.ok) throw new Error(data.error || '建立失敗')
 
-      toast.success(editing ? '已更新' : '已新增')
+      toast.success('已新增')
       setModalOpen(false)
       fetchServices()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '儲存失敗'
+      const msg = err instanceof Error ? err.message : '建立失敗'
       setError(msg)
       toast.error(msg)
     } finally {
@@ -288,17 +262,10 @@ export default function ServicesAdminPage() {
                       <Link
                         href={`/admin/services/${s.id}/edit`}
                         className="rounded-md p-1.5 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition"
-                        title="編輯詳細內容（特色、FAQ）"
+                        title="編輯主欄位、特色、FAQ"
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>
-                      <button
-                        onClick={() => openEdit(s)}
-                        className="rounded-md p-1.5 text-ink-soft hover:text-ink hover:bg-bg-soft transition"
-                        title="編輯主欄位"
-                      >
-                        <Sparkles className="h-4 w-4" />
-                      </button>
                       <Link
                         href={`/services/${s.slug}`}
                         target="_blank"
@@ -326,10 +293,8 @@ export default function ServicesAdminPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         size="xl"
-        title={editing ? `編輯：${editing.name}` : '新增服務'}
-        description={
-          editing ? '修改主欄位後存檔。特色、FAQ 在「編輯詳細」頁管理。' : '建立後可進入「編輯詳細」維護特色與 FAQ'
-        }
+        title="新增服務"
+        description="建立後可進入「編輯詳細」維護特色與 FAQ"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <ErrorBanner message={error} />
@@ -337,7 +302,7 @@ export default function ServicesAdminPage() {
           <Field
             label="服務名稱"
             required
-            hint={editing ? undefined : '存檔後系統會自動依名稱產生網址（之後不可改）'}
+            hint="存檔後系統會自動依名稱產生網址（之後不可改）"
           >
             <input
               value={form.name}
@@ -462,7 +427,7 @@ export default function ServicesAdminPage() {
               disabled={submitting}
               className="btn-primary !py-2 !px-4 !text-sm disabled:opacity-60"
             >
-              {submitting ? '儲存中…' : editing ? '更新' : '建立'}
+              {submitting ? '建立中…' : '建立'}
             </button>
           </div>
         </form>
