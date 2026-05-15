@@ -134,8 +134,8 @@ model BookingInquiry {
   id         Int           @id @default(autoincrement())
   name       String
   phone      String
+  lineId     String?       // 客戶 LINE ID（新表單必填，舊資料為 null）
   email      String?
-  serviceIds Int[]         // 客戶想諮詢的服務 ID 陣列
   preferDate DateTime?     // 希望服務日期
   address    String?       // 概略區域（隱私保護用）
   message    String?       // 補充訊息

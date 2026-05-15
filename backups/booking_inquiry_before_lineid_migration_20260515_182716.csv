@@ -1,0 +1,2 @@
+id,name,phone,email,serviceIds,preferDate,address,message,status,isRead,createdAt,updatedAt
+1,蔡旭煌,0916998036,chen0105hc@gmail.com,"{4,1,6}",2026-05-19 00:00:00,台中,Vdb測試，測試，測試，,NEW,t,2026-05-10 09:43:38.797,2026-05-10 09:45:00.38

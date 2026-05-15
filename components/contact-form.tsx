@@ -3,27 +3,18 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Send, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
-type ServiceOption = { id: number; name: string }
-
-export function ContactForm({ services }: { services: ServiceOption[] }) {
+export function ContactForm() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [lineId, setLineId] = useState('')
   const [email, setEmail] = useState('')
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [preferDate, setPreferDate] = useState('')
   const [address, setAddress] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
-
-  function toggleService(id: number) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    )
-  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,8 +24,8 @@ export function ContactForm({ services }: { services: ServiceOption[] }) {
       setError('請至少填寫姓名與聯絡電話')
       return
     }
-    if (selectedIds.length === 0) {
-      setError('請至少選擇一項想諮詢的服務')
+    if (!lineId.trim()) {
+      setError('請填寫您的 LINE ID 以便聯繫')
       return
     }
 
@@ -46,8 +37,8 @@ export function ContactForm({ services }: { services: ServiceOption[] }) {
         body: JSON.stringify({
           name,
           phone,
+          lineId,
           email,
-          serviceIds: selectedIds,
           preferDate: preferDate || null,
           address,
           message,
@@ -107,6 +98,16 @@ export function ContactForm({ services }: { services: ServiceOption[] }) {
         </Field>
       </div>
 
+      <Field label="LINE ID" required>
+        <input
+          value={lineId}
+          onChange={(e) => setLineId(e.target.value)}
+          className="form-input"
+          placeholder="您的 LINE ID（例：cleanmaster123）"
+          maxLength={100}
+        />
+      </Field>
+
       <Field label="電子郵件（選填）">
         <input
           type="email"
@@ -115,29 +116,6 @@ export function ContactForm({ services }: { services: ServiceOption[] }) {
           className="form-input"
           placeholder="you@example.com"
         />
-      </Field>
-
-      <Field label="想諮詢的服務" required>
-        <div className="flex flex-wrap gap-2">
-          {services.map((s) => {
-            const selected = selectedIds.includes(s.id)
-            return (
-              <button
-                type="button"
-                key={s.id}
-                onClick={() => toggleService(s.id)}
-                className={cn(
-                  'rounded-full border px-3.5 py-1.5 text-sm transition',
-                  selected
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-hairline bg-white text-ink-soft hover:border-primary-soft hover:text-primary-deep',
-                )}
-              >
-                {s.name}
-              </button>
-            )
-          })}
-        </div>
       </Field>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

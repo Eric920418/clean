@@ -6,14 +6,18 @@ import { errorResponse, successResponse } from '@/lib/api-auth'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, phone, email, serviceIds, preferDate, address, message } = body
+    const { name, phone, lineId, email, preferDate, address, message } = body
 
     if (!name?.trim() || !phone?.trim()) {
       return errorResponse('姓名與聯絡電話為必填', 400)
     }
 
-    if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
-      return errorResponse('請至少選擇一項服務', 400)
+    if (typeof lineId !== 'string' || !lineId.trim()) {
+      return errorResponse('請填寫 LINE ID', 400)
+    }
+
+    if (lineId.trim().length > 100) {
+      return errorResponse('LINE ID 過長（上限 100 字）', 400)
     }
 
     if (typeof message === 'string' && message.length > 2000) {
@@ -29,8 +33,8 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         phone: phone.trim(),
+        lineId: lineId.trim(),
         email: email?.trim() || null,
-        serviceIds: serviceIds.map((x: unknown) => parseInt(String(x))).filter((n: number) => !isNaN(n)),
         preferDate: preferDate ? new Date(preferDate) : null,
         address: address?.trim() || null,
         message: message?.trim() || null,

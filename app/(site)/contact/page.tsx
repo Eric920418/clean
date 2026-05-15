@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Phone, Mail, Clock, MapPin, MessageCircle, PhoneCall } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { ContactForm } from '@/components/contact-form'
-import { getActiveServices, getSiteSettings, getContentBlock } from '@/lib/queries'
+import { getSiteSettings, getContentBlock } from '@/lib/queries'
 
 export const revalidate = 60
 
@@ -13,12 +13,6 @@ export const metadata: Metadata = {
 }
 
 export default async function ContactPage() {
-  let services: { id: number; name: string }[] = []
-  try {
-    services = await getActiveServices()
-  } catch {
-    services = []
-  }
   const [settings, heroBlock] = await Promise.all([
     getSiteSettings().catch(() => ({}) as Record<string, string>),
     getContentBlock('hero-contact').catch(() => null),

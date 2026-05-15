@@ -56,7 +56,7 @@ export function HeroSection({ section, service, phoneTel }: Props) {
             </a>
             <Link
               href="#works"
-              className="btn-ghost border-white/40 bg-white text-black hover:bg-white/20 hover:border-white"
+              className="btn-ghost bg-white! text-black! border-white/40 hover:bg-white/80! hover:border-white"
             >
               看實績對比
             </Link>
