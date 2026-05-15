@@ -65,8 +65,8 @@ export type AdminInquiry = {
   id: number
   name: string
   phone: string
+  lineId: string | null
   email: string | null
-  serviceIds: number[]
   preferDate: string | null
   address: string | null
   message: string | null

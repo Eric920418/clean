@@ -128,7 +128,7 @@ export default async function ContactPage() {
           </aside>
 
           <div className="lg:col-span-2">
-            <ContactForm services={services.map((s) => ({ id: s.id, name: s.name }))} />
+            <ContactForm />
           </div>
         </div>
       </section>
