@@ -41,7 +41,7 @@ export function HeroSection({ section, service, phoneTel }: Props) {
             <IconByName name={service.icon ?? 'Sparkles'} className="h-5 w-5" />
           </span>
           {eyebrow && (
-            <div className="mt-5 text-xs font-semibold tracking-[0.2em] text-white/70 uppercase">
+            <div className="mt-5 text-xs font-semibold tracking-[0.2em] text-white uppercase">
               {eyebrow}
             </div>
           )}
