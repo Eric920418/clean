@@ -27,7 +27,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
       { name: 'description', label: '副標說明', type: 'textarea' },
       { name: 'primaryCta', label: '主 CTA 按鈕文字', type: 'text', hint: '例：立即來電預約' },
-      { name: 'secondaryCta', label: '副 CTA 按鈕文字', type: 'text', hint: '例：看清潔實績' },
+      { name: 'secondaryCta', label: '副 CTA 按鈕文字', type: 'text', hint: '例：看服務案例' },
       { name: 'checklist1', label: 'Checklist 1', type: 'text' },
       { name: 'checklist2', label: 'Checklist 2', type: 'text' },
       { name: 'checklist3', label: 'Checklist 3', type: 'text' },
@@ -144,7 +144,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     ],
   },
   'hero-works': {
-    title: '清潔實績・Hero',
+    title: '服務案例・Hero',
     description: 'Works 頁的標題段',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
@@ -158,7 +158,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     description: '導覽列的 5 個分頁 label、主要按鈕文字、Footer 法律聲明',
     fields: [
       { name: 'navServicesLabel', label: '導覽：服務項目', type: 'text' },
-      { name: 'navWorksLabel', label: '導覽：清潔實績', type: 'text' },
+      { name: 'navWorksLabel', label: '導覽：服務案例', type: 'text' },
       { name: 'navAboutLabel', label: '導覽：關於我們', type: 'text' },
       { name: 'navFaqLabel', label: '導覽：常見問題', type: 'text' },
       { name: 'navContactLabel', label: '導覽：預約諮詢', type: 'text' },

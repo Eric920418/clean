@@ -161,7 +161,7 @@ async function main() {
       description:
         '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。',
       primaryCta: '立即來電預約',
-      secondaryCta: '看清潔實績',
+      secondaryCta: '看服務案例',
       checklist1: '歐盟認證環保洗劑',
       checklist2: '透明報價・絕不增項',
       checklist3: '30 天無憂保固',
@@ -227,12 +227,12 @@ async function main() {
     },
     'hero-works': {
       eyebrow: 'Real Results',
-      title: '清潔實績・前後對比',
+      title: '服務案例・前後對比',
       description: '拖動中央分隔線，親眼見證 invisible care 帶來的改變。所有照片均為真實案例。',
     },
     navigation: {
       navServicesLabel: '服務項目',
-      navWorksLabel: '清潔實績',
+      navWorksLabel: '服務案例',
       navAboutLabel: '關於我們',
       navFaqLabel: '常見問題',
       navContactLabel: '預約諮詢',

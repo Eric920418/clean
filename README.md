@@ -147,7 +147,7 @@ clean/
 │   ├── services/
 │   │   ├── page.tsx                六大服務列表
 │   │   └── [slug]/page.tsx         服務詳情（含 generateStaticParams）
-│   ├── works/page.tsx              清潔實績（前後對比集合 + 分類篩選）
+│   ├── works/page.tsx              服務案例（前後對比集合 + 分類篩選）
 │   ├── about/page.tsx              關於我們
 │   ├── contact/page.tsx            預約諮詢
 │   ├── faq/page.tsx                常見問題
@@ -352,7 +352,7 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
 | `/` | 首頁 |
 | `/services` | 六大服務列表 |
 | `/services/[slug]` | 單一服務詳情（generateStaticParams） |
-| `/works` | 清潔實績（全部對比圖 + 分類篩選） |
+| `/works` | 服務案例（全部對比圖 + 分類篩選） |
 | `/about` | 關於我們 |
 | `/contact` | 預約諮詢 |
 | `/faq` | 常見問題 |

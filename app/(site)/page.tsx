@@ -86,23 +86,27 @@ function Hero({
     <section className="relative overflow-hidden bg-medical-glow">
       <div className="container-narrow grid grid-cols-1 items-center gap-10 pt-14 pb-16 md:grid-cols-2 md:gap-14 md:pt-20 md:pb-24">
         <div>
-          <span className="eyebrow">{hero.eyebrow || 'Invisible Care · 居家健康守護'}</span>
+          <span className="eyebrow">
+            {hero.eyebrow || "Invisible Care · 居家健康守護"}
+          </span>
           <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-ink md:text-6xl">
-            {hero.titleLine1 || '看不見的守護，'}
+            {hero.titleLine1 || "看不見的守護，"}
             <br />
-            <span className="text-primary-deep">{hero.titleLine2 || '才是家最頂級的豪華'}</span>
+            <span className="text-primary-deep">
+              {hero.titleLine2 || "才是家最頂級的豪華"}
+            </span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-ink-soft md:text-lg">
             {hero.description ||
-              '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。'}
+              "從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。"}
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
-              {hero.primaryCta || '立即來電預約'}
+              {hero.primaryCta || "立即來電預約"}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/works" className="btn-ghost">
-              {hero.secondaryCta || '看清潔實績'}
+              {hero.secondaryCta || "看服務案例"}
             </Link>
           </div>
 
@@ -123,7 +127,7 @@ function Hero({
             {featured ? (
               <Image
                 src={featured.afterUrl}
-                alt={featured.caption ?? '清洗後實況'}
+                alt={featured.caption ?? "清洗後實況"}
                 fill
                 sizes="(min-width: 768px) 50vw, 100vw"
                 className="object-cover"
@@ -145,7 +149,7 @@ function Hero({
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 /* ============================================================

@@ -43,7 +43,7 @@ export function SiteNav({
   // route 固定，label 由業主後台改
   const navItems = [
     { href: '/services', label: navigation.navServicesLabel || '服務項目' },
-    { href: '/works', label: navigation.navWorksLabel || '清潔實績' },
+    { href: '/works', label: navigation.navWorksLabel || '服務案例' },
     { href: '/about', label: navigation.navAboutLabel || '關於我們' },
     { href: '/faq', label: navigation.navFaqLabel || '常見問題' },
     { href: '/contact', label: navigation.navContactLabel || '預約諮詢' },
