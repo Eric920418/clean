@@ -154,27 +154,16 @@ export default function ServiceSectionsPage({ params }: PageProps) {
   }, [id])
 
   async function move(section: AdminServiceSection, dir: 'up' | 'down') {
-    const sorted = sections.slice().sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((s) => s.id === section.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
-
     try {
-      await Promise.all([
-        fetch(`/api/admin/services/${id}/sections/${section.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swap.order }),
-        }),
-        fetch(`/api/admin/services/${id}/sections/${swap.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: section.order }),
-        }),
-      ])
-      fetchAll()
+      const moved = await swapOrderByIndex(
+        sections,
+        section.id,
+        dir,
+        (sid) => `/api/admin/services/${id}/sections/${sid}`,
+      )
+      if (moved) fetchAll()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '排序失敗')
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
   }
 

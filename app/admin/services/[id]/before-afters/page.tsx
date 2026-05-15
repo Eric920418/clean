@@ -22,6 +22,7 @@ import { BeforeAfterModal } from '@/components/admin/before-after-modal'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { cn } from '@/lib/utils'
 import type { AdminBeforeAfter, AdminService } from '@/lib/admin-types'
+import { swapOrderByIndex } from '@/lib/admin-reorder'
 import { CONFIRM_MESSAGES, MODULES, NAV_LABELS } from '@/lib/i18n/admin-zh'
 
 type PageProps = { params: Promise<{ id: string }> }
@@ -108,12 +109,17 @@ export default function BeforeAftersPage({ params }: PageProps) {
   }
 
   async function move(b: AdminBeforeAfter, dir: 'up' | 'down') {
-    const sorted = [...items].sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((x) => x.id === b.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
-    await patch(b, { order: swap.order })
-    await patch(swap, { order: b.order })
+    try {
+      const moved = await swapOrderByIndex(
+        items,
+        b.id,
+        dir,
+        (bid) => `/api/admin/services/${id}/before-afters/${bid}`,
+      )
+      if (moved) fetchAll()
+    } catch (err) {
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
+    }
   }
 
   if (loading) {
