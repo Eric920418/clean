@@ -45,7 +45,7 @@ export function HeroSection({ section, service, phoneTel }: Props) {
               {eyebrow}
             </div>
           )}
-          <h1 className="mt-5 text-4xl font-medium tracking-tight md:text-5xl">{title}</h1>
+          <h1 className="mt-5 text-white! text-4xl font-medium tracking-tight md:text-5xl">{title}</h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
             {description}
           </p>

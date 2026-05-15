@@ -301,9 +301,12 @@ model BeforeAfterPair {                 // 🎯 核心
 }
 
 model BookingInquiry {                   // 取代 ContactMessage
-  serviceIds Int[]                      // 客戶可多選想諮詢的服務
+  lineId     String?                    // 客戶 LINE ID（新表單必填，舊資料為 null）
   status     InquiryStatus              // NEW / CONTACTED / QUOTED / DONE / CLOSED
 }
+// 2026-05-15：contact 表單從 serviceIds 改為 lineId
+// schema.prisma 已移除 serviceIds，DB 欄位保留（nullable）→ prisma 不會 SELECT，舊資料保留
+// 若未來要徹底清欄位：ALTER TABLE "BookingInquiry" DROP COLUMN "serviceIds";
 
 model WhyUsSection {                     // 首頁/關於頁 WhyUs 多區塊
   location    String                    // "home" 首頁、"about" 關於頁
@@ -698,6 +701,21 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-15（contact 表單：移除「想諮詢的服務」，改填 LINE ID）
+
+**動機**：簡化轉換漏斗，LINE ID 比 email/電話對台灣客戶的後續聯絡命中率更高。
+
+**改動**：
+
+- **`prisma/schema.prisma`** `BookingInquiry`：移除 `serviceIds Int[]`、新增 `lineId String?`。schema 設 nullable，業務層（API + 前端）強制必填——`null` 只代表「舊資料無此欄位」這個歷史事實
+- **`components/contact-form.tsx`**：移除多選 toggle 服務 UI 與 `services` prop，改為 `LINE ID` 文字必填欄位（緊接電話之後），placeholder「您的 LINE ID（例：cleanmaster123）」、`maxLength=100`、不做嚴格 regex（避免擋掉貼 line.me 連結的客戶）
+- **`app/api/inquiries/route.ts`**：解構移除 `serviceIds`、加 `lineId` 驗證（非空 + 上限 100 字）。`prisma.bookingInquiry.create` 寫入 `lineId.trim()`
+- **`app/(site)/contact/page.tsx`**：移除 `getActiveServices` import 與呼叫（函數本身保留——服務列表頁仍在用），`<ContactForm />` 不再需要 props
+- **`lib/admin-types.ts`** `AdminInquiry`：欄位 `serviceIds: number[]` → `lineId: string | null`
+- **`app/admin/inquiries/[id]/page.tsx`**：移除「想諮詢的服務」整個 `<section>` + `services` state + `/api/admin/services` fetch + `matchedServices` 計算。客戶資訊區新增 LINE ID 顯示 + 「複製」按鈕（個人 LINE ID 沒有官方 deeplink，複製貼到 LINE 搜尋是最務實的 UX）
+- **`app/admin/inquiries/page.tsx`** 列表頁：桌機版表格「電話 / Email」欄改為「電話 / LINE ID」（email 退到詳情頁查看）。手機版 card 維持不變
+- **資料庫**：用 `ALTER TABLE ... ADD COLUMN "lineId" TEXT` 純新增（非破壞性）。`serviceIds` 欄位**保留在 DB 但 schema.prisma 已移除**——prisma client 不會讀寫它，新諮詢的 `serviceIds` 為 NULL，舊資料完整保留（已備份 CSV 在 `backups/`）。這是「方案 A：保留欄位但停用」，業務效果跟「完全 DROP」一致，但零資料破壞、零部署風險。若未來要徹底清理欄位，再執行 `ALTER TABLE "BookingInquiry" DROP COLUMN "serviceIds";`
 
 ### 2026-05-15（效能優化：region 對齊 + Neon serverless driver + bundle 瘦身）
 
