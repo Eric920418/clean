@@ -3,13 +3,13 @@
 import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Phone, Mail, MessageCircle, MapPin, Calendar, Trash2, Loader2, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { StatusBadge, STATUS_LABELS } from '@/components/admin/status-badge'
 import { cn } from '@/lib/utils'
-import type { AdminInquiry, AdminService } from '@/lib/admin-types'
+import type { AdminInquiry } from '@/lib/admin-types'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -17,22 +17,16 @@ export default function InquiryDetailPage({ params }: PageProps) {
   const { id } = use(params)
   const router = useRouter()
   const [inquiry, setInquiry] = useState<AdminInquiry | null>(null)
-  const [services, setServices] = useState<AdminService[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   async function fetchAll() {
     setLoading(true)
     try {
-      const [inqRes, srvRes] = await Promise.all([
-        fetch(`/api/admin/inquiries/${id}`),
-        fetch('/api/admin/services'),
-      ])
+      const inqRes = await fetch(`/api/admin/inquiries/${id}`)
       const inq = await inqRes.json()
-      const srv = await srvRes.json()
       if (!inqRes.ok) throw new Error(inq.error || '讀取失敗')
       setInquiry(inq)
-      setServices(srv)
 
       // 自動標記為已讀
       if (!inq.isRead) {
@@ -46,6 +40,16 @@ export default function InquiryDetailPage({ params }: PageProps) {
       setError(err instanceof Error ? err.message : '讀取失敗')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function copyLineId() {
+    if (!inquiry?.lineId) return
+    try {
+      await navigator.clipboard.writeText(inquiry.lineId)
+      toast.success('LINE ID 已複製')
+    } catch {
+      toast.error('複製失敗')
     }
   }
 
@@ -104,8 +108,6 @@ export default function InquiryDetailPage({ params }: PageProps) {
     )
   }
 
-  const matchedServices = services.filter((s) => inquiry.serviceIds.includes(s.id))
-
   return (
     <>
       <AdminPageHeader
@@ -142,6 +144,29 @@ export default function InquiryDetailPage({ params }: PageProps) {
                   </a>
                 </dd>
               </div>
+              <div>
+                <dt className="text-xs text-ink-muted flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3" /> LINE ID
+                </dt>
+                <dd className="mt-0.5 flex items-center gap-2">
+                  {inquiry.lineId ? (
+                    <>
+                      <span className="font-medium text-ink break-all">{inquiry.lineId}</span>
+                      <button
+                        type="button"
+                        onClick={copyLineId}
+                        className="inline-flex items-center gap-1 rounded-md border border-hairline px-2 py-0.5 text-xs text-ink-soft hover:border-primary-soft hover:text-primary-deep transition"
+                        title="複製 LINE ID"
+                      >
+                        <Copy className="h-3 w-3" />
+                        複製
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-ink-muted">（舊資料未填）</span>
+                  )}
+                </dd>
+              </div>
               {inquiry.email && (
                 <div>
                   <dt className="text-xs text-ink-muted flex items-center gap-1">
@@ -173,24 +198,6 @@ export default function InquiryDetailPage({ params }: PageProps) {
                 </div>
               )}
             </dl>
-          </section>
-
-          <section className="rounded-xl border border-hairline bg-white p-6">
-            <h2 className="text-base font-semibold text-ink mb-4">想諮詢的服務</h2>
-            {matchedServices.length === 0 ? (
-              <p className="text-sm text-ink-muted">（未指定）</p>
-            ) : (
-              <ul className="flex flex-wrap gap-2">
-                {matchedServices.map((s) => (
-                  <li
-                    key={s.id}
-                    className="rounded-full bg-bg-tint px-3 py-1 text-sm text-primary-deep"
-                  >
-                    {s.name}
-                  </li>
-                ))}
-              </ul>
-            )}
           </section>
 
           <section className="rounded-xl border border-hairline bg-white p-6">
