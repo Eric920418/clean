@@ -89,7 +89,7 @@ function Hero({
           <span className="eyebrow">
             {hero.eyebrow || "Invisible Care · 居家健康守護"}
           </span>
-          <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-ink md:text-6xl">
+          <h1 className="mt-5 text-2xl font-medium leading-tight tracking-tight text-ink md:text-4xl">
             {hero.titleLine1 || "看不見的守護，"}
             <br />
             <span className="text-primary-deep">
