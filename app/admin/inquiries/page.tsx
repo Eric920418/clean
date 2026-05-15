@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Phone, Mail, Inbox, Loader2, ChevronRight } from 'lucide-react'
+import { Phone, MessageCircle, Inbox, Loader2, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { StatusBadge } from '@/components/admin/status-badge'
@@ -114,7 +114,7 @@ export default function InquiriesPage() {
                 <tr>
                   <th className="px-5 py-4 font-medium">時間</th>
                   <th className="px-5 py-4 font-medium">客人</th>
-                  <th className="px-5 py-4 font-medium">電話 / Email</th>
+                  <th className="px-5 py-4 font-medium">電話 / LINE ID</th>
                   <th className="px-5 py-4 font-medium">問題摘要</th>
                   <th className="px-5 py-4 font-medium text-center">狀態</th>
                 </tr>
@@ -161,13 +161,11 @@ export default function InquiriesPage() {
                         >
                           <Phone className="h-4 w-4" /> {it.phone}
                         </a>
-                        {it.email && (
-                          <a
-                            href={`mailto:${it.email}`}
-                            className="flex items-center gap-1.5 text-base text-ink-soft hover:text-primary-deep"
-                          >
-                            <Mail className="h-4 w-4" /> {it.email}
-                          </a>
+                        {it.lineId && (
+                          <div className="flex items-center gap-1.5 text-base text-ink-soft">
+                            <MessageCircle className="h-4 w-4" />
+                            <span className="break-all">{it.lineId}</span>
+                          </div>
                         )}
                       </div>
                     </td>
