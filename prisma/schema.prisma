@@ -123,7 +123,8 @@ model ServiceGalleryImage {
   sectionId Int
   section   ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   url       String
-  alt       String?
+  alt       String?  // SEO / 無障礙用
+  caption   String?  // 顯示在照片下方的說明文字
   order     Int     @default(0)
 }
 

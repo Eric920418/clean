@@ -61,7 +61,7 @@ export default function ServiceEditPage({ params }: PageProps) {
     <>
       <AdminPageHeader
         title={service.name}
-        description="維護服務的特色 bullet、常見問題、對比圖與圖庫"
+        description="維護服務的主欄位、特色 bullet、常見問題，以及對比圖與圖庫子頁連結"
         breadcrumb={[
           { label: '服務管理', href: '/admin/services' },
           { label: service.name },

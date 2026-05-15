@@ -294,7 +294,7 @@ export default function ServicesAdminPage() {
         onClose={() => setModalOpen(false)}
         size="xl"
         title="新增服務"
-        description="建立後可進入「編輯詳細」維護特色與 FAQ"
+        description="建立後點列表上的 ✏️ 進入編輯頁，繼續維護圖片、特色、FAQ、對比圖與頁面區塊"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <ErrorBanner message={error} />
