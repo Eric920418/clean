@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string; sectionId: string }> }
 
 // PUT /api/admin/services/[id]/sections/[sectionId] — 更新（order swap / isVisible toggle / config 編輯）
 export async function PUT(request: NextRequest, { params }: RouteParams) {
-  const { sectionId } = await params
+  const { id, sectionId } = await params
   const auth = await checkAdminAuth()
   if (!auth.authorized) return auth.response
 
@@ -31,6 +32,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id: parseInt(sectionId, 10) },
       data,
     })
+    await revalidateService(parseInt(id, 10))
     return successResponse(section)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -53,6 +55,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     await prisma.serviceSection.delete({ where: { id: parseInt(sectionId, 10) } })
+    await revalidateService(serviceId)
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

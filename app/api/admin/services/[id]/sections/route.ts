@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { revalidateService } from '@/lib/revalidate-service'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -95,6 +96,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     })
 
+    await revalidateService(serviceId)
     return successResponse(section, 201)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '新增失敗')

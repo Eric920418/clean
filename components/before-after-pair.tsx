@@ -56,7 +56,7 @@ function Pane({
   caption,
 }: {
   url: string
-  label: '清洗前' | '清洗後'
+  label: '服務前' | '服務後'
   tone: 'ink' | 'primary'
   aspectClass: string
   priority: boolean
