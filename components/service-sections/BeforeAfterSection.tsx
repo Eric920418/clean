@@ -18,7 +18,7 @@ export function BeforeAfterSection({ section, service }: Props) {
     configString(section.config, 'description') ?? '所有照片均為實際施作案例，未經修飾濾鏡。'
 
   return (
-    <section id="works" className="bg-bg-soft py-16 md:py-24">
+    <section id="works" className="bg-bg-soft py-6 md:py-10">
       <div className="container-narrow">
         <SectionHeading eyebrow={eyebrow} title={title} description={description} />
         <div className="mx-auto mt-9 grid max-w-4xl grid-cols-1 gap-10">

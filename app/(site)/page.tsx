@@ -209,7 +209,7 @@ function WhyUs({ sections }: { sections: WhyUsSectionData[] }) {
       {sections.map((section) => {
         const cards = (section.cards as unknown as WhyUsCard[]) ?? []
         return (
-          <section key={section.id} className="bg-bg-soft py-16 md:py-24">
+          <section key={section.id} className="bg-bg-soft py-6 md:py-10">
             <div className="container-narrow">
               <SectionHeading
                 align="center"

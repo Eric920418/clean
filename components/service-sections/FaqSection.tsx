@@ -15,7 +15,7 @@ export function FaqSection({ section }: Props) {
   const title = configString(section.config, 'title') ?? '常見問題'
 
   return (
-    <section className="bg-bg-soft py-16 md:py-24">
+    <section className="bg-bg-soft py-6 md:py-10">
       <div className="container-narrow max-w-3xl">
         <SectionHeading eyebrow={eyebrow} title={title} align="center" />
         <div className="mt-9">
