@@ -11,6 +11,7 @@ import { useConfirm } from '@/components/admin/confirm-dialog'
 import { cn } from '@/lib/utils'
 import { emptyCards, WHY_US_CARD_COUNT, type WhyUsCard } from '@/lib/why-us'
 import type { AdminWhyUsSection } from '@/lib/admin-types'
+import { swapOrderByIndex } from '@/lib/admin-reorder'
 
 type Location = 'home' | 'about'
 const LOCATION_LABEL: Record<Location, string> = {
@@ -133,29 +134,18 @@ export default function WhyUsSectionsPage() {
     })
   }
 
-  // 上下移動：swap order（同 location 內互換）
+  // 上下移動：在同 location 內互換（visibleItems 已 filter by activeLocation；DB 的 order 也按 location 分組從 0 起算）
   async function move(section: AdminWhyUsSection, dir: 'up' | 'down') {
-    const sorted = visibleItems.slice().sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((s) => s.id === section.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
-
     try {
-      await Promise.all([
-        fetch(`/api/admin/why-us-sections/${section.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swap.order }),
-        }),
-        fetch(`/api/admin/why-us-sections/${swap.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: section.order }),
-        }),
-      ])
-      fetchAll()
+      const moved = await swapOrderByIndex(
+        visibleItems,
+        section.id,
+        dir,
+        (sid) => `/api/admin/why-us-sections/${sid}`,
+      )
+      if (moved) fetchAll()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '排序失敗')
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
   }
 

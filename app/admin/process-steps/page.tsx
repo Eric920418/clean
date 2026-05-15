@@ -9,6 +9,7 @@ import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import type { AdminProcessStep } from '@/lib/admin-types'
+import { swapOrderByIndex } from '@/lib/admin-reorder'
 
 type FormState = { step: string; title: string; desc: string }
 const emptyForm: FormState = { step: '', title: '', desc: '' }
@@ -101,26 +102,16 @@ export default function ProcessStepsPage() {
   }
 
   async function move(it: AdminProcessStep, dir: 'up' | 'down') {
-    const sorted = [...items].sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((s) => s.id === it.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
     try {
-      await Promise.all([
-        fetch(`/api/admin/process-steps/${it.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swap.order }),
-        }),
-        fetch(`/api/admin/process-steps/${swap.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: it.order }),
-        }),
-      ])
-      fetchAll()
+      const moved = await swapOrderByIndex(
+        items,
+        it.id,
+        dir,
+        (pid) => `/api/admin/process-steps/${pid}`,
+      )
+      if (moved) fetchAll()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '排序失敗')
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
   }
 

@@ -39,13 +39,21 @@ async function main() {
     }
     log.push(`ProcessStep: ${processSteps.length} rows`)
 
-    const whyUs = await db.whyUsSection.findMany({ orderBy: [{ order: 'asc' }, { id: 'asc' }] })
-    for (let i = 0; i < whyUs.length; i++) {
-      if (whyUs[i].order !== i) {
-        await db.whyUsSection.update({ where: { id: whyUs[i].id }, data: { order: i } })
+    // group by location（home / about 各自 0..n-1）
+    let whyUsCount = 0
+    for (const loc of ['home', 'about']) {
+      const rows = await db.whyUsSection.findMany({
+        where: { location: loc },
+        orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      })
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].order !== i) {
+          await db.whyUsSection.update({ where: { id: rows[i].id }, data: { order: i } })
+        }
+        whyUsCount++
       }
     }
-    log.push(`WhyUsSection: ${whyUs.length} rows`)
+    log.push(`WhyUsSection: ${whyUsCount} rows (grouped by location)`)
 
     // group by serviceId
     const serviceIds = (await db.service.findMany({ select: { id: true } })).map((s) => s.id)

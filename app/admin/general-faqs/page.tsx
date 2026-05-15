@@ -9,6 +9,7 @@ import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import type { AdminGeneralFaq } from '@/lib/admin-types'
+import { swapOrderByIndex } from '@/lib/admin-reorder'
 
 type FormState = { question: string; answer: string }
 const emptyForm: FormState = { question: '', answer: '' }
@@ -100,26 +101,16 @@ export default function GeneralFaqsPage() {
   }
 
   async function move(it: AdminGeneralFaq, dir: 'up' | 'down') {
-    const sorted = [...items].sort((a, b) => a.order - b.order)
-    const idx = sorted.findIndex((s) => s.id === it.id)
-    const swap = dir === 'up' ? sorted[idx - 1] : sorted[idx + 1]
-    if (!swap) return
     try {
-      await Promise.all([
-        fetch(`/api/admin/general-faqs/${it.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: swap.order }),
-        }),
-        fetch(`/api/admin/general-faqs/${swap.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: it.order }),
-        }),
-      ])
-      fetchAll()
+      const moved = await swapOrderByIndex(
+        items,
+        it.id,
+        dir,
+        (fid) => `/api/admin/general-faqs/${fid}`,
+      )
+      if (moved) fetchAll()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '排序失敗')
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
   }
 
