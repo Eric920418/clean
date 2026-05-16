@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
-import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { Field, inputClass } from '@/components/admin/form-field'
 import { ImageUploader } from '@/components/admin/image-uploader'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 
-type FieldType = 'text' | 'textarea' | 'image'
+type FieldType = 'text' | 'richtext' | 'image'
 
 type BlockDef = {
   title: string
@@ -25,7 +26,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：Invisible Care · 居家健康守護' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
-      { name: 'description', label: '副標說明', type: 'textarea' },
+      { name: 'description', label: '副標說明', type: 'richtext' },
       { name: 'primaryCta', label: '主 CTA 按鈕文字', type: 'text', hint: '例：立即來電預約' },
       { name: 'secondaryCta', label: '副 CTA 按鈕文字', type: 'text', hint: '例：看服務案例' },
       { name: 'checklist1', label: 'Checklist 1', type: 'text' },
@@ -40,7 +41,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
     ],
   },
   'section-works-home': {
@@ -49,7 +50,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
       { name: 'viewAllLabel', label: '「查看全部實績」按鈕文字', type: 'text' },
     ],
   },
@@ -76,7 +77,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'overline', label: '上方小標', type: 'text', hint: '例：BOOK YOUR HOME CARE TODAY' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
       { name: 'primaryCta', label: '按鈕文字', type: 'text' },
     ],
   },
@@ -88,7 +89,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：About invisible care' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
-      { name: 'lead', label: '右側說明文', type: 'textarea' },
+      { name: 'lead', label: '右側說明文', type: 'richtext' },
     ],
   },
   about: {
@@ -97,9 +98,9 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'paragraph1', label: '段落 1', type: 'textarea' },
-      { name: 'paragraph2', label: '段落 2', type: 'textarea' },
-      { name: 'paragraph3', label: '段落 3', type: 'textarea' },
+      { name: 'paragraph1', label: '段落 1', type: 'richtext' },
+      { name: 'paragraph2', label: '段落 2', type: 'richtext' },
+      { name: 'paragraph3', label: '段落 3', type: 'richtext' },
       { name: 'image', label: '故事區圖片', type: 'image', folder: 'about' },
     ],
   },
@@ -108,7 +109,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     description: 'About 頁底部的呼籲區塊',
     fields: [
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
       { name: 'primaryCta', label: '按鈕文字', type: 'text' },
     ],
   },
@@ -119,7 +120,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
     ],
   },
   'hero-faq': {
@@ -128,7 +129,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: 'Hero 標題', type: 'text' },
-      { name: 'description', label: 'Hero 副標', type: 'textarea' },
+      { name: 'description', label: 'Hero 副標', type: 'richtext' },
       { name: 'generalHeading', label: '一般服務區塊標題', type: 'text' },
       { name: 'contactBoxText', label: '底部聯絡卡片文字', type: 'text' },
       { name: 'contactBoxButton', label: '底部聯絡按鈕文字', type: 'text' },
@@ -140,7 +141,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
     ],
   },
   'hero-works': {
@@ -149,7 +150,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
-      { name: 'description', label: '副標', type: 'textarea' },
+      { name: 'description', label: '副標', type: 'richtext' },
     ],
   },
   // === 全站導覽（Header / Footer 文字） ===
@@ -163,7 +164,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'navFaqLabel', label: '導覽：常見問題', type: 'text' },
       { name: 'navContactLabel', label: '導覽：預約諮詢', type: 'text' },
       { name: 'navPrimaryCtaLabel', label: '導覽列主按鈕文字', type: 'text', hint: '例：立即來電預約' },
-      { name: 'footerLegalNote', label: 'Footer 法律聲明', type: 'textarea' },
+      { name: 'footerLegalNote', label: 'Footer 法律聲明', type: 'richtext' },
     ],
   },
 }
@@ -218,10 +219,12 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
   async function save() {
     setSaving(true)
     try {
+      // 告訴 API 哪些 key 是富文本，需 sanitize（其他純 text / image URL 不動）
+      const richTextKeys = def.fields.filter((f) => f.type === 'richtext').map((f) => f.name)
       const r = await fetch(`/api/admin/content/${blockKey}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload: values }),
+        body: JSON.stringify({ payload: values, richTextKeys }),
       })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '儲存失敗')
@@ -261,12 +264,11 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
         <div className="space-y-4">
           {def.fields.map((f) => (
             <Field key={f.name} label={f.label} hint={f.hint}>
-              {f.type === 'textarea' ? (
-                <textarea
+              {f.type === 'richtext' ? (
+                <RichTextEditor
                   value={values[f.name] ?? ''}
-                  onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
-                  className={textareaClass}
-                  rows={3}
+                  onContentChange={(html) => setValues({ ...values, [f.name]: html })}
+                  height="180px"
                 />
               ) : f.type === 'image' ? (
                 <ImageUploader

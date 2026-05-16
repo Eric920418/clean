@@ -97,10 +97,13 @@ function Hero({
               {hero.titleLine2 || "才是家最頂級的豪華"}
             </span>
           </h1>
-          <p className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base">
-            {hero.description ||
-              "從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。"}
-          </p>
+          <RichText
+            html={
+              hero.description ||
+              '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。'
+            }
+            className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base"
+          />
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
               {hero.primaryCta || "立即來電預約"}
@@ -403,9 +406,10 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
             <br />
             {block.titleLine2 || '把時間留給家人。'}
           </h2>
-          <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 md:text-base">
-            {block.description || '一通電話，專人為您現場評估，給您完整透明的報價。'}
-          </p>
+          <RichText
+            html={block.description || '一通電話，專人為您現場評估，給您完整透明的報價。'}
+            className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 md:text-base"
+          />
           <div className="mt-8 flex flex-wrap gap-3">
             <a href={phoneTel} className="btn-primary">
               {block.primaryCta || '立即來電預約'}

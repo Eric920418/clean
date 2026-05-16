@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Phone, Mail, MapPin, Clock, ShieldCheck, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
 import { getActiveServices } from '@/lib/queries'
+import { RichText } from '@/components/rich-text'
 
 export async function SiteFooter({
   settings,
@@ -186,7 +187,10 @@ export async function SiteFooter({
       <div className="border-t border-hairline">
         <div className="container-narrow flex flex-col items-start gap-2 py-6 text-xs text-ink-muted md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} {siteName}. All rights reserved.</p>
-          <p>{navigation.footerLegalNote || '本網站所有清洗前後對比圖均經客戶授權刊登'}</p>
+          <RichText
+            html={navigation.footerLegalNote || '本網站所有清洗前後對比圖均經客戶授權刊登'}
+            inline
+          />
         </div>
       </div>
     </footer>

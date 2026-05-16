@@ -2,6 +2,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
+import { RichText } from '@/components/rich-text'
 import { getContentBlock, getSiteSettings, getWhyUsSections, getAllContentBlocks } from '@/lib/queries'
 import type { WhyUsCard } from '@/lib/why-us'
 
@@ -47,10 +48,13 @@ export default async function AboutPage() {
               <span className="text-primary-deep">{heroBlock.titleLine2 || '才是家最頂級的豪華'}</span>
             </h1>
           </div>
-          <p className="text-base leading-relaxed text-ink-soft md:text-lg">
-            {heroBlock.lead ||
-              '真正的居家品質，不該只存在於裝潢的華麗，而應體現在每一次深呼吸、每一寸觸摸到的布料，以及每一口入喉的水中。我們是 居家健康空間的修復師。'}
-          </p>
+          <RichText
+            html={
+              heroBlock.lead ||
+              '真正的居家品質，不該只存在於裝潢的華麗，而應體現在每一次深呼吸、每一寸觸摸到的布料，以及每一口入喉的水中。我們是 居家健康空間的修復師。'
+            }
+            className="text-base leading-relaxed text-ink-soft md:text-lg"
+          />
         </div>
       </section>
 
@@ -70,7 +74,7 @@ export default async function AboutPage() {
             <SectionHeading eyebrow={eyebrow} title={title} />
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
               {paragraphs.map((p, i) => (
-                <p key={i}>{p}</p>
+                <RichText key={i} html={p} />
               ))}
             </div>
           </div>
@@ -112,9 +116,10 @@ export default async function AboutPage() {
           <h2 className="text-3xl font-medium tracking-tight text-ink md:text-4xl">
             {ctaBlock.title || '您的家，值得被溫柔對待'}
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft">
-            {ctaBlock.description || '讓專業的職人團隊，為您的愛家注入全新的生命力。'}
-          </p>
+          <RichText
+            html={ctaBlock.description || '讓專業的職人團隊，為您的愛家注入全新的生命力。'}
+            className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft"
+          />
           <a href={phoneTel} className="btn-primary mt-8">
             {ctaBlock.primaryCta || '立即來電預約'}
             <ArrowRight className="h-4 w-4" />

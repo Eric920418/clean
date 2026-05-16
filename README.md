@@ -719,6 +719,34 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-16（CKEditor 擴展到 `/admin/content`：14 個 ContentBlock 多行欄位升級）
+
+**動機**：甲方反映 about 頁的「我們的專業全方位服務」段落要打項目符號只能手動敲 `• ` + 換行，土法煉鋼且 SEO 看不出 `<ul>` 結構。`/admin/content` 整頁的 textarea 全部升級為 CKEditor。
+
+**範圍**：**只升級多行欄位（textarea → richtext），短欄位（text）維持純 input**。理由：按鈕 label / 導覽分頁名 / Eyebrow 是「結構化 string」，富文本會把 `立即來電預約` 變成 `<p>立即來電預約</p>`、按鈕渲染要 strip tags、整套邏輯複雜化；50 個短欄位每個掛一個 toolbar 也會把頁面長度撐爆。
+
+| 升級的 14 個欄位（按 block） | 維持 text input 的欄位 |
+|---|---|
+| hero-home.description | eyebrow / titleLine1/2 / primaryCta / secondaryCta / checklist1-4 |
+| section-services-home.description、section-works-home.description | eyebrow / title / viewAllLabel |
+| cta-home.description | overline / titleLine1/2 / primaryCta |
+| hero-about.lead | eyebrow / titleLine1/2 |
+| about.paragraph1/2/3 | eyebrow / title |
+| cta-about.description | title / primaryCta |
+| hero-contact / hero-faq / hero-services / hero-works 的 description | eyebrow / title / 各種 label |
+| navigation.footerLegalNote | 5 個 nav label + navPrimaryCtaLabel |
+
+**改動**：
+- **`app/admin/content/page.tsx`**：`FieldType` `'textarea'` → `'richtext'`、所有對應 field 改類型、BlockEditor 改 render `<RichTextEditor>`、save 時 body 帶 `richTextKeys` 清單
+- **`app/api/admin/content/[key]/route.ts`**：PUT 接 `richTextKeys: string[]`，只對這些 key 過 `sanitizeRichText()`，其他純 text / image URL 不動
+- **`prisma/backfill-contentblock-richtext.ts`**（新檔，一次性）：對 12 個 block 內 14 個 richtext 欄位把純文字按 `\n+` 拆段、每段包成 `<p>...</p>`。Idempotent（已 `<` 開頭就跳過）。已執行：12 blocks / 14 fields backfilled
+- **`components/section-heading.tsx`**：`description` 從 `<p whitespace-pre-line>` 改用 `<RichText html={description}>`，這個 helper 被首頁 / about / contact / faq / works / services 共用，一改全動
+- **`app/(site)/page.tsx`** 直接渲染的 hero.description + 底部 CTA banner.description → `<RichText>`
+- **`app/(site)/about/page.tsx`** hero lead / paragraphs.map / cta description → `<RichText>`
+- **`components/site-footer.tsx`** `navigation.footerLegalNote` → `<RichText inline>`（小字一行，用 inline 模式不壞排版）
+
+**注意**：之前 plan 階段刻意把 ContentBlock.payload 排除（標「複雜結構，後續迭代」），但 about 頁案例證明這個欄位正是富文本最該存在的地方 — 本次解鎖。
+
 ### 2026-05-16（CKEditor 富文本引入：8 個長文欄位升級）
 
 **動機**：甲方寫服務介紹 / FAQ / 評價時只能純文字，無法用粗體、列表、標題、表格、插圖、超連結。引入 seminar 專案的 CKEditor 5 ClassicEditor。
