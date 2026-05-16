@@ -286,28 +286,11 @@
     border-radius: revert;
   }
 
-  /* ============================================
-   * CKEditor dropdown panel 顯示契約（NUCLEAR）
-   * ============================================
-   * Root cause：admin 環境內某條 CSS 規則把 CKEditor 預設的 `.ck-dropdown__panel
-   * { display: none }` 蓋掉，導致 toolbar 第一個 dropdown panel 在沒有 `_visible`
-   * class 時也顯示出來、視覺看起來「自動打開」。
-   *
-   * 驗證：拔掉 toolbar 第一個按鈕（heading）後，第二個按鈕（fontSize）變成第一
-   * 個、就換它顯示 — 100% 證明這是「toolbar 第一個位置」+「display 污染」、
-   * 不是任何特定 plugin 的 bug。
-   *
-   * 修法：用 !important 強制建立鐵律：
-   *   sans `_visible` class → display: none
-   *   持 `_visible` class → display: inline-block
-   * 不加 .admin-friendly prefix — CKEditor 部分 dropdown panel 會 portal 到 body 下、
-   * 跑出 admin-friendly wrapper 範圍。直接全域鎖死最穩。 */
-  .ck-dropdown__panel:not(.ck-dropdown__panel-visible) {
-    display: none !important;
-  }
-  .ck-dropdown__panel.ck-dropdown__panel-visible {
-    display: inline-block !important;
-  }
+  /* CKEditor 5 v44 dropdown panel bug 真實 root cause（已本地 reproduce 確認）：
+   * click editable area → CKEditor 內部把 toolbar 第一個 dropdown 自動 open
+   * （button aria-expanded=true、panel 加 _visible class、focus 跳進 panel）。
+   * 純 CSS 攔不住「真的 open」狀態 — 修補在 rich-text-editor.tsx handleEditorReady
+   * 用 JS 攔截 editable focus event 強制關閉所有 toolbar dropdown。 */
 
   /* Section 容器 */
   .section {

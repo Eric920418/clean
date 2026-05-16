@@ -116,7 +116,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v7] mounted — nuclear css contract for dropdown panel display')
+    console.log('[RichTextEditor v10] mounted — intercept toolbar dropdowns on editor mousedown')
     return () => setIsReady(false)
   }, [])
 
@@ -322,6 +322,56 @@ export function RichTextEditor({
     }
   }
 
+  /**
+   * CKEditor 5 v44 internal bug 修補：
+   * click editable area → CKEditor 自動把 toolbar 第一個 dropdown open + focus 跳進去。
+   * 拔掉 'heading' 變 'fontSize'、bug 跟著轉移到 fontSize → 證實是「位置依賴」、不是 plugin bug。
+   *
+   * 攔截：editable focus 時、強制把 toolbar 內所有 dropdown 的 isOpen 設回 false。
+   */
+  /**
+   * CKEditor 5 v44 bug — 已本地 reproduce 確認流程：
+   *   1. user mousedown 在 editable area
+   *   2. CKEditor 在 mousedown 內 preventDefault、focus 沒進 contenteditable
+   *   3. CKEditor 把 focus 跳到 toolbar 第一個 dropdown panel 第一個選項
+   *   4. → 該 dropdown 被 open（aria-expanded=true、panel display=block）
+   * 拔掉 'heading' bug 轉移到 'fontSize'，證實是「toolbar 第一個 dropdown 位置」
+   * 依賴的內部 bug，跟特定 plugin 無關。
+   *
+   * 修補：在 mount 後直接 DOM-level 監聽 editor wrapper 的 mousedown，
+   * 等 CKEditor 內部把 dropdown open 完、再強制把 isOpen 設回 false。
+   * 不能用 editor.editing.view.document.on('focus')，因為 focus 根本沒進 editable。
+   */
+  const handleEditorReady = (editor: unknown) => {
+    const ed = editor as {
+      ui: {
+        view: {
+          element?: HTMLElement
+          toolbar?: { items?: Iterable<{ isOpen?: boolean }> }
+        }
+      }
+    }
+    const root = ed.ui.view.element
+    if (!root) return
+
+    const closeAllDropdowns = () => {
+      const items = ed.ui.view.toolbar?.items
+      if (!items) return
+      for (const item of items) {
+        if (item && item.isOpen === true) item.isOpen = false
+      }
+    }
+
+    // mousedown 後 CKEditor 會在 microtask 內把 dropdown open
+    // 用兩階段延遲確保攔截到「open 完才 close」
+    root.addEventListener('mousedown', () => {
+      requestAnimationFrame(() => {
+        closeAllDropdowns()
+        setTimeout(closeAllDropdowns, 50)
+      })
+    })
+  }
+
   return (
     <div className="editor-wrapper">
       <style>{`
@@ -337,6 +387,7 @@ export function RichTextEditor({
               editor={ClassicEditor}
               config={editorConfig}
               onChange={handleEditorChange}
+              onReady={handleEditorReady}
             />
           )}
         </div>
