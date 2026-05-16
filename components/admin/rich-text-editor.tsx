@@ -114,6 +114,9 @@ export function RichTextEditor({
 
   useEffect(() => {
     setIsReady(true)
+    // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
+    // eslint-disable-next-line no-console
+    console.log('[RichTextEditor v6] mounted — toolbar without heading dropdown')
     return () => setIsReady(false)
   }, [])
 
@@ -123,8 +126,9 @@ export function RichTextEditor({
     return {
       toolbar: {
         items: [
-          'heading',
-          '|',
+          // 拔掉 'heading' — bug 反覆出現「dropdown 自動打開」，先暫時移除驗證。
+          // 如果 deploy 後段落 ▾ 按鈕還在 → 100% 是 deploy 沒生效
+          // 如果按鈕消失但 dropdown 還會出現 → CKEditor 自身 bug、需降版
           'fontSize',
           'fontFamily',
           'fontColor',
