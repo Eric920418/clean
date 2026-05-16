@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { CKEditor } from '@ckeditor/ckeditor5-react'
 
 import {
   ClassicEditor,
@@ -8,8 +9,10 @@ import {
   Autoformat,
   AutoImage,
   AutoLink,
+  Autosave,
   BlockQuote,
   Bold,
+  Emoji,
   Essentials,
   FontBackgroundColor,
   FontColor,
@@ -34,6 +37,7 @@ import {
   LinkImage,
   List,
   ListProperties,
+  Mention,
   Paragraph,
   RemoveFormat,
   Strikethrough,
@@ -52,10 +56,7 @@ import translations from 'ckeditor5/translations/zh.js'
 import 'ckeditor5/ckeditor5.css'
 
 type Props = {
-  /**
-   * **只在 mount 時讀取一次**作為 initial data，之後更新 prop 不會同步進 editor。
-   * 外部 reset 需求請改用 key prop 強制 re-mount。
-   */
+  /** mount 時讀取一次作為 initial data，之後 prop 變動不影響 editor */
   value: string
   onContentChange: (html: string) => void
   height?: string | number
@@ -63,8 +64,7 @@ type Props = {
 }
 
 /**
- * 自訂 R2 upload adapter — 取代 CKEditor 預設 Base64UploadAdapter，
- * 把編輯器內貼上 / 拖入的圖片打到 /api/admin/upload（既有 R2）。
+ * 自訂 R2 upload adapter — 取代 CKEditor 預設 Base64UploadAdapter。
  */
 function R2UploadAdapterPlugin(editor: unknown) {
   const e = editor as {
@@ -91,39 +91,36 @@ function R2UploadAdapterPlugin(editor: unknown) {
 }
 
 /**
- * 自行用 ClassicEditor.create() 初始化，**不用** @ckeditor/ckeditor5-react wrapper。
- * 原因：v9.5.0 wrapper 在重 render / mount 順序下有 toolbar dropdown 不正確的 issue
- * （表現：點 editable 後 heading 段落 dropdown 莫名展開）。直接用原生 API 排除 wrapper 嫌疑。
+ * 結構完全照搬 seminar/src/components/CustomEditor.tsx（這個在 seminar production 已驗證無 bug）。
  *
- * 同時拔除三個 plugin：
- *  - Mention：我們沒用 @ 提及，feeds: [{marker: '@', feed: []}] 是垃圾配置
- *  - Autosave：沒設定 save callback，留著只會跑空白 timer
- *  - Emoji：用不到、且依賴後端 emoji index
+ * 與 seminar 差異只有 2 處：
+ *  1. 加 `value: string` prop 並把 `initialData` 從 '' 改為 value（編輯既有內容必需）
+ *  2. 把 Base64UploadAdapter 換成 R2UploadAdapter（圖片不塞 base64、走 R2）
+ *
+ * 其他全部跟 seminar 一致 — plugin list、config、wrapper、useMemo、useEffect、render 結構。
+ * 之前我做的「拔掉 Mention/Autosave/Emoji」「改用 native init」全部還原 — 排除「我自己搞壞」的可能。
  */
 export function RichTextEditor({
   value,
   onContentChange,
-  height = '240px',
+  height = '200px',
   placeholder,
 }: Props) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const editorRef = useRef<unknown>(null)
-  // 凍住第一次的 value 與 callback，useEffect 依賴空陣列、永不重建
+  const editorContainerRef = useRef(null)
+  const editorRef = useRef(null)
+  const [isReady, setIsReady] = useState(false)
+  // 凍住 mount 時的 value 作為 initialData，避免每次 prop 變動就重 init
   const initialDataRef = useRef(value)
-  const onChangeRef = useRef(onContentChange)
-  const placeholderRef = useRef(placeholder)
-
-  // 保 callback 最新（避免 stale closure）
-  useEffect(() => {
-    onChangeRef.current = onContentChange
-  })
 
   useEffect(() => {
-    const host = containerRef.current
-    if (!host) return
-    let cancelled = false
+    setIsReady(true)
+    return () => setIsReady(false)
+  }, [])
 
-    const config = {
+  const editorConfig = useMemo(() => {
+    if (!isReady) return {}
+
+    return {
       toolbar: {
         items: [
           'heading',
@@ -139,6 +136,7 @@ export function RichTextEditor({
           'strikethrough',
           'removeFormat',
           '|',
+          'emoji',
           'horizontalLine',
           'link',
           'insertImage',
@@ -161,8 +159,10 @@ export function RichTextEditor({
         Autoformat,
         AutoImage,
         AutoLink,
+        Autosave,
         BlockQuote,
         Bold,
+        Emoji,
         Essentials,
         FontBackgroundColor,
         FontColor,
@@ -187,6 +187,7 @@ export function RichTextEditor({
         LinkImage,
         List,
         ListProperties,
+        Mention,
         Paragraph,
         RemoveFormat,
         Strikethrough,
@@ -201,18 +202,56 @@ export function RichTextEditor({
         Underline,
       ],
       extraPlugins: [R2UploadAdapterPlugin],
-      initialData: initialDataRef.current,
-      fontFamily: { supportAllValues: true },
-      fontSize: { options: [10, 12, 14, 'default', 18, 20, 22], supportAllValues: true },
+      fontFamily: {
+        supportAllValues: true,
+      },
+      fontSize: {
+        options: [10, 12, 14, 'default', 18, 20, 22],
+        supportAllValues: true,
+      },
       heading: {
         options: [
-          { model: 'paragraph' as const, title: '段落', class: 'ck-heading_paragraph' },
-          { model: 'heading1' as const, view: 'h1', title: '標題 1', class: 'ck-heading_heading1' },
-          { model: 'heading2' as const, view: 'h2', title: '標題 2', class: 'ck-heading_heading2' },
-          { model: 'heading3' as const, view: 'h3', title: '標題 3', class: 'ck-heading_heading3' },
-          { model: 'heading4' as const, view: 'h4', title: '標題 4', class: 'ck-heading_heading4' },
-          { model: 'heading5' as const, view: 'h5', title: '標題 5', class: 'ck-heading_heading5' },
-          { model: 'heading6' as const, view: 'h6', title: '標題 6', class: 'ck-heading_heading6' },
+          {
+            model: 'paragraph' as const,
+            title: '段落',
+            class: 'ck-heading_paragraph',
+          },
+          {
+            model: 'heading1' as const,
+            view: 'h1',
+            title: '標題 1',
+            class: 'ck-heading_heading1',
+          },
+          {
+            model: 'heading2' as const,
+            view: 'h2',
+            title: '標題 2',
+            class: 'ck-heading_heading2',
+          },
+          {
+            model: 'heading3' as const,
+            view: 'h3',
+            title: '標題 3',
+            class: 'ck-heading_heading3',
+          },
+          {
+            model: 'heading4' as const,
+            view: 'h4',
+            title: '標題 4',
+            class: 'ck-heading_heading4',
+          },
+          {
+            model: 'heading5' as const,
+            view: 'h5',
+            title: '標題 5',
+            class: 'ck-heading_heading5',
+          },
+          {
+            model: 'heading6' as const,
+            view: 'h6',
+            title: '標題 6',
+            class: 'ck-heading_heading6',
+          },
         ],
       },
       image: {
@@ -227,14 +266,38 @@ export function RichTextEditor({
           'resizeImage',
         ],
       },
+      initialData: initialDataRef.current,
       language: 'zh',
       licenseKey: 'GPL',
       link: {
         addTargetToExternalLinks: true,
         defaultProtocol: 'https://',
+        decorators: {
+          toggleDownloadable: {
+            mode: 'manual' as const,
+            label: '可下載',
+            attributes: {
+              download: 'file',
+            },
+          },
+        },
       },
-      list: { properties: { styles: true, startIndex: true, reversed: true } },
-      placeholder: placeholderRef.current || '在此輸入或貼上您的內容！',
+      list: {
+        properties: {
+          styles: true,
+          startIndex: true,
+          reversed: true,
+        },
+      },
+      mention: {
+        feeds: [
+          {
+            marker: '@',
+            feed: [],
+          },
+        ],
+      },
+      placeholder: placeholder || '在此輸入或貼上您的內容！',
       table: {
         contentToolbar: [
           'tableColumn',
@@ -246,58 +309,35 @@ export function RichTextEditor({
       },
       translations: [translations],
     }
+  }, [isReady])
 
-    ClassicEditor.create(host, config)
-      .then((editor) => {
-        if (cancelled) {
-          editor.destroy().catch(() => {})
-          return
-        }
-        editorRef.current = editor
-
-        // 監聽內容變更
-        editor.model.document.on('change:data', () => {
-          onChangeRef.current(editor.getData())
-        })
-
-        // 啟動後強制關閉所有 toolbar dropdown，防 v44 啟動時 heading dropdown 預設展開
-        const view = editor.ui.view as unknown as {
-          toolbar?: { items?: Iterable<{ isOpen?: boolean }> }
-        }
-        const items = view.toolbar?.items
-        if (items) {
-          for (const item of items) {
-            if (item && item.isOpen === true) item.isOpen = false
-          }
-        }
-      })
-      .catch((err) => {
-        console.error('[RichTextEditor] CKEditor init failed:', err)
-      })
-
-    return () => {
-      cancelled = true
-      const editor = editorRef.current as { destroy?: () => Promise<void> } | null
-      if (editor?.destroy) {
-        editor.destroy().catch(() => {})
-      }
-      editorRef.current = null
+  const handleEditorChange = (_event: unknown, editor: unknown) => {
+    const e = editor as { getData: () => string }
+    const data = e.getData()
+    if (onContentChange) {
+      onContentChange(data)
     }
-    // 空依賴：editor 只在 mount 時建立一次。callback / placeholder 透過 ref 保最新
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const cssHeight = typeof height === 'number' ? `${height}px` : height
+  }
 
   return (
     <div className="editor-wrapper">
       <style>{`
         .ck-editor__editable_inline {
-          min-height: ${cssHeight};
-          max-height: ${cssHeight};
+          min-height: ${typeof height === 'number' ? `${height}px` : height};
+          max-height: ${typeof height === 'number' ? `${height}px` : height};
         }
       `}</style>
-      <div ref={containerRef} />
+      <div className="editor-container" ref={editorContainerRef}>
+        <div className="editor-container__editor" ref={editorRef}>
+          {isReady && (
+            <CKEditor
+              editor={ClassicEditor}
+              config={editorConfig}
+              onChange={handleEditorChange}
+            />
+          )}
+        </div>
+      </div>
     </div>
   )
 }
