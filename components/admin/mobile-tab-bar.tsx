@@ -8,8 +8,7 @@ import { NAV_LABELS } from '@/lib/i18n/admin-zh'
 
 /**
  * 手機底部 Tab Bar — 老人友善
- * - 高 72px，每個 tab 觸控目標 56x72px
- * - icon + 文字（不靠純圖示認知）
+ * - 高 64px，icon h-5 w-5 + text-xs，whitespace-nowrap 防爆版
  * - 4 個入口涵蓋 80% 需求；其餘走「更多」
  * - 桌機隱藏（md: hidden）
  */
@@ -45,14 +44,14 @@ export function MobileTabBar({ unreadCount = 0 }: { unreadCount?: number }) {
             key={tab.href}
             href={tab.href}
             className={cn(
-              'relative flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition-colors',
+              'relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors',
               isActive ? 'text-primary-deep' : 'text-ink-soft hover:text-ink',
             )}
-            style={{ minHeight: 72 }}
+            style={{ minHeight: 64 }}
           >
             <div className="relative">
               <Icon
-                className={cn('h-6 w-6', isActive && 'scale-110 transition-transform')}
+                className={cn('h-5 w-5', isActive && 'scale-110 transition-transform')}
                 strokeWidth={isActive ? 2.4 : 2}
               />
               {showBadge && (
@@ -61,7 +60,12 @@ export function MobileTabBar({ unreadCount = 0 }: { unreadCount?: number }) {
                 </span>
               )}
             </div>
-            <span className={cn('text-sm font-medium', isActive && 'font-semibold')}>
+            <span
+              className={cn(
+                'whitespace-nowrap text-xs font-medium',
+                isActive && 'font-semibold',
+              )}
+            >
               {tab.label}
             </span>
             {isActive && (

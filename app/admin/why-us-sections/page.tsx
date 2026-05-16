@@ -355,7 +355,7 @@ export default function WhyUsSectionsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-hairline -mx-6 px-6 -mb-6 pb-4 sticky bottom-0 bg-white">
+          <div className="flex justify-end gap-2 pt-4 border-t border-hairline -mx-4 px-4 -mb-4 pb-4 sm:-mx-5 sm:px-5 sm:-mb-5 md:-mx-6 md:px-6 md:-mb-6 sticky bottom-0 bg-white">
             <button
               type="button"
               onClick={() => setOpen(false)}

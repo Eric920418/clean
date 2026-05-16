@@ -240,7 +240,7 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
   const dirty = JSON.stringify(values) !== JSON.stringify(original)
 
   return (
-    <section className="rounded-xl border border-hairline bg-white p-6">
+    <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5 md:p-6">
       <header className="mb-4 flex items-center justify-between border-b border-hairline-soft pb-3">
         <div>
           <h2 className="text-base font-semibold text-ink">{def.title}</h2>

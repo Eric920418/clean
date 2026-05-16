@@ -89,11 +89,26 @@
 | 表單 input 高度 | **48px** | `.admin-friendly input` |
 | Error 訊息 | **紅底白字卡片 + ⚠ 圖示** | `components/admin/form-field.tsx` `Field` |
 | 危險動作 | **二次確認 modal**（取消在左主視覺、確認在右紅色） | `components/admin/confirm-dialog.tsx` + `useConfirm` hook |
-| 中文措辭 | **口語化字典**（「詢問單」→「客人問問題」、enum 加 emoji） | `lib/i18n/admin-zh.ts` 單一來源 |
+| 中文措辭 | **口語化字典**（「詢問單」→「客人問題」、enum 加 emoji） | `lib/i18n/admin-zh.ts` 單一來源 |
 | 導覽 | **手機底部 4 tab + 桌機 sidebar**（永遠顯示文字標籤、不再純 icon） | `components/admin/mobile-tab-bar.tsx`、`sidebar.tsx` |
 | Mobile-first | 卡片版面取代密集表格、`tel:` 直接撥號、`env(safe-area-inset-bottom)` 避讓 home indicator | `app/admin/inquiries/page.tsx` 等 |
 
 **修改任何後台文字／enum 顯示，請從 `lib/i18n/admin-zh.ts` 改起，不要散落在各頁面。**
+
+#### 手機版 Spacing 慣例（避免擁擠／爆版）
+
+375px iPhone 上外層 padding 會與卡片 padding 疊加吃掉內容寬度。後台統一以下規則：
+
+| 元素 | Mobile | Tablet (`sm:`) | Desktop (`md:`) |
+|---|---|---|---|
+| 外層 layout (`AdminContent`) | `px-3 py-4` | `p-6` | `p-8` |
+| 卡片／section | `p-4` | `p-5` | `p-6` |
+| AdminModal 內容區 | `p-4` | `p-5` | `p-6` |
+| AdminModal header | `px-4 py-3` | `px-5 py-4` | `px-6` |
+| Sticky bottom action bar 的 `-mx`/`px`/`-mb` | `-4` | `-5` | `-6` |
+| 底部 tab bar | 高 **64px**、`text-xs`、icon `h-5 w-5`、`whitespace-nowrap` |
+
+新增頁面卡片 className 一律使用 `p-4 sm:p-5 md:p-6`，請勿單獨寫死 `p-5` 或 `p-6`。
 
 ## API 路由
 

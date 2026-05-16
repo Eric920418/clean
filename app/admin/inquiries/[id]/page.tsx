@@ -127,7 +127,7 @@ export default function InquiryDetailPage({ params }: PageProps) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <section className="rounded-xl border border-hairline bg-white p-6">
+          <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5 md:p-6">
             <h2 className="text-base font-semibold text-ink mb-4">客戶資訊</h2>
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">
               <div>
@@ -200,7 +200,7 @@ export default function InquiryDetailPage({ params }: PageProps) {
             </dl>
           </section>
 
-          <section className="rounded-xl border border-hairline bg-white p-6">
+          <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5 md:p-6">
             <h2 className="text-base font-semibold text-ink mb-4">補充說明</h2>
             <p className="whitespace-pre-line text-sm text-ink-soft leading-relaxed">
               {inquiry.message || (
@@ -211,7 +211,7 @@ export default function InquiryDetailPage({ params }: PageProps) {
         </div>
 
         <aside className="space-y-4">
-          <section className="rounded-xl border border-hairline bg-white p-5">
+          <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-ink mb-3">處理狀態</h2>
             <div className="flex items-center gap-2 mb-4">
               <StatusBadge status={inquiry.status} />
@@ -234,7 +234,7 @@ export default function InquiryDetailPage({ params }: PageProps) {
             </div>
           </section>
 
-          <section className="rounded-xl border border-hairline bg-white p-5">
+          <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5">
             <h2 className="text-sm font-semibold text-ink mb-3">快速行動</h2>
             <div className="space-y-2">
               <a

@@ -139,7 +139,7 @@ export default function GeneralFaqsPage() {
       ) : (
         <div className="space-y-3">
           {items.map((it, idx) => (
-            <article key={it.id} className="rounded-xl border border-hairline bg-white p-5">
+            <article key={it.id} className="rounded-xl border border-hairline bg-white p-4 sm:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-ink">Q. {it.question}</h3>
@@ -205,7 +205,7 @@ export default function GeneralFaqsPage() {
             />
           </Field>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-hairline -mx-6 px-6 -mb-6 pb-4 sticky bottom-0 bg-white">
+          <div className="flex justify-end gap-2 pt-4 border-t border-hairline -mx-4 px-4 -mb-4 pb-4 sm:-mx-5 sm:px-5 sm:-mb-5 md:-mx-6 md:px-6 md:-mb-6 sticky bottom-0 bg-white">
             <button
               type="button"
               onClick={() => setOpen(false)}

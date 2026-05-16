@@ -51,8 +51,8 @@ export function AdminContent({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <main className="min-h-screen md:ml-64">
           <div
-            className="p-4 sm:p-6 md:p-8"
-            style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom) + 1rem)' }}
+            className="px-3 py-4 sm:p-6 md:p-8"
+            style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom) + 1rem)' }}
           >
             {children}
           </div>

@@ -86,7 +86,7 @@ export default async function DashboardPage() {
           <Link
             key={s.label}
             href={s.href}
-            className="card-hover rounded-xl border border-hairline bg-white p-5"
+            className="card-hover rounded-xl border border-hairline bg-white p-4 sm:p-5"
           >
             <div className="flex items-start justify-between">
               <span
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
       <section className="rounded-xl border border-hairline bg-white">
         <header className="flex items-center justify-between border-b border-hairline px-5 py-4 sm:px-6">
           <div>
-            <h2 className="text-lg font-semibold text-ink">最近的客人問問題</h2>
+            <h2 className="text-lg font-semibold text-ink">最近的客人問題</h2>
             <p className="text-base text-ink-soft mt-0.5">沒讀過的會排在最上面</p>
           </div>
           <Link

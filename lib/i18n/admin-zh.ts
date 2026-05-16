@@ -8,7 +8,7 @@ import type { AdminInquiry } from '@/lib/admin-types'
 export const NAV_LABELS = {
   dashboard: '首頁',
   services: '我們的服務',
-  inquiries: '客人問問題',
+  inquiries: '客人問題',
   testimonials: '客人的好話',
   whyUs: '為何選我們',
   processSteps: '服務流程',
@@ -60,7 +60,7 @@ export const ACTIONS = {
 // === 模組名稱與功能描述（給標題、空狀態用） ===
 export const MODULES = {
   inquiries: {
-    title: '客人問問題',
+    title: '客人問題',
     description: '客人從網站留下的聯絡資料和需求',
     emptyText: '還沒有客人問問題',
   },

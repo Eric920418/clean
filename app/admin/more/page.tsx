@@ -83,7 +83,7 @@ export default function MorePage() {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="flex items-center gap-4 rounded-2xl border border-hairline bg-white p-5 transition hover:border-primary-soft hover:shadow-sm"
+                className="flex items-center gap-4 rounded-2xl border border-hairline bg-white p-4 sm:p-5 transition hover:border-primary-soft hover:shadow-sm"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-bg-tint text-primary-deep shrink-0">
                   <Icon className="h-6 w-6" />
@@ -106,7 +106,7 @@ export default function MorePage() {
         <button
           type="button"
           onClick={() => setAdvancedOpen((v) => !v)}
-          className="flex w-full items-center gap-4 p-5 transition hover:bg-bg-soft"
+          className="flex w-full items-center gap-4 p-4 sm:p-5 transition hover:bg-bg-soft"
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-bg-soft text-ink-soft shrink-0">
             <Wrench className="h-6 w-6" />
@@ -132,7 +132,7 @@ export default function MorePage() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-4 px-5 py-4 transition hover:bg-bg-soft"
+                    className="flex items-center gap-4 px-4 py-3 sm:px-5 sm:py-4 transition hover:bg-bg-soft"
                   >
                     <Icon className="h-5 w-5 text-ink-soft shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -154,7 +154,7 @@ export default function MorePage() {
       <button
         type="button"
         onClick={() => signOut({ callbackUrl: '/admin/login' })}
-        className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl border border-hairline bg-white p-5 text-lg font-medium text-ink-soft transition hover:border-danger hover:text-danger"
+        className="mt-8 flex w-full items-center justify-center gap-3 rounded-2xl border border-hairline bg-white p-4 sm:p-5 text-lg font-medium text-ink-soft transition hover:border-danger hover:text-danger"
         style={{ minHeight: 64 }}
       >
         <LogOut className="h-5 w-5" />

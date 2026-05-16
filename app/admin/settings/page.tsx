@@ -109,7 +109,7 @@ export default function SettingsPage() {
       ) : (
         <div className="space-y-6">
           {SETTING_GROUPS.map((group) => (
-            <section key={group.title} className="rounded-xl border border-hairline bg-white p-6">
+            <section key={group.title} className="rounded-xl border border-hairline bg-white p-4 sm:p-5 md:p-6">
               <h2 className="text-base font-semibold text-ink mb-4 border-b border-hairline-soft pb-3">
                 {group.title}
               </h2>
