@@ -263,6 +263,29 @@
     border-radius: var(--radius-sm);
   }
 
+  /* CKEditor 內部元素全部豁免老人友善尺寸規則。
+   * 理由：CKEditor 自帶完整 button / dropdown / focus 樣式系統，外部 min-height 會把
+   *   toolbar 按鈕跟 dropdown 選項撐到 44px → 排版破壞、dropdown 按鈕 hit area
+   *   貼到 editable area、使用者誤點就打開段落選單。 */
+  .admin-friendly .ck,
+  .admin-friendly .ck * {
+    font-size: revert;
+    line-height: revert;
+  }
+  .admin-friendly .ck button,
+  .admin-friendly .ck [role='button'],
+  .admin-friendly .ck input,
+  .admin-friendly .ck textarea,
+  .admin-friendly .ck select {
+    min-height: revert;
+    font-size: revert;
+  }
+  .admin-friendly .ck *:focus-visible {
+    outline: revert;
+    outline-offset: revert;
+    border-radius: revert;
+  }
+
   /* Section 容器 */
   .section {
     padding-top: 2rem;
