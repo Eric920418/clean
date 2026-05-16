@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -19,10 +20,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data.question = body.question.trim()
     }
     if (body.answer !== undefined) {
-      if (typeof body.answer !== 'string' || !body.answer.trim()) {
-        return errorResponse('回答為必填', 400)
-      }
-      data.answer = body.answer.trim()
+      const cleanAnswer = sanitizeRichText(body.answer)
+      if (!cleanAnswer) return errorResponse('回答為必填', 400)
+      data.answer = cleanAnswer
     }
     if (body.order !== undefined) {
       data.order = typeof body.order === 'number' ? body.order : parseInt(String(body.order), 10)

@@ -719,6 +719,39 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-16（CKEditor 富文本引入：8 個長文欄位升級）
+
+**動機**：甲方寫服務介紹 / FAQ / 評價時只能純文字，無法用粗體、列表、標題、表格、插圖、超連結。引入 seminar 專案的 CKEditor 5 ClassicEditor。
+
+**範圍刻意縮窄**：只改「真正是文章型長文」的欄位，**不改**短說明、客戶填寫欄位、結構化欄位。
+
+| 改成富文本 | 維持純 textarea（明確列表，避免日後混淆） |
+|---|---|
+| `Service.longDesc` | `Service.shortDesc`（卡片摘要會破排版） |
+| `ServiceFaq.answer` | `BookingInquiry.message`（客戶填、安全考量） |
+| `GeneralFaq.answer` | `BeforeAfterPair.caption` / `ServiceGalleryImage.caption`（短說明） |
+| `Testimonial.content` | `ServiceSection.config.description`（hero / cta / before_after 副標、短） |
+| `ServiceSection.config.paragraph1/2/3`（intro） | `ProcessStep.desc` / `WhyUsSection.description` / `WhyUsSection.cards[].desc` |
+| `ServiceSection.config.body`（text_block） | `ContentBlock.payload`（複雜結構，後續迭代） |
+
+**改動**：
+- **`components/admin/rich-text-editor.tsx`**（新檔）：CKEditor 5 ClassicEditor + 自訂 R2 UploadAdapter（取代 `Base64UploadAdapter`，避免 HTML 被 base64 圖片撐爆）
+- **`components/admin/rich-text-editor-loader.tsx`**（新檔）：`next/dynamic` + `ssr: false`，CKEditor 不能 SSR 必須 client only
+- **`components/rich-text.tsx`**（新檔）：前台渲染元件，內含 sanitize；支援 `inline` mode（用於 testimonial blockquote 內保留中文括弧裝飾）
+- **`lib/sanitize-html.ts`**（新檔）：用 `sanitize-html` 套件（**不用 `isomorphic-dompurify`** — 在 Next.js server bundle 環境會試圖 read 不存在的 jsdom default-stylesheet.css）
+- **`prisma/backfill-richtext.ts`**（新檔，一次性）：把現有純文字按 `\n+` 拆段、每段包成 `<p>...</p>` 並 escape HTML 特殊字元。Idempotent（已 `<` 開頭就跳過）。已執行回填 33 筆
+- **`app/globals.css`**：加 `@plugin "@tailwindcss/typography"`，前台渲染富文本才有 `prose` 樣式
+- **8 個 admin form**：`general-faqs/page.tsx`、`testimonials/page.tsx`、`services/page.tsx`、`services/[id]/edit/page.tsx`（longDesc + FAQ）、`section-config-modal.tsx`（intro paragraph1/2/3 + text_block body）的 `<textarea>` 換成 `<RichTextEditor>`
+- **5 個 API route 寫入 sanitize**：`services` POST/PUT、`general-faqs` POST/PUT、`testimonials` POST/PUT、`services/[id]/faqs` POST/PUT、`services/[id]/sections/[sectionId]` PUT（config 內 RICH_TEXT_CONFIG_KEYS）
+- **5 個前台元件**：`IntroSection`、`TextBlockSection`、`WhyWithFeaturesSection`、`faq.tsx`、首頁 testimonial 卡片改用 `<RichText html={...} />`
+
+**已知顧慮**：
+- **CKEditor 5 GPL 授權**在商業 CMS 屬法律灰色地帶。如未來需上正式商用授權再評估換 Tiptap
+- **bundle size 約 2-3 MB**：dynamic import 後僅 admin 編輯頁載入，前台不受影響
+- **CSS 主題**（lark）配色與 clean 設計系統不一致，先接受外觀差異
+
+**新欄位寫入規則**：未來新加「長文」型欄位，必須在對應 API route POST/PUT 過 `sanitizeRichText()`、admin form 用 `<RichTextEditor from rich-text-editor-loader>`、前台用 `<RichText html={...} />`。
+
 ### 2026-05-16（admin 排序箭頭失效：order 碰撞修復）
 
 **症狀**：`/admin/services` 等列表頁的上下箭頭點了不動。

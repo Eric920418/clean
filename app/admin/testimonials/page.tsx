@@ -5,7 +5,8 @@ import { Plus, Pencil, Trash2, Star, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { AdminModal } from '@/components/admin/admin-modal'
-import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { Field, inputClass } from '@/components/admin/form-field'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { cn } from '@/lib/utils'
 import type { AdminTestimonial, AdminService } from '@/lib/admin-types'
@@ -243,12 +244,9 @@ export default function TestimonialsPage() {
           </div>
 
           <Field label="評價內容" required>
-            <textarea
+            <RichTextEditor
               value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              className={textareaClass}
-              rows={4}
-              required
+              onContentChange={(html) => setForm({ ...form, content: html })}
             />
           </Field>
 

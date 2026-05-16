@@ -13,6 +13,7 @@ import { ImageUploader } from '@/components/admin/image-uploader'
 import { cn } from '@/lib/utils'
 import type { AdminService } from '@/lib/admin-types'
 import { swapOrderByIndex, nextOrder } from '@/lib/admin-reorder'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 
 const emptyForm = {
   name: '',
@@ -314,12 +315,9 @@ export default function ServicesAdminPage() {
           </Field>
 
           <Field label="詳細描述" required hint="顯示在服務詳情頁「為什麼這項服務重要？」區塊主文">
-            <textarea
+            <RichTextEditor
               value={form.longDesc}
-              onChange={(e) => setForm({ ...form, longDesc: e.target.value })}
-              className={textareaClass}
-              rows={5}
-              required
+              onContentChange={(html) => setForm({ ...form, longDesc: html })}
             />
           </Field>
 

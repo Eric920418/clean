@@ -1,5 +1,6 @@
 import { SectionHeading } from '@/components/section-heading'
 import { CheckCircle2 } from 'lucide-react'
+import { RichText } from '@/components/rich-text'
 import type { SectionWithRelations, ServiceForSection } from './types'
 import { configString } from './types'
 
@@ -18,9 +19,10 @@ export function WhyWithFeaturesSection({ section, service }: Props) {
       <div className="container-narrow grid grid-cols-1 gap-14 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SectionHeading eyebrow={eyebrow} title={title} />
-          <p className="mt-6 whitespace-pre-line text-base leading-loose text-ink-soft md:text-lg">
-            {service.longDesc}
-          </p>
+          <RichText
+            html={service.longDesc}
+            className="mt-6 text-base leading-loose text-ink-soft md:text-lg"
+          />
         </div>
         <aside className="rounded-xl border border-hairline bg-bg-soft p-7">
           <h3 className="text-base font-medium text-ink">服務重點</h3>

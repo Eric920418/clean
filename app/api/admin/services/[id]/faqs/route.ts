@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { revalidateService } from '@/lib/revalidate-service'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -27,14 +28,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   try {
     const { question, answer, order, sectionId } = await request.json()
-    if (!question || !answer) return errorResponse('問題與答案為必填', 400)
+    if (!question) return errorResponse('問題為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
+    const cleanAnswer = sanitizeRichText(answer)
+    if (!cleanAnswer) return errorResponse('答案為必填', 400)
 
     const item = await prisma.serviceFaq.create({
       data: {
         sectionId,
         question,
-        answer,
+        answer: cleanAnswer,
         order: order ?? 0,
       },
     })

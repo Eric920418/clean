@@ -15,6 +15,7 @@ import {
 } from '@/lib/queries'
 import type { WhyUsCard } from '@/lib/why-us'
 import { JsonLd } from '@/components/json-ld'
+import { RichText } from '@/components/rich-text'
 import { localBusinessJsonLd } from '@/lib/seo'
 
 // ISR：每 60 秒 background revalidation；首次以外的訪客都讀 cache
@@ -363,7 +364,7 @@ function Testimonials({
                 ))}
               </div>
               <blockquote className="mt-4 flex-1 text-sm leading-relaxed text-ink-soft">
-                「{t.content}」
+                「<RichText html={t.content} inline />」
               </blockquote>
               <figcaption className="mt-6 border-t border-hairline-soft pt-4">
                 <div className="text-sm font-medium text-ink">{t.authorName}</div>

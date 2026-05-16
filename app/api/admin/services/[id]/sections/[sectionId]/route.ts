@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { revalidateService } from '@/lib/revalidate-service'
+import { sanitizeRichText } from '@/lib/sanitize-html'
+
+const RICH_TEXT_CONFIG_KEYS = ['paragraph1', 'paragraph2', 'paragraph3', 'body'] as const
 
 type RouteParams = { params: Promise<{ id: string; sectionId: string }> }
 
@@ -25,7 +28,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (typeof body.config !== 'object' || body.config === null || Array.isArray(body.config)) {
         return errorResponse('config 必須是 object', 400)
       }
-      data.config = body.config
+      // 對 config 內的富文本欄位 sanitize
+      const cfg = { ...(body.config as Record<string, unknown>) }
+      for (const key of RICH_TEXT_CONFIG_KEYS) {
+        if (cfg[key] !== undefined) {
+          cfg[key] = cfg[key] === null ? null : sanitizeRichText(cfg[key])
+        }
+      }
+      data.config = cfg
     }
 
     const section = await prisma.serviceSection.update({

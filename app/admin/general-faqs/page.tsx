@@ -5,7 +5,8 @@ import { Plus, Pencil, Trash2, Loader2, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { AdminModal } from '@/components/admin/admin-modal'
-import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { Field, inputClass } from '@/components/admin/form-field'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import type { AdminGeneralFaq } from '@/lib/admin-types'
@@ -197,13 +198,10 @@ export default function GeneralFaqsPage() {
           </Field>
 
           <Field label="回答" required>
-            <textarea
+            <RichTextEditor
               value={form.answer}
-              onChange={(e) => setForm({ ...form, answer: e.target.value })}
-              className={textareaClass}
-              rows={5}
+              onContentChange={(html) => setForm({ ...form, answer: html })}
               placeholder="一般情況下 1–3 天內可安排…"
-              required
             />
           </Field>
 

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 export async function GET() {
   const auth = await checkAdminAuth()
@@ -24,9 +25,8 @@ export async function POST(request: NextRequest) {
     if (typeof question !== 'string' || !question.trim()) {
       return errorResponse('問題為必填', 400)
     }
-    if (typeof answer !== 'string' || !answer.trim()) {
-      return errorResponse('回答為必填', 400)
-    }
+    const cleanAnswer = sanitizeRichText(answer)
+    if (!cleanAnswer) return errorResponse('回答為必填', 400)
 
     let finalOrder = typeof order === 'number' ? order : null
     if (finalOrder === null) {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const item = await prisma.generalFaq.create({
-      data: { question: question.trim(), answer: answer.trim(), order: finalOrder },
+      data: { question: question.trim(), answer: cleanAnswer, order: finalOrder },
     })
     return successResponse(item, 201)
   } catch (error) {

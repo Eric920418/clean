@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { slugify, uniqueSlug } from '@/lib/slug'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 // GET 全部服務（admin 用，需登入；前台讀資料走 lib/queries.ts）
 export async function GET(request: NextRequest) {
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
       return errorResponse('名稱、卡片摘要、長描述為必填', 400)
     }
 
+    const cleanLongDesc = sanitizeRichText(longDesc)
+    if (!cleanLongDesc) return errorResponse('長描述不可為空', 400)
+
     const existing = new Set(
       (await prisma.service.findMany({ select: { slug: true } })).map((s) => s.slug),
     )
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
         slug,
         name,
         shortDesc,
-        longDesc,
+        longDesc: cleanLongDesc,
         icon: icon || null,
         heroImage: heroImage || null,
         cardImage: cardImage || null,

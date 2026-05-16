@@ -2,6 +2,7 @@
 
 import * as Accordion from '@radix-ui/react-accordion'
 import { ChevronDown } from 'lucide-react'
+import { RichText } from '@/components/rich-text'
 
 type FaqItem = { id: number; question: string; answer: string }
 
@@ -21,7 +22,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
             </Accordion.Trigger>
           </Accordion.Header>
           <Accordion.Content className="overflow-hidden text-sm leading-relaxed text-ink-soft data-[state=open]:animate-[fade-down_0.2s_ease]">
-            <div className="whitespace-pre-line px-6 pb-5">{item.answer}</div>
+            <RichText html={item.answer} className="px-6 pb-5 prose-sm" />
           </Accordion.Content>
         </Accordion.Item>
       ))}

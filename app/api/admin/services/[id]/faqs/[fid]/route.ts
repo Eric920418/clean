@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { revalidateService } from '@/lib/revalidate-service'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 type RouteParams = { params: Promise<{ id: string; fid: string }> }
 
@@ -16,7 +17,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id: parseInt(fid) },
       data: {
         ...(body.question !== undefined && { question: body.question }),
-        ...(body.answer !== undefined && { answer: body.answer }),
+        ...(body.answer !== undefined && {
+          answer: (() => {
+            const c = sanitizeRichText(body.answer)
+            if (!c) throw new Error('答案為必填')
+            return c
+          })(),
+        }),
         ...(body.order !== undefined && { order: body.order }),
       },
     })

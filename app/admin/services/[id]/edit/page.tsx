@@ -6,6 +6,8 @@ import { Plus, Trash2, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save, Layou
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
+import { RichText } from '@/components/rich-text'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { ImageUploader } from '@/components/admin/image-uploader'
 import type { AdminService, AdminServiceFeature, AdminServiceFaq } from '@/lib/admin-types'
@@ -425,12 +427,11 @@ function FaqsPanel({
             />
           </Field>
           <Field label="答案">
-            <textarea
+            <RichTextEditor
               value={a}
-              onChange={(e) => setA(e.target.value)}
-              className={textareaClass}
-              rows={3}
+              onContentChange={(html) => setA(html)}
               placeholder="一般家庭建議每年清洗一次..."
+              height="180px"
             />
           </Field>
           <div className="flex justify-end gap-2">
@@ -488,9 +489,10 @@ function FaqRow({
               <MessageSquare className="h-3.5 w-3.5 mt-1 text-primary-deep shrink-0" />
               {faq.question}
             </p>
-            <p className="mt-1.5 text-xs text-ink-soft leading-relaxed pl-5">
-              {faq.answer}
-            </p>
+            <RichText
+              html={faq.answer}
+              className="mt-1.5 text-xs text-ink-soft leading-relaxed pl-5 prose-sm"
+            />
           </div>
           <div className="flex gap-1 shrink-0">
             <button
@@ -515,11 +517,10 @@ function FaqRow({
   return (
     <li className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
       <input value={q} onChange={(e) => setQ(e.target.value)} className={inputClass} />
-      <textarea
+      <RichTextEditor
         value={a}
-        onChange={(e) => setA(e.target.value)}
-        className={textareaClass}
-        rows={3}
+        onContentChange={(html) => setA(html)}
+        height="180px"
       />
       <div className="flex justify-end gap-2">
         <button
@@ -626,12 +627,9 @@ function MainFieldsPanel({
         </Field>
 
         <Field label="詳細描述" required hint="顯示在服務詳情頁「為什麼這項服務重要？」區塊主文">
-          <textarea
+          <RichTextEditor
             value={form.longDesc}
-            onChange={(e) => setForm({ ...form, longDesc: e.target.value })}
-            className={textareaClass}
-            rows={5}
-            required
+            onContentChange={(html) => setForm({ ...form, longDesc: html })}
           />
         </Field>
 

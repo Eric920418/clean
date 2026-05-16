@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 export async function GET() {
   const auth = await checkAdminAuth()
@@ -22,16 +23,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { authorName, authorMeta, rating, content, serviceId, isActive, order } = body
-    if (!authorName?.trim() || !content?.trim()) {
-      return errorResponse('客戶署名與內容為必填', 400)
-    }
+    if (!authorName?.trim()) return errorResponse('客戶署名為必填', 400)
+    const cleanContent = sanitizeRichText(content)
+    if (!cleanContent) return errorResponse('內容為必填', 400)
 
     const item = await prisma.testimonial.create({
       data: {
         authorName: authorName.trim(),
         authorMeta: authorMeta?.trim() || null,
         rating: parseInt(String(rating ?? 5)) || 5,
-        content: content.trim(),
+        content: cleanContent,
         serviceId: serviceId ? parseInt(String(serviceId)) : null,
         isActive: isActive !== false,
         order: order ?? 0,

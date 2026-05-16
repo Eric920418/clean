@@ -6,6 +6,7 @@ import { AdminModal } from './admin-modal'
 import { Field, inputClass, textareaClass } from './form-field'
 import { ErrorBanner } from './error-banner'
 import { ImageUploader } from './image-uploader'
+import { RichTextEditor } from './rich-text-editor-loader'
 import type { AdminServiceSection, ServiceSectionType } from '@/lib/admin-types'
 
 type Props = {
@@ -21,7 +22,7 @@ type ConfigState = Record<string, string>
 // 每種 type 要編輯的欄位
 const FIELDS_BY_TYPE: Record<
   ServiceSectionType,
-  { key: string; label: string; hint?: string; kind: 'text' | 'textarea' | 'image' }[]
+  { key: string; label: string; hint?: string; kind: 'text' | 'textarea' | 'richtext' | 'image' }[]
 > = {
   hero: [
     { key: 'heroImage', label: 'Hero 背景圖（可選）', hint: '若留空則使用「服務主圖」', kind: 'image' },
@@ -34,9 +35,9 @@ const FIELDS_BY_TYPE: Record<
     { key: 'eyebrow', label: '小標籤', hint: '例：Our Story', kind: 'text' },
     { key: 'title', label: '標題', kind: 'text' },
     { key: 'image', label: '故事圖', kind: 'image' },
-    { key: 'paragraph1', label: '段落 1', kind: 'textarea' },
-    { key: 'paragraph2', label: '段落 2', kind: 'textarea' },
-    { key: 'paragraph3', label: '段落 3', kind: 'textarea' },
+    { key: 'paragraph1', label: '段落 1', kind: 'richtext' },
+    { key: 'paragraph2', label: '段落 2', kind: 'richtext' },
+    { key: 'paragraph3', label: '段落 3', kind: 'richtext' },
   ],
   why_with_features: [
     { key: 'eyebrow', label: '小標籤', hint: '預設：Why this matters', kind: 'text' },
@@ -54,7 +55,7 @@ const FIELDS_BY_TYPE: Record<
   text_block: [
     { key: 'eyebrow', label: '小標籤（可選）', kind: 'text' },
     { key: 'title', label: '標題', kind: 'text' },
-    { key: 'body', label: '內文', hint: '支援多行；用於優惠公告、最新消息等', kind: 'textarea' },
+    { key: 'body', label: '內文', hint: '支援富文本；用於優惠公告、最新消息等', kind: 'richtext' },
   ],
   // 以下三種屬於「複雜 type」，本 modal 不支援；sections 管理頁應另外導向子頁
   before_after: [],
@@ -152,6 +153,13 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
                 onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
                 className={textareaClass}
                 rows={3}
+              />
+            )}
+            {field.kind === 'richtext' && (
+              <RichTextEditor
+                value={form[field.key] ?? ''}
+                onContentChange={(html) => setForm({ ...form, [field.key]: html })}
+                height="200px"
               />
             )}
             {field.kind === 'image' && (

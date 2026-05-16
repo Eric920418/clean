@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { deleteImageFromR2 } from '@/lib/r2'
 import { revalidateService } from '@/lib/revalidate-service'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -67,7 +68,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.shortDesc !== undefined && { shortDesc: body.shortDesc }),
-        ...(body.longDesc !== undefined && { longDesc: body.longDesc }),
+        ...(body.longDesc !== undefined && {
+          longDesc: (() => {
+            const c = sanitizeRichText(body.longDesc)
+            if (!c) throw new Error('長描述不可為空')
+            return c
+          })(),
+        }),
         ...(body.icon !== undefined && { icon: body.icon || null }),
         ...(body.heroImage !== undefined && { heroImage: body.heroImage || null }),
         ...(body.cardImage !== undefined && { cardImage: body.cardImage || null }),

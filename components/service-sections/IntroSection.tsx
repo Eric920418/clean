@@ -1,5 +1,6 @@
 import { SectionHeading } from '@/components/section-heading'
 import { LightboxImage } from '@/components/lightbox-image'
+import { RichText } from '@/components/rich-text'
 import type { SectionWithRelations, ServiceForSection } from './types'
 import { configString } from './types'
 
@@ -43,7 +44,7 @@ export function IntroSection({ section, service }: Props) {
           {paragraphs.length > 0 && (
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
               {paragraphs.map((p, i) => (
-                <p key={i} className="whitespace-pre-line">{p}</p>
+                <RichText key={i} html={p} />
               ))}
             </div>
           )}

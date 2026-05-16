@@ -1,4 +1,5 @@
 import { SectionHeading } from '@/components/section-heading'
+import { RichText } from '@/components/rich-text'
 import type { SectionWithRelations } from './types'
 import { configString } from './types'
 
@@ -18,9 +19,10 @@ export function TextBlockSection({ section }: Props) {
       <div className="container-narrow max-w-3xl">
         {title && <SectionHeading eyebrow={eyebrow ?? undefined} title={title} align="center" />}
         {body && (
-          <div className="mt-6 whitespace-pre-line text-center text-base leading-loose text-ink-soft">
-            {body}
-          </div>
+          <RichText
+            html={body}
+            className="mt-6 text-center text-base leading-loose text-ink-soft"
+          />
         )}
       </div>
     </section>

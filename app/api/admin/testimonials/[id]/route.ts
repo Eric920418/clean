@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -17,7 +18,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(body.authorName !== undefined && { authorName: body.authorName }),
         ...(body.authorMeta !== undefined && { authorMeta: body.authorMeta || null }),
         ...(body.rating !== undefined && { rating: parseInt(String(body.rating)) || 5 }),
-        ...(body.content !== undefined && { content: body.content }),
+        ...(body.content !== undefined && {
+          content: (() => {
+            const c = sanitizeRichText(body.content)
+            if (!c) throw new Error('內容為必填')
+            return c
+          })(),
+        }),
         ...(body.serviceId !== undefined && {
           serviceId: body.serviceId ? parseInt(String(body.serviceId)) : null,
         }),
