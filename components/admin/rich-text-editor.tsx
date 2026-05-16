@@ -116,7 +116,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v10] mounted — intercept toolbar dropdowns on editor mousedown')
+    console.log('[RichTextEditor v11] mounted — bold first + mousedown intercept (double defense)')
     return () => setIsReady(false)
   }, [])
 
@@ -125,19 +125,21 @@ export function RichTextEditor({
 
     return {
       toolbar: {
+        // 第一個位置故意放非 dropdown 按鈕（bold）避開 CKEditor v44 的「自動 open
+        // toolbar 第一個 dropdown」bug。bug 修補在 handleEditorReady 的 mousedown
+        // intercept，這裡再加一道防線：就算 intercept 沒生效，bold 也不會 open。
         items: [
-          'heading',
-          '|',
-          'fontSize',
-          'fontFamily',
-          'fontColor',
-          'fontBackgroundColor',
-          '|',
           'bold',
           'italic',
           'underline',
           'strikethrough',
           'removeFormat',
+          '|',
+          'heading',
+          'fontSize',
+          'fontFamily',
+          'fontColor',
+          'fontBackgroundColor',
           '|',
           'emoji',
           'horizontalLine',
