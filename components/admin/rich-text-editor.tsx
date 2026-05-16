@@ -56,6 +56,11 @@ import translations from 'ckeditor5/translations/zh.js'
 import 'ckeditor5/ckeditor5.css'
 
 type Props = {
+  /**
+   * **只在 mount 時讀取一次**作為 initial data，**之後更新 prop 不會同步進 editor**
+   * （CKEditor 受控模式會在每次 setData 時重設 selection、打開 heading dropdown）。
+   * 外部 reset 需求請改用 key prop 強制 re-mount。
+   */
   value: string
   onContentChange: (html: string) => void
   height?: string | number
@@ -99,6 +104,11 @@ export function RichTextEditor({
 }: Props) {
   const [isReady, setIsReady] = useState(false)
   const lastEmittedRef = useRef(value)
+  // 「非受控」模式：用 useState 凍住 mount 時的 value 作為 initial data。
+  // 不能直接傳 data={value}，否則每次 onChange → parent setState → re-render → CKEditor 收到新 data →
+  // 內部 editor.setData() 重設 selection → 游標跳走、heading 段落 dropdown 重算被打開。
+  // 「外部 reset」需求請改用 key prop 強制 re-mount RichTextEditor。
+  const [initialData] = useState(value)
 
   useEffect(() => {
     setIsReady(true)
@@ -265,7 +275,7 @@ export function RichTextEditor({
         <CKEditor
           editor={ClassicEditor}
           config={editorConfig}
-          data={value}
+          data={initialData}
           onChange={handleEditorChange}
         />
       )}
