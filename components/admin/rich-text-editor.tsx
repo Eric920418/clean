@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { CKEditor } from '@ckeditor/ckeditor5-react'
+import { useEffect, useRef } from 'react'
 
 import {
   ClassicEditor,
@@ -9,10 +8,8 @@ import {
   Autoformat,
   AutoImage,
   AutoLink,
-  Autosave,
   BlockQuote,
   Bold,
-  Emoji,
   Essentials,
   FontBackgroundColor,
   FontColor,
@@ -37,7 +34,6 @@ import {
   LinkImage,
   List,
   ListProperties,
-  Mention,
   Paragraph,
   RemoveFormat,
   Strikethrough,
@@ -57,8 +53,7 @@ import 'ckeditor5/ckeditor5.css'
 
 type Props = {
   /**
-   * **只在 mount 時讀取一次**作為 initial data，**之後更新 prop 不會同步進 editor**
-   * （CKEditor 受控模式會在每次 setData 時重設 selection、打開 heading dropdown）。
+   * **只在 mount 時讀取一次**作為 initial data，之後更新 prop 不會同步進 editor。
    * 外部 reset 需求請改用 key prop 強制 re-mount。
    */
   value: string
@@ -70,7 +65,6 @@ type Props = {
 /**
  * 自訂 R2 upload adapter — 取代 CKEditor 預設 Base64UploadAdapter，
  * 把編輯器內貼上 / 拖入的圖片打到 /api/admin/upload（既有 R2）。
- * 這樣 HTML 內只存 URL 不存 base64，避免 longDesc 等欄位被一張圖撐到 hundreds of KB。
  */
 function R2UploadAdapterPlugin(editor: unknown) {
   const e = editor as {
@@ -96,29 +90,40 @@ function R2UploadAdapterPlugin(editor: unknown) {
   }
 }
 
+/**
+ * 自行用 ClassicEditor.create() 初始化，**不用** @ckeditor/ckeditor5-react wrapper。
+ * 原因：v9.5.0 wrapper 在重 render / mount 順序下有 toolbar dropdown 不正確的 issue
+ * （表現：點 editable 後 heading 段落 dropdown 莫名展開）。直接用原生 API 排除 wrapper 嫌疑。
+ *
+ * 同時拔除三個 plugin：
+ *  - Mention：我們沒用 @ 提及，feeds: [{marker: '@', feed: []}] 是垃圾配置
+ *  - Autosave：沒設定 save callback，留著只會跑空白 timer
+ *  - Emoji：用不到、且依賴後端 emoji index
+ */
 export function RichTextEditor({
   value,
   onContentChange,
   height = '240px',
   placeholder,
 }: Props) {
-  const [isReady, setIsReady] = useState(false)
-  const lastEmittedRef = useRef(value)
-  // 「非受控」模式：用 useState 凍住 mount 時的 value 作為 initial data。
-  // 不能直接傳 data={value}，否則每次 onChange → parent setState → re-render → CKEditor 收到新 data →
-  // 內部 editor.setData() 重設 selection → 游標跳走、heading 段落 dropdown 重算被打開。
-  // 「外部 reset」需求請改用 key prop 強制 re-mount RichTextEditor。
-  const [initialData] = useState(value)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const editorRef = useRef<unknown>(null)
+  // 凍住第一次的 value 與 callback，useEffect 依賴空陣列、永不重建
+  const initialDataRef = useRef(value)
+  const onChangeRef = useRef(onContentChange)
+  const placeholderRef = useRef(placeholder)
+
+  // 保 callback 最新（避免 stale closure）
+  useEffect(() => {
+    onChangeRef.current = onContentChange
+  })
 
   useEffect(() => {
-    setIsReady(true)
-    return () => setIsReady(false)
-  }, [])
+    const host = containerRef.current
+    if (!host) return
+    let cancelled = false
 
-  const editorConfig = useMemo(() => {
-    if (!isReady) return null
-
-    return {
+    const config = {
       toolbar: {
         items: [
           'heading',
@@ -134,7 +139,6 @@ export function RichTextEditor({
           'strikethrough',
           'removeFormat',
           '|',
-          'emoji',
           'horizontalLine',
           'link',
           'insertImage',
@@ -157,10 +161,8 @@ export function RichTextEditor({
         Autoformat,
         AutoImage,
         AutoLink,
-        Autosave,
         BlockQuote,
         Bold,
-        Emoji,
         Essentials,
         FontBackgroundColor,
         FontColor,
@@ -185,7 +187,6 @@ export function RichTextEditor({
         LinkImage,
         List,
         ListProperties,
-        Mention,
         Paragraph,
         RemoveFormat,
         Strikethrough,
@@ -200,6 +201,7 @@ export function RichTextEditor({
         Underline,
       ],
       extraPlugins: [R2UploadAdapterPlugin],
+      initialData: initialDataRef.current,
       fontFamily: { supportAllValues: true },
       fontSize: { options: [10, 12, 14, 'default', 18, 20, 22], supportAllValues: true },
       heading: {
@@ -230,17 +232,9 @@ export function RichTextEditor({
       link: {
         addTargetToExternalLinks: true,
         defaultProtocol: 'https://',
-        decorators: {
-          toggleDownloadable: {
-            mode: 'manual' as const,
-            label: '可下載',
-            attributes: { download: 'file' },
-          },
-        },
       },
       list: { properties: { styles: true, startIndex: true, reversed: true } },
-      mention: { feeds: [{ marker: '@', feed: [] }] },
-      placeholder: placeholder || '在此輸入或貼上您的內容！',
+      placeholder: placeholderRef.current || '在此輸入或貼上您的內容！',
       table: {
         contentToolbar: [
           'tableColumn',
@@ -252,14 +246,46 @@ export function RichTextEditor({
       },
       translations: [translations],
     }
-  }, [isReady, placeholder])
 
-  function handleEditorChange(_event: unknown, editor: unknown) {
-    const e = editor as { getData: () => string }
-    const data = e.getData()
-    lastEmittedRef.current = data
-    onContentChange(data)
-  }
+    ClassicEditor.create(host, config)
+      .then((editor) => {
+        if (cancelled) {
+          editor.destroy().catch(() => {})
+          return
+        }
+        editorRef.current = editor
+
+        // 監聽內容變更
+        editor.model.document.on('change:data', () => {
+          onChangeRef.current(editor.getData())
+        })
+
+        // 啟動後強制關閉所有 toolbar dropdown，防 v44 啟動時 heading dropdown 預設展開
+        const view = editor.ui.view as unknown as {
+          toolbar?: { items?: Iterable<{ isOpen?: boolean }> }
+        }
+        const items = view.toolbar?.items
+        if (items) {
+          for (const item of items) {
+            if (item && item.isOpen === true) item.isOpen = false
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('[RichTextEditor] CKEditor init failed:', err)
+      })
+
+    return () => {
+      cancelled = true
+      const editor = editorRef.current as { destroy?: () => Promise<void> } | null
+      if (editor?.destroy) {
+        editor.destroy().catch(() => {})
+      }
+      editorRef.current = null
+    }
+    // 空依賴：editor 只在 mount 時建立一次。callback / placeholder 透過 ref 保最新
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const cssHeight = typeof height === 'number' ? `${height}px` : height
 
@@ -271,14 +297,7 @@ export function RichTextEditor({
           max-height: ${cssHeight};
         }
       `}</style>
-      {isReady && editorConfig && (
-        <CKEditor
-          editor={ClassicEditor}
-          config={editorConfig}
-          data={initialData}
-          onChange={handleEditorChange}
-        />
-      )}
+      <div ref={containerRef} />
     </div>
   )
 }
