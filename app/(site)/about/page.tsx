@@ -32,9 +32,7 @@ export default async function AboutPage() {
     aboutBlock?.paragraph2 || 'invisible care 整合了防霾通風、全戶濾水、深度清潔、家電維修等核心技術，致力於為每一位客戶提供「由內而外」的居家健康解決方案。',
     aboutBlock?.paragraph3 || '我們不只是清潔工，更是您居家的健康顧問，用職人精神與精準技術，為您守護家人的每一次呼吸與每一滴用水。',
   ].filter(Boolean)
-  const image =
-    aboutBlock?.image ||
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80'
+  const image = aboutBlock?.image ?? null
 
   return (
     <>
@@ -59,17 +57,19 @@ export default async function AboutPage() {
       </section>
 
       <section className="section pt-10 md:pt-14">
-        <div className="container-narrow grid grid-cols-1 items-center gap-12 md:grid-cols-2">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
-            <Image
-              src={image}
-              alt="師傅施作中"
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
-              unoptimized
-            />
-          </div>
+        <div className={`container-narrow grid items-center gap-12 ${image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+          {image && (
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
+              <Image
+                src={image}
+                alt="師傅施作中"
+                fill
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+          )}
           <div>
             <SectionHeading eyebrow={eyebrow} title={title} />
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">

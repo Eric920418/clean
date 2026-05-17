@@ -396,19 +396,18 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
   return (
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
-        <div className="absolute inset-0 opacity-25">
-          <Image
-            src={
-              block.backgroundImage ||
-              'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1600&q=80'
-            }
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover"
-            unoptimized
-          />
-        </div>
+        {block.backgroundImage && (
+          <div className="absolute inset-0 opacity-25">
+            <Image
+              src={block.backgroundImage}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        )}
         <div className="relative max-w-2xl">
           <span className="text-xs font-medium tracking-[0.2em] text-primary-soft">
             {block.overline || 'BOOK YOUR HOME CARE TODAY'}

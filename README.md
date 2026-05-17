@@ -786,7 +786,50 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
-### 2026-05-18（**真正根因找到**：`<Field>` 用 `<label>` 包 RichTextEditor 才是「點輸入框觸發 toolbar 第一個按鈕」的 root cause）
+### 2026-05-18（**最終修法**：兩個獨立 bug 一起解 — `<Field>` label 攔截 + CKEditor v45+ 拒絕 GPL）
+
+**事件總結**：業主回報「modal 內 CKEditor 不能編輯、點輸入框觸發 toolbar 第一個按鈕」。一連串排查發現是**兩個獨立 bug 疊起來**：
+
+**Bug #1**：`components/admin/form-field.tsx` 的 `Field` 元件用 `<label>` 包整個 children。HTML `<label>` 標準行為：點 label 內非 form-control 區域 → 瀏覽器自動把 click + focus 轉發到 label 內**第一個 focusable form control**（input / button / textarea / select）。CKEditor toolbar 第一個 button 落在 `<Field><RichTextEditor /></Field>` 結構的 `<label>` 內，contenteditable 不算 labelable element，所以點編輯區會被 forward 到 toolbar 第一個按鈕。
+
+**Bug #2**：CKEditor 5 從 v45 開始**拒絕 `licenseKey: 'GPL'`**。v45+ `@ckeditor/ckeditor5-core` 內 `verifyLicenseKey` 直接呼叫 `blockEditor('lts')` → `editor.enableReadOnlyMode(Symbol('invalidLicense'))`，把整個 editor 鎖成 read-only、所有 toolbar button 變灰、contenteditable=false。v44.3.0 仍接受 GPL（只在 distributionChannel === 'cloud' 才 block）。本次先升 v47 後改 GPL 全 block、後來再降回 v44 才恢復。
+
+**為何「FAQ items 頁正常」**：`components/admin/section-editors/FaqsEditor.tsx` 用 RichTextEditor 時**沒包 `<Field>`**、直接放在 `<div>` 內。一直以為差別是 inline vs modal — **錯**，是 Field 包裝差別。
+
+**走過的修法路徑（前面幾次修錯方向）**：
+1. ❌ 各種 `clearBoldOnce` multi-tick hack（tick 0 / microtask / setTimeout 0/50ms / RAF×2 / 500ms focus window）
+2. ❌ 升 CKEditor 5 v44.3.0 → v47.7.1、想說 v44 internal bug — **反而觸發 Bug #2，editor 完全變 read-only 不能編輯**
+3. ❌ ClassicEditor → DecoupledEditor、想說 toolbar 跟 editable 物理分離
+4. ✅ 改 Field 從 `<label>` → `<div>`、保留 `<span>` 文字顯示（解 Bug #1）
+5. ✅ 降回 ckeditor5 v44.3.0 + @ckeditor/ckeditor5-react v9.5.0（解 Bug #2）
+
+**最終修法**：
+- `components/admin/form-field.tsx`：`<label>` → `<div>`，內附長註解警告未來不要改回。失去「點 label 文字 → forward focus 給內部 input」這個 nice-to-have，但 user 點 input/textarea/select 本身仍能正常 focus（瀏覽器原生行為），UX 影響極小。
+- `package.json`：`ckeditor5` 維持 `^44.3.0`、`@ckeditor/ckeditor5-react` 維持 `^9.5.0`（v44 GPL 仍 work）
+- `components/admin/rich-text-editor.tsx`：保留 ClassicEditor → DecoupledEditor + toolbar 拆到外部 div + `data` prop + `onAfterDestroy` 清 toolbar 殘留。雖然 Bug #1 修了後 ClassicEditor 理論上也能工作，但 DecoupledEditor 結構照 user 提供的 `/Users/eric/Desktop/Contribute/components/CustomEditor.tsx` 範例做、已驗證 production 可用，比較穩。
+- 拔掉 477 行內所有 v44 hack（mousedown intercept + multi-tick clearBold + 500ms focus window + `[RichTextEditor v15] mounted` console.log），檔案從 477 行縮到約 360 行。
+
+**驗證方式（gstack headless 瀏覽器自動測）**：
+1. `pnpm build` 一次過、零 breaking change
+2. dev server 起 + 清 `.next` cache（**重要**：升 v47 又降回 v44 時、cache 必須清）
+3. 用 gstack 登入 admin → 進 `/admin/general-faqs` → 開新增 FAQ modal
+4. CKEditor 內 `editor.isReadOnly === false`、`_readOnlyLocks` 為 `Set([])`、`contenteditable="true"`
+5. 點編輯區、type「測試打字看看」→ `<p>測試打字看看</p>` 寫進 editable innerHTML
+6. toolbar 粗體按鈕從 disabled 變 enabled、點擊不觸發異常 active
+
+**關鍵檔案**：
+- `components/admin/form-field.tsx` — `<label>` → `<div>`（**Bug #1 修這個**）
+- `package.json` — 保持 `ckeditor5@^44.3.0` 不升（**Bug #2 是 v45+ 拒絕 GPL 才產生的**）
+- `components/admin/rich-text-editor.tsx` — DecoupledEditor + 拔掉所有 v44 hack
+
+**未來警告 — 嚴重程度極高**：
+- **不要把 `Field` 外層的 `<div>` 改回 `<label>`** — 任何用 `<Field>` 包 RichTextEditor 的場景會立刻復活 Bug #1。code 內已留長註解
+- **不要升 ckeditor5 到 v45+**，除非先去 [CKEditor Customer Portal](https://portal.ckeditor.com/) 申請 free OSS license key（雖然開源、但需要註冊取得 token）並改 `licenseKey: process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY`。v45+ 直接拒絕 `'GPL'` 字串、editor 會永久 read-only
+- 加新「複合 widget」（contenteditable / custom editor / iframe-based control）時，用 `<Field>` 包它一定要先確認 widget 內部沒有 form control button
+- 之前那一年累積的 hack 都是在追幽靈（v44 internal bug 不存在 / sticky toolbar scrolling parent 沒影響），如果未來在 modal 內又看到 toolbar 按鈕怪異 active — 先檢查 `<Field>` 外層是不是 `<label>`，再去懷疑 CKEditor
+- **dev server cache 是 debug 殺手**：升降 CKEditor 版本時，務必 `rm -rf .next` 後重啟，否則 React Fast Refresh 會跑舊 bundle 給你看新行為，極難 debug
+
+### 2026-05-17（一些被淘汰的中途修法 — 真正修法看 2026-05-18 那則）
 
 **真正的 root cause**：`components/admin/form-field.tsx` 的 `Field` 元件原本用 `<label>` 包整個 children。HTML `<label>` 標準行為：點 label 內**非 form-control 區域** → 瀏覽器把 click + focus 自動 forward 到 label 內**第一個 focusable form control**（input / button / textarea / select）。
 

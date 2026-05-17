@@ -111,18 +111,23 @@ export function RichTextEditor({
   /**
    * DecoupledEditor 的 toolbar 跟 editable 是物理分離的兩個 DOM element。
    * onReady 後把 CKEditor 內部生成的 toolbar element 塞進外部 toolbarRef div。
-   *
-   * 為何用 Decoupled 而非 Classic：CKEditor 5 ClassicEditor 在 modal 容器
-   * （fixed overlay + overflow-y-auto）內，focus editable 會把 focus tracker
-   * 跳到 toolbar 第一個 button（undo / bold 等），導致 user 不能立刻打字、
-   * 第一個按鈕呈現 active 狀態。Decoupled 把 toolbar 放在 wrapper 外，
-   * CKEditor 內部找不到「toolbar 跟 editable 在同 wrapper」的條件、不會跳 focus。
+   * 照官方 React + DecoupledEditor 範例做、不要自己發明。
    */
   const handleEditorReady = (editor: unknown) => {
     const ed = editor as { ui: { view: { toolbar: { element: HTMLElement | null } } } }
     const toolbarEl = ed.ui.view.toolbar.element
     if (toolbarRef.current && toolbarEl) {
       toolbarRef.current.appendChild(toolbarEl)
+    }
+  }
+
+  /**
+   * DecoupledEditor + React wrapper：editor destroy 時 toolbar element 仍會留在 toolbarRef 內、
+   * 下次 mount 會出兩個 toolbar 疊起來。手動清空。
+   */
+  const handleAfterDestroy = () => {
+    if (toolbarRef.current) {
+      Array.from(toolbarRef.current.children).forEach((child) => child.remove())
     }
   }
 
@@ -287,7 +292,6 @@ export function RichTextEditor({
           'resizeImage',
         ],
       },
-      initialData: initialDataRef.current,
       language: 'zh',
       licenseKey: 'GPL',
       link: {
@@ -369,9 +373,11 @@ export function RichTextEditor({
         {isReady && (
           <CKEditor
             editor={DecoupledEditor}
+            data={initialDataRef.current}
             config={editorConfig}
             onChange={handleEditorChange}
             onReady={handleEditorReady}
+            onAfterDestroy={handleAfterDestroy}
           />
         )}
       </div>

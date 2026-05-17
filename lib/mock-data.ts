@@ -41,9 +41,10 @@ export type MockTestimonial = {
   content: string
 }
 
-// 圖庫使用 Unsplash 高品質清潔/家居圖（生產環境會被 R2 真實照片取代）
-const u = (id: string, w = 1200) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`
+// 圖片一律留空 — 業主端不准放假圖（unsplash／placeholder 等）。
+// 保留函式簽名是為了不動下方所有 mock service 結構；fresh DB seed 後業主到後台逐一上傳 R2 真實照片。
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const u = (_id: string, _w = 1200) => ''
 
 export const mockServices: MockService[] = [
   {
