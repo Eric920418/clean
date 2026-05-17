@@ -117,7 +117,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v12] mounted — clear stale selection attrs on focus')
+    console.log('[RichTextEditor v13] mounted — mousedown closeDropdowns skips toolbar (fix insertTable)')
     return () => setIsReady(false)
   }, [])
 
@@ -408,7 +408,13 @@ export function RichTextEditor({
 
     // mousedown 後 CKEditor 會在 microtask 內把 dropdown open
     // 用兩階段延遲確保攔截到「open 完才 close」
-    root.addEventListener('mousedown', () => {
+    //
+    // ⚠️ target check：只攔「點 editable area」觸發的 auto-open，
+    // 點 toolbar 上的按鈕（如 insertTable 的網格選擇器，會在 mousedown 階段就 open）
+    // 要放行，否則 user 主動打開的 dropdown 會被一起關掉、表格叫不出來。
+    root.addEventListener('mousedown', (e) => {
+      const target = e.target as Element | null
+      if (target?.closest('.ck-toolbar')) return
       requestAnimationFrame(() => {
         closeAllDropdowns()
         setTimeout(closeAllDropdowns, 50)
