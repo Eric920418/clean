@@ -91,16 +91,6 @@ function R2UploadAdapterPlugin(editor: unknown) {
   }
 }
 
-/**
- * 結構完全照搬 seminar/src/components/CustomEditor.tsx（這個在 seminar production 已驗證無 bug）。
- *
- * 與 seminar 差異只有 2 處：
- *  1. 加 `value: string` prop 並把 `initialData` 從 '' 改為 value（編輯既有內容必需）
- *  2. 把 Base64UploadAdapter 換成 R2UploadAdapter（圖片不塞 base64、走 R2）
- *
- * 其他全部跟 seminar 一致 — plugin list、config、wrapper、useMemo、useEffect、render 結構。
- * 之前我做的「拔掉 Mention/Autosave/Emoji」「改用 native init」全部還原 — 排除「我自己搞壞」的可能。
- */
 export function RichTextEditor({
   value,
   onContentChange,
@@ -115,9 +105,6 @@ export function RichTextEditor({
 
   useEffect(() => {
     setIsReady(true)
-    // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
-    // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v15] mounted — multi-tick + 500ms window cleanup')
     return () => setIsReady(false)
   }, [])
 
@@ -126,21 +113,21 @@ export function RichTextEditor({
 
     return {
       toolbar: {
-        // 第一個位置故意放非 dropdown 按鈕（bold）避開 CKEditor v44 的「自動 open
-        // toolbar 第一個 dropdown」bug。bug 修補在 handleEditorReady 的 mousedown
-        // intercept，這裡再加一道防線：就算 intercept 沒生效，bold 也不會 open。
         items: [
-          'bold',
-          'italic',
-          'underline',
-          'strikethrough',
-          'removeFormat',
+          'undo',
+          'redo',
           '|',
           'heading',
           'fontSize',
           'fontFamily',
           'fontColor',
           'fontBackgroundColor',
+          '|',
+          'bold',
+          'italic',
+          'underline',
+          'strikethrough',
+          'removeFormat',
           '|',
           'emoji',
           'horizontalLine',
@@ -335,122 +322,6 @@ export function RichTextEditor({
     }
   }
 
-  /**
-   * CKEditor 5 v44 internal bug 修補：
-   * click editable area → CKEditor 自動把 toolbar 第一個 dropdown open + focus 跳進去。
-   * 拔掉 'heading' 變 'fontSize'、bug 跟著轉移到 fontSize → 證實是「位置依賴」、不是 plugin bug。
-   *
-   * 攔截：editable focus 時、強制把 toolbar 內所有 dropdown 的 isOpen 設回 false。
-   */
-  /**
-   * CKEditor 5 v44 bug — 已本地 reproduce 確認流程：
-   *   1. user mousedown 在 editable area
-   *   2. CKEditor 在 mousedown 內 preventDefault、focus 沒進 contenteditable
-   *   3. CKEditor 把 focus 跳到 toolbar 第一個 dropdown panel 第一個選項
-   *   4. → 該 dropdown 被 open（aria-expanded=true、panel display=block）
-   * 拔掉 'heading' bug 轉移到 'fontSize'，證實是「toolbar 第一個 dropdown 位置」
-   * 依賴的內部 bug，跟特定 plugin 無關。
-   *
-   * 修補：在 mount 後直接 DOM-level 監聽 editor wrapper 的 mousedown，
-   * 等 CKEditor 內部把 dropdown open 完、再強制把 isOpen 設回 false。
-   * 不能用 editor.editing.view.document.on('focus')，因為 focus 根本沒進 editable。
-   */
-  const handleEditorReady = (editor: unknown) => {
-    const ed = editor as {
-      ui: {
-        view: {
-          element?: HTMLElement
-          toolbar?: { items?: Iterable<{ isOpen?: boolean }> }
-        }
-      }
-      model: {
-        change: (cb: (writer: { removeSelectionAttribute: (key: string) => void }) => void) => void
-        document: {
-          selection: {
-            hasAttribute: (key: string) => boolean
-            isCollapsed: boolean
-            on: (event: string, cb: () => void) => void
-          }
-        }
-      }
-      editing: {
-        view: { document: { on: (event: string, cb: () => void) => void } }
-      }
-    }
-    const root = ed.ui.view.element
-    if (!root) return
-
-    const closeAllDropdowns = () => {
-      const items = ed.ui.view.toolbar?.items
-      if (!items) return
-      for (const item of items) {
-        if (item && item.isOpen === true) item.isOpen = false
-      }
-    }
-
-    /**
-     * Bug 修補 — CKEditor 5 v44 在 focus editable 時把 toolbar 第一個 button 對應的
-     * model attribute 加到 selection 上（bold 第一個 → 加 bold attribute；fontSize 第一個 → 加 fontSize）。
-     * 結果：user 打字會自動變粗（或大字、或顏色）。已本地 reproduce 確認 editable HTML 變 `<strong>`。
-     *
-     * **只清 `bold`，不要清全部** — 之前清全部會把 user 主動從 fontSize / fontFamily /
-     * fontColor / fontBackgroundColor / highlight 等 dropdown 套用的 attribute 也一起殺掉，
-     * 導致「點 dropdown 選 20pt 後打字卻沒變大」這類業主回報的問題。
-     *
-     * 因為 v44 bug 只會誤加「toolbar 第一個 button」的 attribute、現在 first 是 `bold`，
-     * 所以只需處理 `bold`。如果之後 toolbar 第一個換成別的、要同步調整這裡。
-     *
-     * Tradeoff：user 在空白游標點 bold 按鈕後失去焦點再回來，bold attribute 會被清掉；
-     * 業主用法是「先選字再 bold」而非「先 bold 再打字」，接受這個小代價。
-     */
-    const clearBoldOnce = () => {
-      try {
-        ed.model.change((writer) => {
-          writer.removeSelectionAttribute('bold')
-        })
-      } catch {
-        // editor 可能 destroy 中、忽略
-      }
-    }
-
-    // 多時刻清理 — CKEditor 在 focus 後不同 tick 都可能設 bold，得每個 tick 都打一次
-    // 才能贏。一次 cleanup 已被驗證會被 CKEditor 後續 microtask 覆寫掉。
-    const clearStaleSelectionAttrs = () => {
-      clearBoldOnce()
-      Promise.resolve().then(clearBoldOnce)
-      setTimeout(clearBoldOnce, 0)
-      setTimeout(clearBoldOnce, 50)
-      requestAnimationFrame(() => requestAnimationFrame(clearBoldOnce))
-    }
-
-    // mousedown 後 CKEditor 會在 microtask 內把 dropdown open
-    // 用兩階段延遲確保攔截到「open 完才 close」
-    //
-    // ⚠️ target check：只攔「點 editable area」觸發的 auto-open，
-    // 點 toolbar 上的按鈕（如 insertTable 的網格選擇器，會在 mousedown 階段就 open）
-    // 要放行，否則 user 主動打開的 dropdown 會被一起關掉、表格叫不出來。
-    root.addEventListener('mousedown', (e) => {
-      const target = e.target as Element | null
-      if (target?.closest('.ck-toolbar')) return
-      requestAnimationFrame(() => {
-        closeAllDropdowns()
-        setTimeout(closeAllDropdowns, 50)
-      })
-    })
-
-    // focus editable → 清掉 CKEditor v44 誤加的 selection attribute
-    // 配合 focus 窗口：focus 後 500ms 內任何 selection attribute 變動都視為「stale set」、清掉
-    // 超過 500ms 則信任使用者操作（避免破壞 user click bold 後立刻打字）
-    let focusedAt = 0
-    ed.editing.view.document.on('focus', () => {
-      focusedAt = Date.now()
-      clearStaleSelectionAttrs()
-    })
-    ed.model.document.selection.on('change', () => {
-      if (Date.now() - focusedAt < 500) clearBoldOnce()
-    })
-  }
-
   return (
     <div className="editor-wrapper">
       <style>{`
@@ -466,7 +337,6 @@ export function RichTextEditor({
               editor={ClassicEditor}
               config={editorConfig}
               onChange={handleEditorChange}
-              onReady={handleEditorReady}
             />
           )}
         </div>

@@ -15,7 +15,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@aws-sdk/client-s3": "^3.971.0",
-    "@ckeditor/ckeditor5-react": "^9.5.0",
+    "@ckeditor/ckeditor5-react": "^11.1.2",
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.2.0",
@@ -42,7 +42,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
-    "ckeditor5": "^44.3.0",
+    "ckeditor5": "^47.7.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",

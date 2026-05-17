@@ -786,6 +786,30 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-17（CKEditor 5 v44 → v47.7.1 升級：根本拔掉 modal 內 toolbar 第一個按鈕被自動 active 的 bug）
+
+**動機**：業主回報「所有後台用到富文本編輯器的 modal（新增/編輯 FAQ、評價、服務、流程步驟、區塊內容 modal、對比圖 modal）剛 hover 或 focus 編輯區，toolbar 第一個按鈕（粗體）就會自動進入 active 狀態，看起來像被選取」。唯一正常的頁面是 `/admin/services/[id]/sections/[sectionId]/items` 的 FaqsEditor（inline 條件渲染）。**根因**：CKEditor 5 v44 的 internal bug — focus editable 時，toolbar 第一個 item 對應的 model attribute 會被自動加到 selection 上，導致對應 button 看起來 active。本地 reproduce 確認 editable HTML 真的會多包一層 `<strong>`。
+
+**先前的 hack 為何在 modal 內失效**：`components/admin/rich-text-editor.tsx` 已經有一坨 hack 修補 v44 bug — `handleEditorReady` 內 wrapper mousedown intercept、multi-tick `clearBoldOnce`（tick 0 / microtask / 0ms / 50ms / 2 frames）、500ms focus window selection change 監聽。這套 hack 在 inline mount 場景剛好贏得時序競賽，但在 `AdminModal`（`fixed inset-0 z-50` + `max-h-[90vh] overflow-y-auto` 容器）內，CKEditor sticky toolbar 的 scrolling parent 改變，CKEditor 內部設 bold attribute 的時機被延遲到 multi-tick clear 跑完之後，CKEditor 再把 bold 加回來 → hack 失效。
+
+**修法**：直接升 ckeditor5 v44.3.0 → v47.7.1（跨 3 個 major version），`@ckeditor/ckeditor5-react` v9.5.0 → v11.1.2（為了滿足 react wrapper 對 ckeditor5 >= 46.0.0 的 peer dependency）。v45+ 內部已重構 selection / focus / toolbar 行為，原本的 internal bug 不存在。
+
+**清掉的 hack**（`components/admin/rich-text-editor.tsx` 從 477 行縮到 347 行）：
+- `handleEditorReady` 整個函式（mousedown intercept + `clearBoldOnce` + `clearStaleSelectionAttrs` multi-tick + `focusedAt` 500ms window + `selection.on('change')` 持續清 bold）
+- `<CKEditor>` 的 `onReady` prop
+- `[RichTextEditor v15] mounted` production console.log
+- toolbar items 第一個從 `bold` 改回 `undo` / `redo` / `heading` 開頭（原本為了避開 v44 「第一個 dropdown auto-open」bug 才把 bold 放前面）
+
+**驗證**：
+- `pnpm build` 一次過、零 breaking change — 41 個 plugin import（從 `'ckeditor5'` unified entry）名稱完全沒變，`translations/zh.js` 路徑、licenseKey `'GPL'`、config schema 全部跨 3 major version 仍兼容。原本擔心的 `ImageInsertViaUrl` 拆分、`Mention` config 改動都沒發生
+- 升級後 `/admin/services/[id]/sections/[sectionId]/items` route bundle 從 ~260KB 降到 246KB（CKEditor 內部也瘦了 + 拔掉 hack）
+
+**關鍵檔案**：
+- `package.json` — ckeditor5 `^44.3.0` → `^47.7.1`，`@ckeditor/ckeditor5-react` `^9.5.0` → `^11.1.2`
+- `components/admin/rich-text-editor.tsx` — 拔掉所有 v44 hack、toolbar 順序還原
+
+**未來警告**：CKEditor 5 v44 系列的「toolbar 第一個 button 對應 attribute 被誤加到 selection」內部 bug 在 v45+ 已修，若未來再升 major version、不要重新 introduce 任何「先把 bold 放第一個避 dropdown auto-open」之類的 workaround、也不要復活 multi-tick `clearBoldOnce`。如果發現新版又出類似 bug，先去 GitHub issue tracker 查（搜「selection attribute focus」），別自己用時序競賽 hack 補。
+
 ### 2026-05-17（服務編輯入口大合併：`/edit` + `/before-afters` + `/gallery` → `/sections`）
 
 **動機**：`/admin/services/[id]/edit` 上的三張快速連結卡（區塊管理、對比圖、圖庫）與獨立的 `/before-afters`、`/gallery` 子頁，跟 `/sections` 頁內的 before_after / gallery 區塊功能 100% 重疊，業主要記兩條編輯路徑、改 schema 時容易漏更新。
