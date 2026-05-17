@@ -140,6 +140,7 @@ function MainFieldsPanel({
 }) {
   const [form, setForm] = useState({
     name: service.name,
+    slug: service.slug,
     shortDesc: service.shortDesc,
     cardImage: service.cardImage ?? '',
     isActive: service.isActive,
@@ -180,7 +181,6 @@ function MainFieldsPanel({
           <h2 className="text-base font-semibold text-ink">主欄位</h2>
           <p className="text-xs text-ink-muted mt-0.5">服務名稱、描述、圖片、SEO、上下架</p>
         </div>
-        <span className="text-xs text-ink-muted font-mono">slug: {service.slug}</span>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,6 +194,24 @@ function MainFieldsPanel({
             placeholder="冷氣機深度清洗"
             required
           />
+        </Field>
+
+        <Field
+          label="網址（URL slug）"
+          required
+          hint="顯示在瀏覽器網址列：/services/這裡。支援中文。空白會轉成 hyphen、特殊符號會被清掉"
+        >
+          <input
+            value={form.slug}
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+            className={`${inputClass} font-mono`}
+            placeholder="冷氣清洗"
+            required
+          />
+          <p className="mt-2 text-xs leading-relaxed rounded-md border border-danger/30 bg-danger/5 px-2.5 py-2 text-danger-deep">
+            ⚠️ 改網址 = 改對外公開 URL。如果這個服務的舊網址（<span className="font-mono">/services/{service.slug}</span>
+            ）已經被貼到 LINE、Google 商家、傳單、QR Code 等地方，<strong>改完後舊連結會立刻 404</strong>、Google 搜尋排名也可能掉。確定要改才存。
+          </p>
         </Field>
 
         <Field label="卡片摘要" required hint="顯示在首頁與列表卡片，建議 80 字內">
