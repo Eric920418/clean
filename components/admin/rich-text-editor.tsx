@@ -94,7 +94,7 @@ function R2UploadAdapterPlugin(editor: unknown) {
 export function RichTextEditor({
   value,
   onContentChange,
-  height = '200px',
+  height = '400px',
   placeholder,
 }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)

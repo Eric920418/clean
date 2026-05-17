@@ -160,7 +160,6 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
               <RichTextEditor
                 value={form[field.key] ?? ''}
                 onContentChange={(html) => setForm({ ...form, [field.key]: html })}
-                height="200px"
               />
             )}
             {field.kind === 'image' && (

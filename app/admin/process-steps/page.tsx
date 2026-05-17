@@ -221,7 +221,6 @@ export default function ProcessStepsPage() {
               value={form.desc}
               onContentChange={(html) => setForm({ ...form, desc: html })}
               placeholder="Line 或表單填寫需求，30 分鐘內專人聯繫。"
-              height="160px"
             />
           </Field>
 

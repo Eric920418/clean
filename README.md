@@ -786,6 +786,31 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
+
+**動機**：業主端不能放假圖。但專案多處有「後台沒設圖就 fallback 到 unsplash」的邏輯，加上 seed 與 mock-data 把 unsplash URL 寫進 DB，導致就算後台不設圖也會顯示假圖。
+
+**改動**：
+
+1. **源碼 fallback 移除（2 處）**：
+   - `app/(site)/page.tsx` — `CtaBanner` 背景圖：原本 `block.backgroundImage || 'https://images.unsplash.com/...'`，改為 `{block.backgroundImage && <div>...</div>}`，沒設背景就直接純 ink 色塊。
+   - `app/(site)/about/page.tsx` — 故事區大圖：原本 `aboutBlock?.image || 'https://images.unsplash.com/...'`，改為條件渲染整個 `<div className="aspect-[4/5]">`，且 grid 自動 collapse 為單欄全寬讓文字撐開（避免左半空白）。
+
+2. **Seed／mock-data 去毒**：
+   - `lib/mock-data.ts` — `u()` helper 從「拼 unsplash URL」改為「永遠回傳空字串」，下方所有 mock service 的 `heroImage / cardImage / beforeUrl / afterUrl / gallery url` 全變空字串，但結構不動。
+   - `prisma/seed.ts` —
+     - `introSectionConfig` 兩支 service 的 `image` 從 unsplash URL 改為 `''`
+     - `about` ContentBlock 的 `image` 從 unsplash URL 改為 `''`
+     - `service.upsert` 的 `heroImage / cardImage` 改用 `m.heroImage || null` / `m.cardImage || null`，避免寫入空字串汙染 schema
+     - `BeforeAfterPair / ServiceGalleryImage` 建立前先 `filter` 掉 URL 空字串，沒有 URL 的對比圖／圖庫圖**不再寫入 DB**（避免 NOT NULL 欄位塞 `''`）
+
+3. **DB 一鍵清理**（針對既有 production 資料）：
+   - `prisma/scan-fake-images.ts`（新）— 唯讀掃 `Service.heroImage/cardImage`、`ServiceSection.config`、`ContentBlock.payload`、`BeforeAfterPair.beforeUrl/afterUrl`、`ServiceGalleryImage.url` 五個出處，列出所有含 `images.unsplash.com / picsum / placeholder` 的位置。`pnpm tsx prisma/scan-fake-images.ts`
+   - `prisma/clear-fake-images.ts`（新）— 預設 dry-run，`--confirm` 才寫 DB。可 null 的欄位設 null，JSON config 移除 key，NOT NULL 欄位（before-after pair、gallery image）整筆 DELETE。執行：`pnpm tsx prisma/clear-fake-images.ts --confirm`
+   - **本次執行結果**：5 筆 UPDATE（4 個服務的 heroImage+cardImage、1 個 intro section config）+ 1 筆 DELETE（一組假紗窗對比圖 pair#48）。掃描歸零。
+
+**未來新增 image 欄位**：千萬不要寫 `image || '<fallback URL>'`。後台沒設就條件渲染整段拿掉，或顯示文字提示（如 `app/(site)/services/page.tsx:57` 的 `<Sparkles>` icon、`app/(site)/page.tsx:144` 的「尚未上傳對比圖」字樣）。`next.config.ts` 的 `images.unsplash.com` 規則暫時保留（讓本機開發若 import 舊 unsplash URL 不會直接炸），但長期可以拿掉。
+
 ### 2026-05-18（**最終修法**：兩個獨立 bug 一起解 — `<Field>` label 攔截 + CKEditor v45+ 拒絕 GPL）
 
 **事件總結**：業主回報「modal 內 CKEditor 不能編輯、點輸入框觸發 toolbar 第一個按鈕」。一連串排查發現是**兩個獨立 bug 疊起來**：
