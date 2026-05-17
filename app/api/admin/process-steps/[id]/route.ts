@@ -27,16 +27,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data.title = body.title.trim()
     }
     if (body.desc !== undefined) {
-      if (typeof body.desc !== 'string' || !body.desc.trim()) {
+      const cleanDesc = sanitizeRichText(body.desc)
+      if (!cleanDesc) {
         return errorResponse('描述為必填', 400)
       }
-      data.desc = body.desc.trim()
+      data.desc = cleanDesc
     }
     if (body.order !== undefined) {
       data.order = typeof body.order === 'number' ? body.order : parseInt(String(body.order), 10)
     }
 
     const item = await prisma.processStep.update({ where: { id: parseInt(id, 10) }, data })
+    revalidatePath('/')
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -50,6 +52,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
   try {
     await prisma.processStep.delete({ where: { id: parseInt(id, 10) } })
+    revalidatePath('/')
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')
