@@ -786,29 +786,42 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
-### 2026-05-17（CKEditor 5 v44 → v47.7.1 升級：根本拔掉 modal 內 toolbar 第一個按鈕被自動 active 的 bug）
+### 2026-05-17（CKEditor 5 v44 → v47.7.1 升級 + ClassicEditor → DecoupledEditor：根本解掉 modal 內 toolbar 第一個按鈕被自動 focus 的 bug）
 
-**動機**：業主回報「所有後台用到富文本編輯器的 modal（新增/編輯 FAQ、評價、服務、流程步驟、區塊內容 modal、對比圖 modal）剛 hover 或 focus 編輯區，toolbar 第一個按鈕（粗體）就會自動進入 active 狀態，看起來像被選取」。唯一正常的頁面是 `/admin/services/[id]/sections/[sectionId]/items` 的 FaqsEditor（inline 條件渲染）。**根因**：CKEditor 5 v44 的 internal bug — focus editable 時，toolbar 第一個 item 對應的 model attribute 會被自動加到 selection 上，導致對應 button 看起來 active。本地 reproduce 確認 editable HTML 真的會多包一層 `<strong>`。
+**動機**：業主回報「所有後台用到富文本編輯器的 modal（新增/編輯 FAQ、評價、服務、流程步驟、區塊內容 modal、對比圖 modal）剛 hover 或 focus 編輯區，toolbar 第一個按鈕（粗體）就會自動進入 active 狀態，看起來像被選取，且根本不能打字」。唯一正常的頁面是 `/admin/services/[id]/sections/[sectionId]/items` 的 FaqsEditor（inline 條件渲染）。
 
-**先前的 hack 為何在 modal 內失效**：`components/admin/rich-text-editor.tsx` 已經有一坨 hack 修補 v44 bug — `handleEditorReady` 內 wrapper mousedown intercept、multi-tick `clearBoldOnce`（tick 0 / microtask / 0ms / 50ms / 2 frames）、500ms focus window selection change 監聽。這套 hack 在 inline mount 場景剛好贏得時序競賽，但在 `AdminModal`（`fixed inset-0 z-50` + `max-h-[90vh] overflow-y-auto` 容器）內，CKEditor sticky toolbar 的 scrolling parent 改變，CKEditor 內部設 bold attribute 的時機被延遲到 multi-tick clear 跑完之後，CKEditor 再把 bold 加回來 → hack 失效。
+**根因（兩層）**：
+1. **CKEditor 5 ClassicEditor 在 modal 容器（fixed overlay + overflow-y-auto）內，focus editable 時會把 focus tracker 跳到 toolbar 第一個 button**，導致該 button 進入 active 狀態 + tooltip 跳出 + 鍵盤 focus 卡在 toolbar、user 不能打字。本地用 production needfix.com.tw 與 dev server 都 reproduce 確認
+2. ClassicEditor 把 toolbar 跟 editable 包在同一個 wrapper element 內，CKEditor 內部的「focus 從 editable 跳到 toolbar」這個行為 hardcoded 依賴 toolbar 跟 editable 是 sibling 關係
 
-**修法**：直接升 ckeditor5 v44.3.0 → v47.7.1（跨 3 個 major version），`@ckeditor/ckeditor5-react` v9.5.0 → v11.1.2（為了滿足 react wrapper 對 ckeditor5 >= 46.0.0 的 peer dependency）。v45+ 內部已重構 selection / focus / toolbar 行為，原本的 internal bug 不存在。
+**走過的修法路徑**：
+1. ❌ **multi-tick `clearBoldOnce` hack（已淘汰）**：原本在 `handleEditorReady` 用 mousedown intercept + 5 個時機（tick 0 / microtask / 0ms / 50ms / 2 frames）清 bold attribute + 500ms focus window selection change 監聽，**inline 場景剛好贏得時序競賽，modal 內失效**
+2. ❌ **升 ckeditor5 v44.3.0 → v47.7.1**（跨 3 major version）：原本以為是 v44 internal bug、v45+ 應該修了。實測**還在**——這不是版本 bug，是 ClassicEditor 架構問題
+3. ✅ **改用 DecoupledEditor**：toolbar 跟 editable 物理分離到兩個 DOM element，onReady 後手動把 `editor.ui.view.toolbar.element` `appendChild` 到外部 `toolbarRef` div。CKEditor 找不到「toolbar 在 editor wrapper 內」的條件、focus tracker 不跳。**參考 `/Users/eric/Desktop/Contribute/components/CustomEditor.tsx` 結構**——那個專案的 RichTextEditor 一直正常、就是用 Decoupled
 
-**清掉的 hack**（`components/admin/rich-text-editor.tsx` 從 477 行縮到 347 行）：
-- `handleEditorReady` 整個函式（mousedown intercept + `clearBoldOnce` + `clearStaleSelectionAttrs` multi-tick + `focusedAt` 500ms window + `selection.on('change')` 持續清 bold）
-- `<CKEditor>` 的 `onReady` prop
-- `[RichTextEditor v15] mounted` production console.log
-- toolbar items 第一個從 `bold` 改回 `undo` / `redo` / `heading` 開頭（原本為了避開 v44 「第一個 dropdown auto-open」bug 才把 bold 放前面）
+**最終修法**：
+- 升 ckeditor5 v44.3.0 → v47.7.1（順便清掉 v44 系列的相關潛在 internal bug），`@ckeditor/ckeditor5-react` v9.5.0 → v11.1.2（peer dep 要求 ckeditor5 >= 46.0.0）
+- `components/admin/rich-text-editor.tsx`：
+  - `import { ClassicEditor, ... }` → `import { DecoupledEditor, ... }` from `'ckeditor5'`（v47 unified package 內有 export `DecoupledEditor`、不用換套件、所有 41 個 plugin 保留）
+  - 拔掉所有 v44 hack（mousedown intercept + multi-tick clearBold + 500ms focus window + `[RichTextEditor v15] mounted` console.log），477 行縮到 ~340 行
+  - render 結構從「單一 wrapper 內塞 `<CKEditor>`」改成「外層 `toolbarRef` div + 外層 `editorRef` div 內塞 `<CKEditor editor={DecoupledEditor}>`」
+  - 新 `handleEditorReady` 只做一件事：`toolbarRef.current.appendChild(editor.ui.view.toolbar.element)`
+  - toolbar items 第一個從 `bold` 改回 `undo / redo / heading` 開頭（v44 「第一個 dropdown auto-open」workaround 不需要了）
+  - 加 CSS：toolbar 容器有上圓角、editable 容器有下圓角、editable focus 時拔掉 CKEditor 預設 box-shadow（與專案 hairline border 風格一致）
 
 **驗證**：
-- `pnpm build` 一次過、零 breaking change — 41 個 plugin import（從 `'ckeditor5'` unified entry）名稱完全沒變，`translations/zh.js` 路徑、licenseKey `'GPL'`、config schema 全部跨 3 major version 仍兼容。原本擔心的 `ImageInsertViaUrl` 拆分、`Mention` config 改動都沒發生
-- 升級後 `/admin/services/[id]/sections/[sectionId]/items` route bundle 從 ~260KB 降到 246KB（CKEditor 內部也瘦了 + 拔掉 hack）
+- `pnpm build` 一次過、零 breaking change — 41 個 plugin import 名稱完全沒變，`translations/zh.js` 路徑、licenseKey `'GPL'`、config schema 全部仍兼容
+- modal 場景（general-faqs、testimonials、services、process-steps、content、section-config、before-after）內 focus 編輯區後第一個 toolbar button 不再 auto-active、可以直接打字
+- inline 場景（FaqsEditor 在 sections/items 頁）一樣正常運作
 
 **關鍵檔案**：
 - `package.json` — ckeditor5 `^44.3.0` → `^47.7.1`，`@ckeditor/ckeditor5-react` `^9.5.0` → `^11.1.2`
-- `components/admin/rich-text-editor.tsx` — 拔掉所有 v44 hack、toolbar 順序還原
+- `components/admin/rich-text-editor.tsx` — ClassicEditor → DecoupledEditor、拔掉所有 v44 hack、toolbar 分離
 
-**未來警告**：CKEditor 5 v44 系列的「toolbar 第一個 button 對應 attribute 被誤加到 selection」內部 bug 在 v45+ 已修，若未來再升 major version、不要重新 introduce 任何「先把 bold 放第一個避 dropdown auto-open」之類的 workaround、也不要復活 multi-tick `clearBoldOnce`。如果發現新版又出類似 bug，先去 GitHub issue tracker 查（搜「selection attribute focus」），別自己用時序競賽 hack 補。
+**未來警告**：
+- 不要把 DecoupledEditor 改回 ClassicEditor，會立刻復活這個 bug
+- 不要在 `handleEditorReady` 內加「修補 selection attribute」「攔截 mousedown 關 dropdown」之類的時序競賽 hack——這條路走過已淘汰
+- toolbar element 是 CKEditor 在 destroy 時自己清理的，不要在 useEffect cleanup 內手動 removeChild（會跟 CKEditor 內部 cleanup 衝突）
 
 ### 2026-05-17（服務編輯入口大合併：`/edit` + `/before-afters` + `/gallery` → `/sections`）
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 
 import {
-  ClassicEditor,
+  DecoupledEditor,
   Alignment,
   Autoformat,
   AutoImage,
@@ -97,8 +97,8 @@ export function RichTextEditor({
   height = '200px',
   placeholder,
 }: Props) {
-  const editorContainerRef = useRef(null)
-  const editorRef = useRef(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
   const [isReady, setIsReady] = useState(false)
   // 凍住 mount 時的 value 作為 initialData，避免每次 prop 變動就重 init
   const initialDataRef = useRef(value)
@@ -107,6 +107,24 @@ export function RichTextEditor({
     setIsReady(true)
     return () => setIsReady(false)
   }, [])
+
+  /**
+   * DecoupledEditor 的 toolbar 跟 editable 是物理分離的兩個 DOM element。
+   * onReady 後把 CKEditor 內部生成的 toolbar element 塞進外部 toolbarRef div。
+   *
+   * 為何用 Decoupled 而非 Classic：CKEditor 5 ClassicEditor 在 modal 容器
+   * （fixed overlay + overflow-y-auto）內，focus editable 會把 focus tracker
+   * 跳到 toolbar 第一個 button（undo / bold 等），導致 user 不能立刻打字、
+   * 第一個按鈕呈現 active 狀態。Decoupled 把 toolbar 放在 wrapper 外，
+   * CKEditor 內部找不到「toolbar 跟 editable 在同 wrapper」的條件、不會跳 focus。
+   */
+  const handleEditorReady = (editor: unknown) => {
+    const ed = editor as { ui: { view: { toolbar: { element: HTMLElement | null } } } }
+    const toolbarEl = ed.ui.view.toolbar.element
+    if (toolbarRef.current && toolbarEl) {
+      toolbarRef.current.appendChild(toolbarEl)
+    }
+  }
 
   const editorConfig = useMemo(() => {
     if (!isReady) return {}
@@ -325,21 +343,37 @@ export function RichTextEditor({
   return (
     <div className="editor-wrapper">
       <style>{`
-        .ck-editor__editable_inline {
+        .editor-toolbar-container {
+          border: 1px solid var(--color-hairline, #e5e7eb);
+          border-bottom: none;
+          border-radius: 0.5rem 0.5rem 0 0;
+          background: #fafafa;
+        }
+        .editor-content-container {
+          border: 1px solid var(--color-hairline, #e5e7eb);
+          border-radius: 0 0 0.5rem 0.5rem;
+        }
+        .editor-content-container .ck-editor__editable {
           min-height: ${typeof height === 'number' ? `${height}px` : height};
           max-height: ${typeof height === 'number' ? `${height}px` : height};
+          overflow-y: auto;
+          border: none !important;
+          border-radius: 0 0 0.5rem 0.5rem;
+        }
+        .editor-content-container .ck-editor__editable.ck-focused {
+          box-shadow: none !important;
         }
       `}</style>
-      <div className="editor-container" ref={editorContainerRef}>
-        <div className="editor-container__editor" ref={editorRef}>
-          {isReady && (
-            <CKEditor
-              editor={ClassicEditor}
-              config={editorConfig}
-              onChange={handleEditorChange}
-            />
-          )}
-        </div>
+      <div ref={toolbarRef} className="editor-toolbar-container" />
+      <div ref={editorRef} className="editor-content-container">
+        {isReady && (
+          <CKEditor
+            editor={DecoupledEditor}
+            config={editorConfig}
+            onChange={handleEditorChange}
+            onReady={handleEditorReady}
+          />
+        )}
       </div>
     </div>
   )
