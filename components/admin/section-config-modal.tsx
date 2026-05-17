@@ -157,6 +157,7 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
             )}
             {field.kind === 'richtext' && (
               <RichTextEditor
+                key={`${section.id}-${field.key}`}
                 value={form[field.key] ?? ''}
                 onContentChange={(html) => setForm({ ...form, [field.key]: html })}
                 height="200px"

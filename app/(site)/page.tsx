@@ -414,7 +414,7 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
             html={block.description || '一通電話，專人為您現場評估，給您完整透明的報價。'}
             className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 md:text-base"
           />
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
               {block.primaryCta || '立即來電預約'}
               <ArrowRight className="h-4 w-4" />
@@ -425,6 +425,23 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
             >
               填寫表單
             </Link>
+            {block.lineUrl && (
+              <a
+                href={block.lineUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="加入 LINE 好友"
+                className="inline-flex items-center"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png"
+                  alt="加入 LINE 好友"
+                  height={36}
+                  className="h-9 w-auto"
+                />
+              </a>
+            )}
           </div>
         </div>
       </div>

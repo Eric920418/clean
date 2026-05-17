@@ -80,6 +80,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
       { name: 'titleLine2', label: '主標第二行', type: 'text' },
       { name: 'description', label: '副標', type: 'richtext' },
       { name: 'primaryCta', label: '按鈕文字', type: 'text' },
+      { name: 'lineUrl', label: 'LINE 加好友連結（選填）', type: 'text', hint: '填網址即會自動顯示官方「加入好友」按鈕；留空則不顯示。例：https://lin.ee/sjHybe1' },
     ],
   },
   // === About 頁 ===
