@@ -762,7 +762,7 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 已知限制
 
-- 部分 mock 圖片仍用 Unsplash，實機部署後業主透過 `/admin/services/[id]/before-afters` 與 `/gallery` 上傳真實照片，會自動存到 Cloudflare R2 並覆蓋顯示
+- 部分 mock 圖片仍用 Unsplash，實機部署後業主透過 `/admin/services/[id]/sections` 內的「前後對比圖」與「服務圖庫」區塊上傳真實照片，會自動存到 Cloudflare R2 並覆蓋顯示
 - Before/After 並排元件在 iOS Safari 14 以下未測試（目標瀏覽器為 iOS 16+ / Chrome 110+）
 - 後台無多管理員 / 角色權限；單一 admin 帳號（drink 模式）
 - 後台無操作 audit log
@@ -783,6 +783,21 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-17（服務編輯入口大合併：`/edit` + `/before-afters` + `/gallery` → `/sections`）
+
+**動機**：`/admin/services/[id]/edit` 上的三張快速連結卡（區塊管理、對比圖、圖庫）與獨立的 `/before-afters`、`/gallery` 子頁，跟 `/sections` 頁內的 before_after / gallery 區塊功能 100% 重疊，業主要記兩條編輯路徑、改 schema 時容易漏更新。
+
+**改動**：
+1. **抽出** `components/admin/service-main-fields-panel.tsx` — 原本 `/edit` 頁內 inline 的 `MainFieldsPanel`（服務名稱 / slug / 描述 / 卡片圖 / SEO / 上下架 / 首頁精選）拉成獨立 component。
+2. **嵌入** `/admin/services/[id]/sections/page.tsx` 頂部 — 主欄位面板放在區塊列表上方，header 簡化為 `service.name`，麵包屑壓成「服務管理 → 服務名稱」兩階。「新增區塊」按鈕從 page header 搬到「頁面區塊」子標題右側，視覺分層更清楚。
+3. **刪除** 三個 page 路由：`app/admin/services/[id]/edit/`、`/before-afters/`、`/gallery/`。**API 路由保留** — `app/api/admin/services/[id]/before-afters/**` 與 `/gallery/**` 仍被 `BeforeAfterEditor` / `GalleryEditor` / `BeforeAfterModal` 使用。
+4. **更新連結**：
+   - `app/admin/services/page.tsx` 列表編輯按鈕 → `/sections`
+   - `app/admin/services/[id]/sections/[sectionId]/items/page.tsx` 兩處麵包屑 → `/sections`（並順手刪掉變成同 URL 的「區塊管理」冗餘階）
+   - `components/admin/quick-actions.tsx` dashboard 快捷「新增清潔前後照片」→ `/sections`（多一層點擊到 before_after section，可接受）
+
+**未來新增 admin page** 若關於服務內容，一律放在 `/sections` 流程內（簡單 type 走 modal、列表型走 `/sections/[sectionId]/items`），不要再開獨立路由——這次合併就是因為當初獨立路由變成重複入口。
 
 ### 2026-05-17（header logo — `public/logo.jpg`，⚠️ 與品牌名衝突待釐清）
 
