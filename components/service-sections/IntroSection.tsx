@@ -26,6 +26,18 @@ export function IntroSection({ section, service }: Props) {
   return (
     <section className="section pt-12 md:pt-16">
       <div className="container-narrow grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+        <div>
+          {title && (
+            <SectionHeading eyebrow={eyebrow ?? undefined} title={title} />
+          )}
+          {paragraphs.length > 0 && (
+            <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
+              {paragraphs.map((p, i) => (
+                <RichText key={i} html={p} />
+              ))}
+            </div>
+          )}
+        </div>
         {image && (
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
             <LightboxImage
@@ -39,17 +51,7 @@ export function IntroSection({ section, service }: Props) {
             />
           </div>
         )}
-        <div>
-          {title && <SectionHeading eyebrow={eyebrow ?? undefined} title={title} />}
-          {paragraphs.length > 0 && (
-            <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
-              {paragraphs.map((p, i) => (
-                <RichText key={i} html={p} />
-              ))}
-            </div>
-          )}
-        </div>
       </div>
     </section>
-  )
+  );
 }
