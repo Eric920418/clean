@@ -389,7 +389,6 @@ function MainFieldsPanel({
   const [form, setForm] = useState({
     name: service.name,
     shortDesc: service.shortDesc,
-    longDesc: service.longDesc,
     cardImage: service.cardImage ?? '',
     isActive: service.isActive,
     isFeatured: service.isFeatured,
@@ -455,12 +454,16 @@ function MainFieldsPanel({
           />
         </Field>
 
-        <Field label="詳細描述" required hint="顯示在服務詳情頁「為什麼這項服務重要？」區塊主文">
-          <RichTextEditor
-            value={form.longDesc}
-            onContentChange={(html) => setForm({ ...form, longDesc: html })}
-          />
-        </Field>
+        <div className="rounded-md border border-hairline-soft bg-bg-soft px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
+          詳細描述（「為什麼這項服務重要？」主文）已移至 sections 子頁。請到{' '}
+          <Link
+            href={`/admin/services/${service.id}/sections`}
+            className="text-primary-deep underline underline-offset-2 hover:no-underline"
+          >
+            頁面區塊管理
+          </Link>{' '}
+          → 點「重點說明 + 特色清單」進入內容管理頁編輯。
+        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="卡片圖（首頁/列表用）">

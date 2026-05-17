@@ -15,7 +15,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const section = await prisma.serviceSection.findUnique({
       where: { id: parseInt(sectionId, 10) },
       include: {
-        service: { select: { id: true, name: true, slug: true } },
+        service: { select: { id: true, name: true, slug: true, longDesc: true } },
         features: { orderBy: { order: 'asc' } },
         faqs: { orderBy: { order: 'asc' } },
         beforeAfters: { orderBy: [{ order: 'asc' }, { createdAt: 'desc' }] },

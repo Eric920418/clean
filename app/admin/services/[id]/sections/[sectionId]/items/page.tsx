@@ -2,9 +2,12 @@
 
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save } from 'lucide-react'
+import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { ErrorBanner } from '@/components/admin/error-banner'
+import { Field } from '@/components/admin/form-field'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { FeaturesEditor } from '@/components/admin/section-editors/FeaturesEditor'
 import { FaqsEditor } from '@/components/admin/section-editors/FaqsEditor'
 import { GalleryEditor } from '@/components/admin/section-editors/GalleryEditor'
@@ -26,7 +29,7 @@ type SectionDetail = {
   order: number
   isVisible: boolean
   config: Record<string, unknown>
-  service: { id: number; name: string; slug: string }
+  service: { id: number; name: string; slug: string; longDesc: string }
   features: AdminServiceFeature[]
   faqs: AdminServiceFaq[]
   beforeAfters: AdminBeforeAfter[]
@@ -157,6 +160,14 @@ export default function SectionItemsPage({ params }: PageProps) {
         onSaved={fetchSection}
       />
 
+      {section.type === 'why_with_features' && (
+        <WhyMainDescEditor
+          serviceId={serviceId}
+          initialLongDesc={section.service.longDesc}
+          onSaved={fetchSection}
+        />
+      )}
+
       <section className="rounded-xl border border-hairline bg-white p-5">
         {section.type === 'why_with_features' && (
           <FeaturesEditor
@@ -192,5 +203,72 @@ export default function SectionItemsPage({ params }: PageProps) {
         )}
       </section>
     </>
+  )
+}
+
+/**
+ * 「為什麼這項服務重要？」主文編輯區。
+ * 資料源是 `Service.longDesc`（不是 section.config），所以走 PUT /api/admin/services/[id]。
+ * 從 /admin/services/[id]/edit 主欄位面板搬過來——這個欄位實際上是 why_with_features section
+ * 的主文，放在這裡符合業主心智模型。
+ */
+function WhyMainDescEditor({
+  serviceId,
+  initialLongDesc,
+  onSaved,
+}: {
+  serviceId: number
+  initialLongDesc: string
+  onSaved: () => void
+}) {
+  const [longDesc, setLongDesc] = useState(initialLongDesc)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const dirty = longDesc !== initialLongDesc
+
+  async function save() {
+    setSaving(true)
+    setError(null)
+    try {
+      const r = await fetch(`/api/admin/services/${serviceId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ longDesc }),
+      })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || '儲存失敗')
+      toast.success('已儲存詳細描述')
+      onSaved()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '儲存失敗'
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <section className="mb-4 rounded-xl border border-hairline bg-white p-5">
+      <header className="mb-4 flex items-center justify-between border-b border-hairline-soft pb-3">
+        <div>
+          <h2 className="text-base font-semibold text-ink">詳細描述（主文）</h2>
+          <p className="text-xs text-ink-muted mt-0.5">顯示在服務詳情頁「為什麼這項服務重要？」區塊的主文</p>
+        </div>
+        <button
+          onClick={save}
+          disabled={!dirty || saving}
+          className="btn-primary !py-2 !px-3 !text-sm disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          儲存
+        </button>
+      </header>
+      <ErrorBanner message={error} />
+      <Field label="主文" hint="支援富文本（標題、列表、粗體等）">
+        <RichTextEditor value={longDesc} onContentChange={setLongDesc} />
+      </Field>
+    </section>
   )
 }

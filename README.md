@@ -587,6 +587,17 @@ return visibleSections.map((section) => (
 
 LINE button 圖片用 `<img>` raw tag、CTA 背景與 unsplash fallback 用 `<Image unoptimized>`，都避免 `next.config.ts` 為單一 host 增加 remotePatterns。
 
+**「詳細描述（主文）」編輯入口從 services/edit 搬到 sections/items 子頁**：`service.longDesc` 在前台 `WhyWithFeaturesSection.tsx` 用作「為什麼這項服務重要？」section 的主文，但 admin 端入口卻在 `/admin/services/[id]/edit` 的主欄位面板，與「該 section 的內容管理」分離 —— 業主心智模型對不上（修文案要先跑兩個頁面）。
+
+**改動**：
+1. `app/api/admin/sections/[sectionId]/route.ts`：GET 的 service select 加 `longDesc: true`，items 子頁拿得到主文初值。
+2. `app/admin/services/[id]/sections/[sectionId]/items/page.tsx`：在 `why_with_features` 區塊 features 編輯區上方新增 `WhyMainDescEditor` 元件（內含 RichTextEditor + 獨立儲存按鈕、走 `PUT /api/admin/services/[id]` 既有 endpoint）。
+3. `app/admin/services/[id]/edit/page.tsx`：移除「詳細描述」Field 與 `form.longDesc`，改為一個指示卡片連往 sections 管理頁。
+
+**資料層零變動**：`Service.longDesc` schema 不變、`PUT /api/admin/services/[id]` 用 `body.longDesc !== undefined` 條件式更新（line 71-77），edit 頁 form 拿掉 longDesc 後 PUT body 不會送該欄、DB 不會被誤覆蓋。前台 `WhyWithFeaturesSection` 仍讀 `service.longDesc` 顯示，**完全不需動前台**。
+
+---
+
 **`SectionConfigModal` 富文本欄位 stale display 修補（兩階段）**：業主回報 `/admin/services/[id]/sections` 跨 section 切換 modal 時，富文本欄位（intro 的 paragraph1/2/3、text_block 的 body）會殘留前一個 section 的內容。
 
 第一次嘗試只給 `<RichTextEditor>` 加 `key={section.id}-${field.key}`，**結果無效**。真正的根因是「**兩階段初始化的時序漏洞**」：`SectionConfigModal` 自己用 `useState<ConfigState>({})` + `useEffect(() => setForm(section.config), [open, section])`，第一次 render 時 form 仍是上一個 section 的內容（useEffect 尚未跑），RichTextEditor 就 mount 並把舊內容凍進 `useRef(value)`；等 useEffect 跑、setForm 變新值時，CKEditor 已 freeze，加 key 也救不回（因為 React 看 key 變 unmount/remount，但第一次 render 時 form 仍 stale）。**且若業主在 stale 狀態下按過儲存，PUT body 會把客廳的內容寫進廚房 section.config，DB 真的被污染**。
