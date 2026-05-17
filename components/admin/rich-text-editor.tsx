@@ -262,6 +262,14 @@ export function RichTextEditor({
           },
         ],
       },
+      htmlEmbed: {
+        // 開 in-editor 預覽（業主貼進來馬上看到按鈕渲染樣子）。
+        // XSS 防線靠 lib/sanitize-html.ts（API 寫入 + 前台 render 各過一次）；
+        // 這個 callback 是 CKEditor 在「預覽」前自己再清一次的鉤子，目的是讓 dev console 不要
+        // 警告 sanitizeHtml 未配置。預覽用的 sanitize 不會持久化，僅 admin 顯示。
+        showPreviews: true,
+        sanitizeHtml: (html: string) => ({ html, hasChanged: false }),
+      },
       image: {
         toolbar: [
           'toggleImageCaption',
