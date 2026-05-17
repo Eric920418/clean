@@ -117,7 +117,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v11] mounted — bold first + mousedown intercept (double defense)')
+    console.log('[RichTextEditor v12] mounted — clear stale selection attrs on focus')
     return () => setIsReady(false)
   }, [])
 
@@ -363,6 +363,15 @@ export function RichTextEditor({
           toolbar?: { items?: Iterable<{ isOpen?: boolean }> }
         }
       }
+      model: {
+        change: (cb: (writer: { removeSelectionAttribute: (key: string) => void }) => void) => void
+        document: {
+          selection: { getAttributeKeys: () => Iterable<string> }
+        }
+      }
+      editing: {
+        view: { document: { on: (event: string, cb: () => void) => void } }
+      }
     }
     const root = ed.ui.view.element
     if (!root) return
@@ -375,6 +384,28 @@ export function RichTextEditor({
       }
     }
 
+    /**
+     * Bug 修補 — CKEditor 5 v44 在 focus editable 時把 toolbar 第一個 button 對應的
+     * model attribute 加到 selection 上（bold 第一個 → 加 bold attribute；fontSize 第一個 → 加 fontSize）。
+     * 結果：user 打字會自動變粗（或大字、或顏色）。已本地 reproduce 確認 editable HTML 變 `<strong>`。
+     *
+     * 修法：focus 後等 microtask、把 selection 上所有 attribute 清掉。selection 剛從外
+     * 跳進來通常是 collapsed empty position、attribute 全是 CKEditor 自己誤加的、清掉
+     * 對 user 真正打字無影響。
+     */
+    const clearStaleSelectionAttrs = () => {
+      Promise.resolve().then(() => {
+        try {
+          ed.model.change((writer) => {
+            const keys = Array.from(ed.model.document.selection.getAttributeKeys())
+            keys.forEach((k) => writer.removeSelectionAttribute(k))
+          })
+        } catch {
+          // editor 可能 destroy 中、忽略
+        }
+      })
+    }
+
     // mousedown 後 CKEditor 會在 microtask 內把 dropdown open
     // 用兩階段延遲確保攔截到「open 完才 close」
     root.addEventListener('mousedown', () => {
@@ -383,6 +414,9 @@ export function RichTextEditor({
         setTimeout(closeAllDropdowns, 50)
       })
     })
+
+    // focus editable → 清掉 CKEditor v44 誤加的 selection attribute
+    ed.editing.view.document.on('focus', clearStaleSelectionAttrs)
   }
 
   return (
