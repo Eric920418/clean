@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, Save } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass } from '@/components/admin/form-field'
@@ -173,27 +173,68 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
 }
 
 export default function ContentAdminPage() {
+  // 一次只展開一個 block — 避免多個 CKEditor instance 同頁 mount 觸發 focus tracker
+  // 衝突 bug（點 editable 會跑到別的 editor 的 toolbar 第一個 dropdown）。
+  // 同場景額外好處：頁面不再一次載入 14 個 ~3MB 的 CKEditor bundle。
+  const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const [dirtyKey, setDirtyKey] = useState<string | null>(null)
+
+  function handleToggle(key: string) {
+    if (expandedKey === key) {
+      // 點當前展開的 → 收合
+      if (dirtyKey === key) {
+        if (!confirm('有未儲存的變更，收合後會遺失。確定收合？')) return
+      }
+      setExpandedKey(null)
+      setDirtyKey(null)
+      return
+    }
+    // 切換到別的 block
+    if (dirtyKey && dirtyKey === expandedKey) {
+      if (!confirm('目前展開的區塊有未儲存的變更，切換後會遺失。確定切換？')) return
+    }
+    setExpandedKey(key)
+    setDirtyKey(null)
+  }
+
   return (
     <>
       <AdminPageHeader
         title="頁面內容"
         description="編輯網站所有頁面的標題、副標、按鈕文字（動態資料如服務、評價、流程在各自的管理頁）"
       />
-      <div className="space-y-6">
+      <div className="space-y-3">
         {Object.keys(BLOCK_DEFS).map((key) => (
-          <BlockEditor key={key} blockKey={key} />
+          <BlockEditor
+            key={key}
+            blockKey={key}
+            isExpanded={expandedKey === key}
+            onToggle={() => handleToggle(key)}
+            onDirtyChange={(dirty) => setDirtyKey(dirty ? key : null)}
+          />
         ))}
       </div>
     </>
   )
 }
 
-function BlockEditor({ blockKey }: { blockKey: string }) {
+function BlockEditor({
+  blockKey,
+  isExpanded,
+  onToggle,
+  onDirtyChange,
+}: {
+  blockKey: string
+  isExpanded: boolean
+  onToggle: () => void
+  onDirtyChange: (dirty: boolean) => void
+}) {
   const def = BLOCK_DEFS[blockKey]
   const [values, setValues] = useState<Record<string, string>>({})
   const [original, setOriginal] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [hasFetched, setHasFetched] = useState(false)
 
   async function fetchOne() {
     setLoading(true)
@@ -207,6 +248,7 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
       })
       setValues(init)
       setOriginal(init)
+      setHasFetched(true)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '讀取失敗')
     } finally {
@@ -214,15 +256,23 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
     }
   }
 
+  // Lazy fetch — 展開時才 fetch、避免 14 個 block 並發打 API
   useEffect(() => {
-    fetchOne()
+    if (isExpanded && !hasFetched) fetchOne()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blockKey])
+  }, [isExpanded])
+
+  const dirty = hasFetched && JSON.stringify(values) !== JSON.stringify(original)
+
+  // 通知父組件 dirty 狀態，切換時可提示
+  useEffect(() => {
+    if (isExpanded) onDirtyChange(dirty)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, isExpanded])
 
   async function save() {
     setSaving(true)
     try {
-      // 告訴 API 哪些 key 是富文本，需 sanitize（其他純 text / image URL 不動）
       const richTextKeys = def.fields.filter((f) => f.type === 'richtext').map((f) => f.name)
       const r = await fetch(`/api/admin/content/${blockKey}`, {
         method: 'PUT',
@@ -233,6 +283,7 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
       if (!r.ok) throw new Error(data.error || '儲存失敗')
       toast.success(`「${def.title}」已儲存`)
       setOriginal(values)
+      onDirtyChange(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '儲存失敗')
     } finally {
@@ -240,54 +291,77 @@ function BlockEditor({ blockKey }: { blockKey: string }) {
     }
   }
 
-  const dirty = JSON.stringify(values) !== JSON.stringify(original)
-
   return (
-    <section className="rounded-xl border border-hairline bg-white p-4 sm:p-5 md:p-6">
-      <header className="mb-4 flex items-center justify-between border-b border-hairline-soft pb-3">
-        <div>
-          <h2 className="text-base font-semibold text-ink">{def.title}</h2>
-          <p className="text-xs text-ink-muted mt-0.5">{def.description}</p>
+    <section className="rounded-xl border border-hairline bg-white">
+      <header
+        onClick={onToggle}
+        className="flex items-center justify-between gap-3 p-4 sm:p-5 cursor-pointer hover:bg-bg-soft/60 transition rounded-xl"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          {isExpanded ? (
+            <ChevronDown className="h-5 w-5 text-ink-soft shrink-0" />
+          ) : (
+            <ChevronRight className="h-5 w-5 text-ink-soft shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-ink truncate">{def.title}</h2>
+            <p className="text-xs text-ink-muted mt-0.5 truncate">{def.description}</p>
+          </div>
         </div>
-        <button
-          onClick={save}
-          disabled={!dirty || saving}
-          className="btn-primary !py-2 !px-3 !text-sm disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          儲存
-        </button>
+        {dirty && (
+          <span className="text-xs font-medium text-warn shrink-0">● 未儲存</span>
+        )}
       </header>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-5 w-5 text-primary-deep animate-spin" />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {def.fields.map((f) => (
-            <Field key={f.name} label={f.label} hint={f.hint}>
-              {f.type === 'richtext' ? (
-                <RichTextEditor
-                  value={values[f.name] ?? ''}
-                  onContentChange={(html) => setValues({ ...values, [f.name]: html })}
-                  height="180px"
-                />
-              ) : f.type === 'image' ? (
-                <ImageUploader
-                  value={values[f.name] ?? ''}
-                  onChange={(url) => setValues({ ...values, [f.name]: url })}
-                  folder={f.folder ?? 'content'}
-                />
-              ) : (
-                <input
-                  value={values[f.name] ?? ''}
-                  onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
-                  className={inputClass}
-                />
-              )}
-            </Field>
-          ))}
+      {isExpanded && (
+        <div className="border-t border-hairline-soft px-4 sm:px-5 md:px-6 pb-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 text-primary-deep animate-spin" />
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 pt-5">
+                {def.fields.map((f) => (
+                  <Field key={f.name} label={f.label} hint={f.hint}>
+                    {f.type === 'richtext' ? (
+                      <RichTextEditor
+                        value={values[f.name] ?? ''}
+                        onContentChange={(html) => setValues({ ...values, [f.name]: html })}
+                        height="180px"
+                      />
+                    ) : f.type === 'image' ? (
+                      <ImageUploader
+                        value={values[f.name] ?? ''}
+                        onChange={(url) => setValues({ ...values, [f.name]: url })}
+                        folder={f.folder ?? 'content'}
+                      />
+                    ) : (
+                      <input
+                        value={values[f.name] ?? ''}
+                        onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
+                        className={inputClass}
+                      />
+                    )}
+                  </Field>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-hairline-soft">
+                <button
+                  onClick={save}
+                  disabled={!dirty || saving}
+                  className="btn-primary !py-2 !px-4 !text-sm disabled:opacity-50"
+                >
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  儲存
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </section>
