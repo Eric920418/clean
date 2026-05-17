@@ -62,7 +62,7 @@
 | `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
 | `/admin/dashboard` | 首頁：QuickActions 兩個大按鈕 + 4 張統計卡 + 最近 5 筆詢問 |
 | `/admin/services` | 服務列表（新增 modal、排序、上下架、刪除、進入詳細編輯） |
-| `/admin/services/[id]/edit` | 服務主欄位 + 子表（主欄位 panel / 特色 / FAQ）統一編輯頁 |
+| `/admin/services/[id]/edit` | 服務主欄位 + FAQ 統一編輯頁（服務特色已改由 sections 子頁的 `FeaturesEditor` 編輯） |
 | `/admin/services/[id]/before-afters` | ⭐ 清潔前後照片管理（每組 modal 上傳） |
 | `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
 | `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
@@ -574,6 +574,8 @@ return visibleSections.map((section) => (
 **Hero 背景圖：唯一入口在 sections > Hero modal**：因為 `HeroSection.tsx` 的 fallback 順序是 `section.config.heroImage ?? service.heroImage`（section 層級優先），如果使用者在 MainFieldsPanel 改 service.heroImage，會被 hero section 的 config 覆蓋而看不到變化。**修法**：MainFieldsPanel 移除 heroImage 欄位（PUT body 也不送，原 Service.heroImage 不動，仍當 fallback），改為指向「頁面區塊管理 → Hero 區塊」的提示卡。新增服務的 create modal **仍保留** heroImage 欄位作為「初始 fallback」用（新建 service 尚無 sections，這時 Service.heroImage 是唯一管道；之後若使用者在 sections 設了 Hero config.heroImage，那邊優先）。`cardImage` 因屬於列表卡片用、與 section 無關，繼續留在 MainFieldsPanel。
 
 **FeaturesPanel / FaqsPanel 補 sectionId（修 400 Bad Request）**：C4b 後 `ServiceFeature.sectionId` 與 `ServiceFaq.sectionId` 必填，API `POST /api/admin/services/[id]/features|faqs` 強制驗證。但 `/admin/services/[id]/edit` 的兩個 panel 是 C4b 前的舊 UI，POST body 缺 `sectionId` 必然回 400。**修法**：兩個 panel 加 `sectionId: number | null` prop，由父層 edit page 從 `service.sections` 自動找對應型別（`why_with_features` 給 features，`faq` 給 faqs）；POST body 帶上 sectionId。**若該型 section 不存在**，panel 不顯示輸入框，改顯示「請先到頁面區塊管理新增此區塊」的提示，連結到 sections 頁。同時 `AdminService` 型別加 `sections?: AdminServiceSection[]`（GET API 一直有回，只是型別沒宣告）。
+
+**`FeaturesPanel` 已從 edit 頁移除（去除重複入口）**：服務特色與 sections 子頁的 `FeaturesEditor` 編輯同一張 `ServiceFeature` 表、同一個 `why_with_features` section，重複入口造成認知負擔。**修法**：`/admin/services/[id]/edit` 完全移除 `FeaturesPanel` 與 `FeatureRow` 函式、相關 `AdminServiceFeature` import 與 `Trash2` icon import；服務特色一律走「頁面區塊管理 → why_with_features 區塊 → items 子頁」編輯。FAQ 編輯目前仍保留在 edit 頁的 `FaqsPanel`（與 sections 子頁的 `FaqsEditor` 並存，**待後續決策**）。後端 API（`/features` CRUD routes、sectionId 必填邏輯）零變動。
 
 **所有 admin 寫入動作主動觸發 ISR revalidate（修「存了沒看到」）**：前台 `/services` 與 `/services/[slug]` 用 `export const revalidate = 60`，預設要等 60 秒。新增 `lib/revalidate-service.ts` 提供 `revalidateService(serviceId)` helper：查 slug → `revalidatePath('/services/${slug}')` + `/services` + `/`。所有 admin write routes（services POST/PUT/DELETE、sections POST/PUT/DELETE、features POST/PUT/DELETE、faqs POST/PUT/DELETE、before-afters POST/PUT/DELETE、gallery POST/PATCH/DELETE）在 DB commit 後呼叫此 helper。`revalidatePath` 是 fire-and-forget，不延遲 API response，但下次前台請求就會立即 regenerate。業主存檔後 hard refresh 就看得到變化、不用再等 60 秒。
 

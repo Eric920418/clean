@@ -44,7 +44,7 @@ export default async function ContactPage() {
       <section className="section pt-8 md:pt-10">
         <div className="container-narrow grid grid-cols-1 gap-10 lg:grid-cols-3">
           <aside className="lg:col-span-1">
-            <div className="rounded-xl border border-hairline bg-bg-soft p-7">
+            <div className="rounded-xl border border-hairline bg-bg-soft p-5">
               <h3 className="text-base font-medium text-ink">直接聯絡</h3>
               <ul className="mt-5 space-y-4 text-sm">
                 <li className="flex items-start gap-3">

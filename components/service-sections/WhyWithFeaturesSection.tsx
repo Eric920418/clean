@@ -24,7 +24,7 @@ export function WhyWithFeaturesSection({ section, service }: Props) {
             className="mt-6 text-base leading-loose text-ink-soft md:text-lg [&_*]:my-0"
           />
         </div>
-        <aside className="rounded-xl border border-hairline bg-bg-soft p-7">
+        <aside className="rounded-xl border border-hairline bg-bg-soft p-5">
           <h3 className="text-base font-medium text-ink">服務重點</h3>
           <ul className="mt-5 space-y-3 text-sm leading-relaxed text-ink-soft">
             {features.map((f) => (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
-import { Plus, Trash2, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
+import { Plus, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
@@ -10,7 +10,7 @@ import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { RichText } from '@/components/rich-text'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { ImageUploader } from '@/components/admin/image-uploader'
-import type { AdminService, AdminServiceFeature, AdminServiceFaq } from '@/lib/admin-types'
+import type { AdminService, AdminServiceFaq } from '@/lib/admin-types'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -63,7 +63,7 @@ export default function ServiceEditPage({ params }: PageProps) {
     <>
       <AdminPageHeader
         title={service.name}
-        description="維護服務的主欄位、特色 bullet、常見問題，以及對比圖與圖庫子頁連結"
+        description="維護服務的主欄位、常見問題，以及對比圖與圖庫子頁連結（服務特色請至「頁面區塊管理」對應 why_with_features 區塊編輯）"
         breadcrumb={[
           { label: '服務管理', href: '/admin/services' },
           { label: service.name },
@@ -128,182 +128,13 @@ export default function ServiceEditPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <FeaturesPanel
-          serviceId={service.id}
-          sectionId={service.sections?.find((s) => s.type === 'why_with_features')?.id ?? null}
-          features={service.features ?? []}
-          onChange={fetchService}
-        />
-        <FaqsPanel
-          serviceId={service.id}
-          sectionId={service.sections?.find((s) => s.type === 'faq')?.id ?? null}
-          faqs={service.faqs ?? []}
-          onChange={fetchService}
-        />
-      </div>
-    </>
-  )
-}
-
-/* ================================================================ */
-function FeaturesPanel({
-  serviceId,
-  sectionId,
-  features,
-  onChange,
-}: {
-  serviceId: number
-  sectionId: number | null
-  features: AdminServiceFeature[]
-  onChange: () => void
-}) {
-  const [newText, setNewText] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  async function add() {
-    if (!newText.trim()) return
-    if (sectionId === null) {
-      toast.error('此服務尚無「服務重點」區塊，請先到「頁面區塊管理」新增 why_with_features 區塊')
-      return
-    }
-    setBusy(true)
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/features`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: newText.trim(), order: features.length, sectionId }),
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '新增失敗')
-      setNewText('')
-      onChange()
-      toast.success('已新增特色')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '新增失敗')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function update(id: number, text: string) {
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/features/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '更新失敗')
-      toast.success('已儲存')
-      onChange()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '更新失敗')
-    }
-  }
-
-  async function remove(id: number) {
-    if (!confirm('確定刪除這條特色？')) return
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/features/${id}`, {
-        method: 'DELETE',
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '刪除失敗')
-      onChange()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '刪除失敗')
-    }
-  }
-
-  return (
-    <section className="rounded-xl border border-hairline bg-white p-5">
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-ink">服務特色</h2>
-          <p className="text-xs text-ink-muted mt-0.5">顯示在詳情頁的「服務重點」清單</p>
-        </div>
-        <span className="text-xs text-ink-muted">{features.length} 條</span>
-      </header>
-
-      <ul className="space-y-2 mb-4">
-        {features.length === 0 && (
-          <li className="text-sm text-ink-muted text-center py-6">尚未新增特色</li>
-        )}
-        {features.map((f) => (
-          <FeatureRow key={f.id} feature={f} onUpdate={update} onDelete={remove} />
-        ))}
-      </ul>
-
-      {sectionId === null ? (
-        <div className="pt-3 border-t border-hairline-soft text-sm leading-relaxed text-ink-soft">
-          此服務尚未建立「服務重點」區塊（why_with_features），請先到{' '}
-          <Link
-            href={`/admin/services/${serviceId}/sections`}
-            className="text-primary-deep underline underline-offset-2 hover:no-underline"
-          >
-            頁面區塊管理
-          </Link>{' '}
-          新增該區塊才能加特色。
-        </div>
-      ) : (
-        <div className="flex gap-2 pt-3 border-t border-hairline-soft">
-          <input
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
-            className={inputClass}
-            placeholder="新增特色，如：全拆解清洗風輪、鋁片、排水盤"
-          />
-          <button
-            onClick={add}
-            disabled={busy || !newText.trim()}
-            className="btn-primary !py-2 !px-3 !text-sm disabled:opacity-60 shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-    </section>
-  )
-}
-
-function FeatureRow({
-  feature,
-  onUpdate,
-  onDelete,
-}: {
-  feature: AdminServiceFeature
-  onUpdate: (id: number, text: string) => void
-  onDelete: (id: number) => void
-}) {
-  const [text, setText] = useState(feature.text)
-  const dirty = text !== feature.text
-
-  return (
-    <li className="flex items-center gap-2 group">
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className={inputClass}
+      <FaqsPanel
+        serviceId={service.id}
+        sectionId={service.sections?.find((s) => s.type === 'faq')?.id ?? null}
+        faqs={service.faqs ?? []}
+        onChange={fetchService}
       />
-      {dirty && (
-        <button
-          onClick={() => onUpdate(feature.id, text)}
-          className="text-primary-deep hover:bg-primary/10 rounded-md p-1.5 transition shrink-0"
-          title="儲存"
-        >
-          <Save className="h-4 w-4" />
-        </button>
-      )}
-      <button
-        onClick={() => onDelete(feature.id)}
-        className="text-ink-muted hover:text-danger hover:bg-danger/10 rounded-md p-1.5 transition shrink-0"
-        title="刪除"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
-    </li>
+    </>
   )
 }
 
