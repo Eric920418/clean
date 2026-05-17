@@ -390,11 +390,9 @@ function MainFieldsPanel({
     name: service.name,
     shortDesc: service.shortDesc,
     longDesc: service.longDesc,
-    icon: service.icon ?? '',
     cardImage: service.cardImage ?? '',
     isActive: service.isActive,
     isFeatured: service.isFeatured,
-    order: service.order,
     seoTitle: service.seoTitle ?? '',
     seoDesc: service.seoDesc ?? '',
   })
@@ -463,25 +461,6 @@ function MainFieldsPanel({
             onContentChange={(html) => setForm({ ...form, longDesc: html })}
           />
         </Field>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Lucide icon 名稱" hint="如 Wind / Droplets / Sparkles / ShieldCheck">
-            <input
-              value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              className={inputClass}
-              placeholder="Wind"
-            />
-          </Field>
-          <Field label="排序" hint="數字越小越前面">
-            <input
-              type="number"
-              value={form.order}
-              onChange={(e) => setForm({ ...form, order: parseInt(e.target.value) || 0 })}
-              className={inputClass}
-            />
-          </Field>
-        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field label="卡片圖（首頁/列表用）">

@@ -128,21 +128,25 @@ function Hero({
 
         <div className="relative">
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-hairline bg-bg-soft shadow-sm">
-            {featured ? (
-              <Image
-                src={featured.afterUrl}
-                alt={featured.caption ?? "清洗後實況"}
-                fill
-                sizes="(min-width: 768px) 50vw, 100vw"
-                className="object-cover"
-                priority
-                unoptimized
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-ink-muted text-sm">
-                尚未上傳對比圖
-              </div>
-            )}
+            {(() => {
+              const heroImageSrc = hero.heroImage || featured?.afterUrl
+              const heroImageAlt = hero.heroImage ? '首頁主視覺' : (featured?.caption ?? '清洗後實況')
+              return heroImageSrc ? (
+                <Image
+                  src={heroImageSrc}
+                  alt={heroImageAlt}
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                  priority
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-ink-muted text-sm">
+                  尚未上傳對比圖
+                </div>
+              )
+            })()}
             <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-primary/95 px-3 py-1 text-xs font-medium tracking-wide text-white shadow-sm">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
               服務後實況

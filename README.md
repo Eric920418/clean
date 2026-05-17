@@ -577,6 +577,10 @@ return visibleSections.map((section) => (
 
 **`FeaturesPanel` 已從 edit 頁移除（去除重複入口）**：服務特色與 sections 子頁的 `FeaturesEditor` 編輯同一張 `ServiceFeature` 表、同一個 `why_with_features` section，重複入口造成認知負擔。**修法**：`/admin/services/[id]/edit` 完全移除 `FeaturesPanel` 與 `FeatureRow` 函式、相關 `AdminServiceFeature` import 與 `Trash2` icon import；服務特色一律走「頁面區塊管理 → why_with_features 區塊 → items 子頁」編輯。FAQ 編輯目前仍保留在 edit 頁的 `FaqsPanel`（與 sections 子頁的 `FaqsEditor` 並存，**待後續決策**）。後端 API（`/features` CRUD routes、sectionId 必填邏輯）零變動。
 
+**首頁 Hero 主視覺圖片可在 `/admin/content` 直接編輯**：`hero-home` ContentBlock 新增 `heroImage` 欄位（image type、folder 'home'）。前台 `app/(site)/page.tsx` Hero 元件改用 `hero.heroImage || featured?.afterUrl` 雙來源邏輯 —— 業主有填就用 ContentBlock 的圖、未填則保留原本「精選對比圖第 0 筆」fallback。alt 對應：用 ContentBlock 圖時固定 "首頁主視覺"，用 featured fallback 時用 `featured.caption`。同時補完 `/api/admin/content/[key]` PUT 的 ISR revalidate（先前漏寫，業主存 content block 要等 60 秒）：DB upsert 後 revalidate `/`、`/about`、`/contact`、`/faq`、`/services`、`/works`。
+
+**MainFieldsPanel 隱藏 `icon` / `order` 欄位**：業主用不到，從 `/admin/services/[id]/edit` 的表單與 form state 移除，UI 不顯示。**後端 API 零變動**（`PUT /api/admin/services/[id]` 已用 `body.xxx !== undefined` 條件式更新，body 沒帶就跳過 DB 寫入）。**現有 `service.icon` / `service.order` 資料保留**，前台仍依 `service.icon` 顯示 lucide 圖示、依 `service.order` 排序。要批次調整排序請改用 `/admin/services` 列表頁的上下移按鈕，icon 需修改可暫時直接改 DB 或臨時加回欄位。
+
 **所有 admin 寫入動作主動觸發 ISR revalidate（修「存了沒看到」）**：前台 `/services` 與 `/services/[slug]` 用 `export const revalidate = 60`，預設要等 60 秒。新增 `lib/revalidate-service.ts` 提供 `revalidateService(serviceId)` helper：查 slug → `revalidatePath('/services/${slug}')` + `/services` + `/`。所有 admin write routes（services POST/PUT/DELETE、sections POST/PUT/DELETE、features POST/PUT/DELETE、faqs POST/PUT/DELETE、before-afters POST/PUT/DELETE、gallery POST/PATCH/DELETE）在 DB commit 後呼叫此 helper。`revalidatePath` 是 fire-and-forget，不延遲 API response，但下次前台請求就會立即 regenerate。業主存檔後 hard refresh 就看得到變化、不用再等 60 秒。
 
 ### C3c（已完成）— 列表 type section-scoped 子頁

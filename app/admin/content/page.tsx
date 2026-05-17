@@ -21,8 +21,9 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   // === 首頁 ===
   'hero-home': {
     title: '首頁 Hero（主視覺）',
-    description: '首頁最上方的標題、副標、按鈕文字、4 條 checklist',
+    description: '首頁最上方的標題、副標、按鈕文字、4 條 checklist、主視覺圖片',
     fields: [
+      { name: 'heroImage', label: '主視覺圖片', type: 'image', folder: 'home', hint: '建議 4:5 比例、800×1000px 以上。未填則使用首頁精選對比圖' },
       { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：Invisible Care · 居家健康守護' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行（強調色）', type: 'text' },
