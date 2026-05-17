@@ -2,15 +2,13 @@
 
 import { useEffect, useState, use } from 'react'
 import Link from 'next/link'
-import { Plus, ImageIcon, MessageSquare, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
+import { ImageIcon, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
-import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
-import { RichText } from '@/components/rich-text'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { ImageUploader } from '@/components/admin/image-uploader'
-import type { AdminService, AdminServiceFaq } from '@/lib/admin-types'
+import type { AdminService } from '@/lib/admin-types'
 
 type PageProps = { params: Promise<{ id: string }> }
 
@@ -63,7 +61,7 @@ export default function ServiceEditPage({ params }: PageProps) {
     <>
       <AdminPageHeader
         title={service.name}
-        description="維護服務的主欄位、常見問題，以及對比圖與圖庫子頁連結（服務特色請至「頁面區塊管理」對應 why_with_features 區塊編輯）"
+        description="維護服務主欄位，以及對比圖與圖庫子頁連結；FAQ、Hero、特色清單等內容請至「頁面區塊管理」對應區塊編輯"
         breadcrumb={[
           { label: '服務管理', href: '/admin/services' },
           { label: service.name },
@@ -128,253 +126,7 @@ export default function ServiceEditPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <FaqsPanel
-        serviceId={service.id}
-        sectionId={service.sections?.find((s) => s.type === 'faq')?.id ?? null}
-        faqs={service.faqs ?? []}
-        onChange={fetchService}
-      />
     </>
-  )
-}
-
-/* ================================================================ */
-function FaqsPanel({
-  serviceId,
-  sectionId,
-  faqs,
-  onChange,
-}: {
-  serviceId: number
-  sectionId: number | null
-  faqs: AdminServiceFaq[]
-  onChange: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [q, setQ] = useState('')
-  const [a, setA] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  async function add() {
-    if (!q.trim() || !a.trim()) return
-    if (sectionId === null) {
-      toast.error('此服務尚無「常見問題」區塊，請先到「頁面區塊管理」新增 faq 區塊')
-      return
-    }
-    setBusy(true)
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/faqs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: q.trim(),
-          answer: a.trim(),
-          order: faqs.length,
-          sectionId,
-        }),
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '新增失敗')
-      setQ('')
-      setA('')
-      setOpen(false)
-      onChange()
-      toast.success('已新增 FAQ')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '新增失敗')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function remove(id: number) {
-    if (!confirm('確定刪除這條 FAQ？')) return
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/faqs/${id}`, {
-        method: 'DELETE',
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '刪除失敗')
-      onChange()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '刪除失敗')
-    }
-  }
-
-  async function update(faq: AdminServiceFaq, patch: Partial<AdminServiceFaq>) {
-    try {
-      const r = await fetch(`/api/admin/services/${serviceId}/faqs/${faq.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
-      })
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '更新失敗')
-      toast.success('已儲存')
-      onChange()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '更新失敗')
-    }
-  }
-
-  return (
-    <section className="rounded-xl border border-hairline bg-white p-5">
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-ink">常見問題</h2>
-          <p className="text-xs text-ink-muted mt-0.5">顯示在詳情頁底部 FAQ 區塊</p>
-        </div>
-        <span className="text-xs text-ink-muted">{faqs.length} 條</span>
-      </header>
-
-      <ul className="space-y-3 mb-4">
-        {faqs.length === 0 && (
-          <li className="text-sm text-ink-muted text-center py-6">尚未新增 FAQ</li>
-        )}
-        {faqs.map((f) => (
-          <FaqRow key={f.id} faq={f} onUpdate={update} onDelete={remove} />
-        ))}
-      </ul>
-
-      {sectionId === null ? (
-        <div className="pt-3 border-t border-hairline-soft text-sm leading-relaxed text-ink-soft">
-          此服務尚未建立「常見問題」區塊（faq），請先到{' '}
-          <Link
-            href={`/admin/services/${serviceId}/sections`}
-            className="text-primary-deep underline underline-offset-2 hover:no-underline"
-          >
-            頁面區塊管理
-          </Link>{' '}
-          新增該區塊才能加 FAQ。
-        </div>
-      ) : open ? (
-        <div className="space-y-2 pt-3 border-t border-hairline-soft">
-          <Field label="問題">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className={inputClass}
-              placeholder="多久應該洗一次冷氣？"
-            />
-          </Field>
-          <Field label="答案">
-            <RichTextEditor
-              value={a}
-              onContentChange={(html) => setA(html)}
-              placeholder="一般家庭建議每年清洗一次..."
-              height="180px"
-            />
-          </Field>
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => {
-                setOpen(false)
-                setQ('')
-                setA('')
-              }}
-              className="btn-ghost !py-1.5 !px-3 !text-sm"
-            >
-              取消
-            </button>
-            <button
-              onClick={add}
-              disabled={busy || !q.trim() || !a.trim()}
-              className="btn-primary !py-1.5 !px-3 !text-sm disabled:opacity-60"
-            >
-              新增
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => setOpen(true)}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-dashed border-hairline py-3 text-sm text-ink-soft hover:border-primary hover:bg-bg-tint/40 hover:text-primary-deep transition"
-        >
-          <Plus className="h-4 w-4" />
-          新增一條 FAQ
-        </button>
-      )}
-    </section>
-  )
-}
-
-function FaqRow({
-  faq,
-  onUpdate,
-  onDelete,
-}: {
-  faq: AdminServiceFaq
-  onUpdate: (faq: AdminServiceFaq, patch: Partial<AdminServiceFaq>) => void
-  onDelete: (id: number) => void
-}) {
-  const [editing, setEditing] = useState(false)
-  const [q, setQ] = useState(faq.question)
-  const [a, setA] = useState(faq.answer)
-
-  if (!editing) {
-    return (
-      <li className="rounded-lg border border-hairline-soft bg-bg-soft/40 p-3 group">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-ink flex items-start gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5 mt-1 text-primary-deep shrink-0" />
-              {faq.question}
-            </p>
-            <RichText
-              html={faq.answer}
-              className="mt-1.5 text-xs text-ink-soft leading-relaxed pl-5 prose-sm"
-            />
-          </div>
-          <div className="flex gap-1 shrink-0">
-            <button
-              onClick={() => setEditing(true)}
-              className="text-xs text-primary-deep hover:underline"
-            >
-              編輯
-            </button>
-            <span className="text-ink-muted">·</span>
-            <button
-              onClick={() => onDelete(faq.id)}
-              className="text-xs text-danger hover:underline"
-            >
-              刪除
-            </button>
-          </div>
-        </div>
-      </li>
-    )
-  }
-
-  return (
-    <li className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-      <input value={q} onChange={(e) => setQ(e.target.value)} className={inputClass} />
-      <RichTextEditor
-        value={a}
-        onContentChange={(html) => setA(html)}
-        height="180px"
-      />
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={() => {
-            setEditing(false)
-            setQ(faq.question)
-            setA(faq.answer)
-          }}
-          className="btn-ghost !py-1 !px-2 !text-xs"
-        >
-          取消
-        </button>
-        <button
-          onClick={() => {
-            onUpdate(faq, { question: q, answer: a })
-            setEditing(false)
-          }}
-          className="btn-primary !py-1 !px-2 !text-xs"
-        >
-          儲存
-        </button>
-      </div>
-    </li>
   )
 }
 

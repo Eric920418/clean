@@ -168,6 +168,7 @@ clean/
 │   ├── faq/page.tsx                常見問題
 │   ├── sitemap.ts                  動態 sitemap.xml
 │   ├── robots.ts                   robots.txt（封鎖 /admin 與 /api）
+│   ├── icon.jpg                    favicon（App Router 慣例自動產生 <link rel="icon">）
 │   └── globals.css                 設計系統 CSS（純淨醫療感）
 │
 ├── components/
@@ -768,6 +769,10 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-17（favicon）
+
+將 `/Users/eric/Downloads/IMG_0748.JPG` 複製為 `app/icon.jpg`，走 Next.js App Router 的 file-based metadata 慣例 — build 時自動產生 `<link rel="icon" href="/icon.jpg?<hash>">`，**`layout.tsx` 不需改 `metadata.icons`**。日後若要換 icon，覆蓋同名檔即可；想優化體積/透明度可換成 `icon.png` 或 `icon.svg`（同名前綴即可）。
 
 ### 2026-05-16（CKEditor 擴展到 `/admin/content`：14 個 ContentBlock 多行欄位升級）
 

@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { Plus, Save, Trash2, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
-import { inputClass, textareaClass } from '@/components/admin/form-field'
+import { inputClass } from '@/components/admin/form-field'
 import { useConfirm } from '@/components/admin/confirm-dialog'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
+import { RichText } from '@/components/rich-text'
 import type { AdminServiceFaq } from '@/lib/admin-types'
 
 type Props = {
