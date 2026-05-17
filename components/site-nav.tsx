@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { Menu, X, ShieldCheck, Phone, ArrowRight } from 'lucide-react'
+import { Menu, X, Phone, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // 內嵌 LINE 風格 icon（白底 + 綠字 knockout，跟 floating-cta 同款）
@@ -69,9 +70,14 @@ export function SiteNav({
     >
       <div className="container-narrow flex h-16 items-center justify-between md:h-20">
         <Link href="/" className="flex items-center gap-2 group">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white shadow-sm transition group-hover:bg-primary-deep">
-            <ShieldCheck className="h-5 w-5" strokeWidth={2.2} />
-          </span>
+          <Image
+            src="/logo.jpg"
+            alt="ProShake"
+            width={40}
+            height={40}
+            priority
+            className="h-10 w-10 rounded-md object-contain transition group-hover:opacity-90"
+          />
           <span className="flex flex-col leading-none">
             <span className="text-base font-semibold tracking-tight text-ink">
               invisible <span className="text-primary-deep">care</span>

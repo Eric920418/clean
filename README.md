@@ -568,7 +568,7 @@ return visibleSections.map((section) => (
 
 > 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
 
-**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、faq answer、text_block body、why_with_features longDesc、`Service.shortDesc`）後台輸入的 `\n` 都會在前台以實際換行渲染。實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。`Service.shortDesc` 顯示在四處：首頁服務卡片（`app/(site)/page.tsx`）、服務列表卡片（`app/(site)/services/page.tsx`）、服務詳情頁 Hero（`HeroSection.tsx`）、其他服務區塊（`MoreServicesSection.tsx`），四處皆套用換行支援；唯獨 SEO meta description（`generateMetadata` 與 `lib/seo.ts`）使用原始字串，因 meta 不渲染換行。例外：`before_after` 的 `caption` 後台是單行 `<input>` 不支援。
+**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、text_block body、why_with_features longDesc、`Service.shortDesc`）後台輸入的 `\n` 都會在前台以實際換行渲染。（FAQ answer 已改為 RichTextEditor，走 HTML 渲染路徑，不在此清單內。）實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。`Service.shortDesc` 顯示在四處：首頁服務卡片（`app/(site)/page.tsx`）、服務列表卡片（`app/(site)/services/page.tsx`）、服務詳情頁 Hero（`HeroSection.tsx`）、其他服務區塊（`MoreServicesSection.tsx`），四處皆套用換行支援；唯獨 SEO meta description（`generateMetadata` 與 `lib/seo.ts`）使用原始字串，因 meta 不渲染換行。例外：`before_after` 的 `caption` 後台是單行 `<input>` 不支援。
 
 **服務主欄位編輯入口統一**：原 `/admin/services` 列表的 Sparkles modal（編輯 11 個主欄位：name / shortDesc / longDesc / icon / order / cardImage / heroImage / seoTitle / seoDesc / isActive / isFeatured）已合併進 `/admin/services/[id]/edit` 的 `MainFieldsPanel`，列表只保留 Pencil 一個編輯入口，避免「同一個服務有兩個編輯入口」的認知負擔。列表頁的 `AdminModal` 縮編為 create-only（新增服務），編輯走獨立頁面。後端 API 零變動（`PUT /api/admin/services/[id]` 既有 schema 已支援）。
 
@@ -576,7 +576,9 @@ return visibleSections.map((section) => (
 
 **FeaturesPanel / FaqsPanel 補 sectionId（修 400 Bad Request）**：C4b 後 `ServiceFeature.sectionId` 與 `ServiceFaq.sectionId` 必填，API `POST /api/admin/services/[id]/features|faqs` 強制驗證。但 `/admin/services/[id]/edit` 的兩個 panel 是 C4b 前的舊 UI，POST body 缺 `sectionId` 必然回 400。**修法**：兩個 panel 加 `sectionId: number | null` prop，由父層 edit page 從 `service.sections` 自動找對應型別（`why_with_features` 給 features，`faq` 給 faqs）；POST body 帶上 sectionId。**若該型 section 不存在**，panel 不顯示輸入框，改顯示「請先到頁面區塊管理新增此區塊」的提示，連結到 sections 頁。同時 `AdminService` 型別加 `sections?: AdminServiceSection[]`（GET API 一直有回，只是型別沒宣告）。
 
-**`FeaturesPanel` 已從 edit 頁移除（去除重複入口）**：服務特色與 sections 子頁的 `FeaturesEditor` 編輯同一張 `ServiceFeature` 表、同一個 `why_with_features` section，重複入口造成認知負擔。**修法**：`/admin/services/[id]/edit` 完全移除 `FeaturesPanel` 與 `FeatureRow` 函式、相關 `AdminServiceFeature` import 與 `Trash2` icon import；服務特色一律走「頁面區塊管理 → why_with_features 區塊 → items 子頁」編輯。FAQ 編輯目前仍保留在 edit 頁的 `FaqsPanel`（與 sections 子頁的 `FaqsEditor` 並存，**待後續決策**）。後端 API（`/features` CRUD routes、sectionId 必填邏輯）零變動。
+**`FeaturesPanel` 已從 edit 頁移除（去除重複入口）**：服務特色與 sections 子頁的 `FeaturesEditor` 編輯同一張 `ServiceFeature` 表、同一個 `why_with_features` section，重複入口造成認知負擔。**修法**：`/admin/services/[id]/edit` 完全移除 `FeaturesPanel` 與 `FeatureRow` 函式、相關 `AdminServiceFeature` import 與 `Trash2` icon import；服務特色一律走「頁面區塊管理 → why_with_features 區塊 → items 子頁」編輯。後端 API（`/features` CRUD routes、sectionId 必填邏輯）零變動。
+
+**`FaqsPanel` 也從 edit 頁移除（同步去除重複入口）**：與 FeaturesPanel 同樣理由——`/admin/services/[id]/edit` 的 `FaqsPanel` 與 sections 子頁的 `FaqsEditor` 編輯同一張 `ServiceFaq` 表、同一個 `faq` section。**修法**：edit 頁完全移除 `FaqsPanel` / `FaqRow` 函式、相關 `AdminServiceFaq` / `RichText` / `RichTextEditor` / `MessageSquare` / `Plus` import；FAQ 一律走「頁面區塊管理 → faq 區塊 → items 子頁」編輯。同時 sections 子頁的 `FaqsEditor` 答案欄位從 `<textarea>` 升級為 `RichTextEditor`（CKEditor），display 從純文字 `<p whitespace-pre-line>` 改為 `<RichText>`（與前台 `components/faq.tsx` 一致），並加提示告知「可貼入 LINE 加好友按鈕等 HTML 片段（`<a href="..."><img ...></a>`），前台會自動 sanitize 後渲染為可點擊圖片」。FAQ answer 不再走 textarea 換行保留邏輯，而是走富文本 HTML 渲染路徑（`lib/sanitize-html.ts` 白名單允許 `a[href,target,rel]` + `img[src,alt,height,width]`，`border="0"` 等 HTML4 屬性會被砍掉但視覺無差）。
 
 **首頁 Hero 主視覺圖片可在 `/admin/content` 直接編輯**：`hero-home` ContentBlock 新增 `heroImage` 欄位（image type、folder 'home'）。前台 `app/(site)/page.tsx` Hero 元件改用 `hero.heroImage || featured?.afterUrl` 雙來源邏輯 —— 業主有填就用 ContentBlock 的圖、未填則保留原本「精選對比圖第 0 筆」fallback。alt 對應：用 ContentBlock 圖時固定 "首頁主視覺"，用 featured fallback 時用 `featured.caption`。同時補完 `/api/admin/content/[key]` PUT 的 ISR revalidate（先前漏寫，業主存 content block 要等 60 秒）：DB upsert 後 revalidate `/`、`/about`、`/contact`、`/faq`、`/services`、`/works`。
 
@@ -770,9 +772,17 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-17（header logo — `public/logo.jpg`，⚠️ 與品牌名衝突待釐清）
+
+`components/site-nav.tsx` 左上角原本的 `ShieldCheck` 方塊圖示換成 `<Image src="/logo.jpg" w/h=40>`，圖檔放在 `public/logo.jpg`（業主提供的 ProShake 握手 logo）。`ShieldCheck` import 已從 lucide-react 移除。右側「invisible care / 看不見的守護」文字塊**保留**（仍由 ContentBlock settings 動態渲染）。
+
+**⚠️ 待釐清**：logo 圖含 "ProShake" wordmark，與站名「invisible care」並列形成雙品牌。後續方向二選一：
+1. 品牌改名 ProShake → 改 `site-settings` 的 siteName / tagline、SEO metadata、README 全站文字。
+2. 換一張「純圖示版（無 wordmark）」logo → 適合 header / favicon 小尺寸顯示，現在這張在 32-40px 下 wordmark 會糊。
+
 ### 2026-05-17（favicon）
 
-將 `/Users/eric/Downloads/IMG_0748.JPG` 複製為 `app/icon.jpg`，走 Next.js App Router 的 file-based metadata 慣例 — build 時自動產生 `<link rel="icon" href="/icon.jpg?<hash>">`，**`layout.tsx` 不需改 `metadata.icons`**。日後若要換 icon，覆蓋同名檔即可；想優化體積/透明度可換成 `icon.png` 或 `icon.svg`（同名前綴即可）。
+將 `/Users/eric/Downloads/IMG_0748.JPG` 複製為 `app/icon.jpg`，走 Next.js App Router 的 file-based metadata 慣例 — build 時自動產生 `<link rel="icon" href="/icon.jpg?<hash>">`，**`layout.tsx` 不需改 `metadata.icons`**。日後若要換 icon，覆蓋同名檔即可；想優化體積/透明度可換成 `icon.png` 或 `icon.svg`（同名前綴即可）。⚠️ 同樣與「invisible care」品牌名衝突（見上一項）。
 
 ### 2026-05-16（CKEditor 擴展到 `/admin/content`：14 個 ContentBlock 多行欄位升級）
 
