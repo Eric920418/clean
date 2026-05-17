@@ -7,6 +7,7 @@ import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass } from '@/components/admin/form-field'
 import { ImageUploader } from '@/components/admin/image-uploader'
 import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
+import { PageSectionsManager } from './_components/PageSectionsManager'
 
 type FieldType = 'text' | 'richtext' | 'image'
 
@@ -203,17 +204,40 @@ export default function ContentAdminPage() {
         title="頁面內容"
         description="編輯網站所有頁面的標題、副標、按鈕文字（動態資料如服務、評價、流程在各自的管理頁）"
       />
-      <div className="space-y-3">
-        {Object.keys(BLOCK_DEFS).map((key) => (
-          <BlockEditor
-            key={key}
-            blockKey={key}
-            isExpanded={expandedKey === key}
-            onToggle={() => handleToggle(key)}
-            onDirtyChange={(dirty) => setDirtyKey(dirty ? key : null)}
-          />
-        ))}
-      </div>
+
+      <section className="mb-10">
+        <h2 className="text-base font-semibold text-ink">首頁・附加區塊（動態）</h2>
+        <p className="mt-1 mb-4 text-xs text-ink-muted">
+          可動態新增、排序、刪除。渲染位置：首頁「客戶評價」之後、底部 CTA banner 之前
+        </p>
+        <PageSectionsManager page="home" />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="text-base font-semibold text-ink">關於我們・附加區塊（動態）</h2>
+        <p className="mt-1 mb-4 text-xs text-ink-muted">
+          可動態新增、排序、刪除。渲染位置：About 頁「品牌信念」之後、底部 CTA 之前
+        </p>
+        <PageSectionsManager page="about" />
+      </section>
+
+      <section>
+        <h2 className="text-base font-semibold text-ink">頁面文案（固定欄位）</h2>
+        <p className="mt-1 mb-4 text-xs text-ink-muted">
+          各頁面預設區塊的標題、副標、按鈕文字、圖片
+        </p>
+        <div className="space-y-3">
+          {Object.keys(BLOCK_DEFS).map((key) => (
+            <BlockEditor
+              key={key}
+              blockKey={key}
+              isExpanded={expandedKey === key}
+              onToggle={() => handleToggle(key)}
+              onDirtyChange={(dirty) => setDirtyKey(dirty ? key : null)}
+            />
+          ))}
+        </div>
+      </section>
     </>
   )
 }

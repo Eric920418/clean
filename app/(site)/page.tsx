@@ -12,7 +12,9 @@ import {
   getProcessSteps,
   getSiteSettings,
   getAllContentBlocks,
+  getActivePageSections,
 } from '@/lib/queries'
+import { PageCustomSections } from './_components/page-custom-sections'
 import type { WhyUsCard } from '@/lib/why-us'
 import { JsonLd } from '@/components/json-ld'
 import { RichText } from '@/components/rich-text'
@@ -22,7 +24,7 @@ import { localBusinessJsonLd } from '@/lib/seo'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [services, testimonials, featured, whyUsSections, processSteps, settings, blocks] =
+  const [services, testimonials, featured, whyUsSections, processSteps, settings, blocks, homeSections] =
     await Promise.all([
       getActiveServices(),
       getActiveTestimonials(),
@@ -31,6 +33,7 @@ export default async function HomePage() {
       getProcessSteps(),
       getSiteSettings(),
       getAllContentBlocks(),
+      getActivePageSections('home'),
     ])
   const phoneTel = settings.phoneTel || ''
   const hero = blocks['hero-home'] ?? {}
@@ -58,6 +61,7 @@ export default async function HomePage() {
       <FeaturedWorks featured={featured} block={sectWorks} />
       <Process steps={processSteps} block={sectProcess} />
       <Testimonials testimonials={testimonials} block={sectTestimonials} />
+      <PageCustomSections sections={homeSections} phoneTel={phoneTel} />
       <CtaBanner phoneTel={phoneTel} block={cta} />
     </>
   )

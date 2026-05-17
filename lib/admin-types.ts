@@ -158,6 +158,21 @@ export type AdminContentBlock = {
   updatedAt: string
 }
 
+export type PageSectionPage = 'home' | 'about'
+
+export type PageSectionType = 'text_block' | 'cta_banner' | 'image_text' | 'rich_content'
+
+export type AdminPageSection = {
+  id: number
+  page: PageSectionPage
+  type: PageSectionType
+  order: number
+  isVisible: boolean
+  config: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
 export type AdminSiteSetting = {
   id: number
   key: string

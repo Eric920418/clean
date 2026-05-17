@@ -70,7 +70,7 @@
 | `/admin/why-us-sections` | ⭐ 首頁「為何選我們」+ 關於頁「三項職人信仰」多區塊 CRUD（依 location 區分） |
 | `/admin/process-steps` | ⭐ 首頁「服務流程」步驟 CRUD（標準 4 步，可增減） |
 | `/admin/general-faqs` | ⭐ `/faq` 頁「一般問題」CRUD（非特定服務的常見問題） |
-| `/admin/content` | 首頁文字（進階，已不含 why-us，那組改由 `/admin/why-us-sections` 管理） |
+| `/admin/content` | ⭐ 頁面內容：上方「首頁附加區塊（動態）」+「關於我們附加區塊（動態）」可新增/排序/隱藏/刪除（4 種 type）；下方保留 14 個固定欄位 ContentBlock 編輯（hero / cta / nav / about 文案） |
 | `/admin/settings` | 站台設定（進階） |
 | `/admin/more` | 手機版「更多」入口（評價 + 進階摺疊區 + 登出） |
 
@@ -145,6 +145,9 @@ PUT/DELETE      /api/admin/general-faqs/[id]
 
 GET             /api/admin/content
 GET/PUT         /api/admin/content/[key]
+
+GET/POST        /api/admin/page-sections          頁面動態附加區塊（GET 需帶 ?page=home|about）
+PUT/DELETE      /api/admin/page-sections/[id]     更新 order / isVisible / config；刪除自動清 R2 圖
 
 GET/PUT         /api/admin/settings         一次拿 / 存所有 key/value
 ```
@@ -350,6 +353,17 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
   question String
   answer   String
   order    Int
+}
+
+model PageSection {                      // 動態附加區塊（後台 /admin/content）
+  page      String                       // "home" 首頁、"about" 關於我們
+  type      String                       // text_block / cta_banner / image_text / rich_content
+  order     Int                          // 同 page 內順序
+  isVisible Boolean
+  config    Json                         // 依 type 不同存不同欄位
+  // 渲染位置：home → Testimonials 後 / CtaBanner 前
+  //         about → Belief sections 後 / CTA 前
+  // @@index([page, order])
 }
 ```
 
@@ -785,6 +799,43 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-18（`/admin/content` 加入動態附加區塊：首頁 + 關於我們）
+
+**動機**：原本 `/admin/content` 只能編輯 14 個寫死 key 的 `ContentBlock`，業主想加「促銷橫幅、品牌故事、認證說明」這類額外段落無從下手。
+
+**設計選擇**：
+- 不破壞既有 14 個 ContentBlock；新增 `PageSection` 表並存（兩者各司其職：ContentBlock 管固定區塊的文案、PageSection 管動態插入的整段區塊）
+- 通用 `PageSection` 表帶 `page` 欄位（`home` / `about`），未來 contact/faq 要加不用再開新表
+- 沿用 `/admin/services/[id]/sections` 的 UI 模式：新增 modal 選 type、上下移排序、顯示/隱藏 toggle、刪除確認
+
+**渲染位置**：
+- `home`：`Testimonials` 後、`CtaBanner` 前（`app/(site)/page.tsx`）
+- `about`：Belief sections（WhyUsSection location=about）後、底部 CTA 前（`app/(site)/about/page.tsx`）
+- 兩個頁面都加 `getActivePageSections(page)` 到既有 `Promise.all`，沒讓 ISR static 退化
+
+**4 種 type**：
+| type | 欄位 | 適用場景 |
+|---|---|---|
+| `text_block` | eyebrow + title + body(rich) | 一段標題說明、最新消息 |
+| `cta_banner` | backgroundImage + overline + titleLine1/2 + description(rich) + primaryCta + lineUrl | 額外的預約 CTA、限時優惠 |
+| `image_text` | layout(left/right) + image + eyebrow + title + body(rich) + ctaText + ctaUrl | 品牌故事、認證介紹 |
+| `rich_content` | html(rich) | 自由格式內容 |
+
+**關鍵檔案**：
+- `prisma/schema.prisma` — 新增 `PageSection` model（`@@index([page, order])`）
+- `app/api/admin/page-sections/route.ts` — GET（?page=）/ POST，含 default config 範本
+- `app/api/admin/page-sections/[id]/route.ts` — PUT / DELETE，富文本 sanitize、R2 圖片孤兒清理、`revalidatePath` 對應頁面
+- `components/admin/page-section-config-modal.tsx` — 依 type 動態渲染欄位（沿用 FieldRenderer pattern）
+- `app/admin/content/_components/PageSectionsManager.tsx` — 列表 / 新增 / 排序 / 隱藏 / 刪除 UI
+- `app/admin/content/page.tsx` — 上方掛兩個 manager（首頁、關於我們），下方保留原 14 個 accordion
+- `app/(site)/_components/page-custom-sections.tsx` — 前台 server component，依 type 渲染 4 種 UI
+- `lib/queries.ts` — 新增 `getActivePageSections(page)`
+- `lib/admin-types.ts` — 新增 `PageSectionPage` / `PageSectionType` / `AdminPageSection`
+
+**為什麼不沿用 `ServiceSection`**：強制 `serviceId` 又綁 4 張子表（features/faqs/before-after/gallery），首頁附加區塊全用 config JSON 就夠。`PageSection` 結構小、index 快、未來擴 contact/faq/works 也獨立。
+
+**為什麼 4 種 type 各自獨立而不全用 `rich_content`**：`rich_content` 雖能塞所有內容，但業主後台會失去結構化欄位提示。`text_block` / `cta_banner` / `image_text` 給業主清楚的填空框，`rich_content` 留給真正自由排版場景。
 
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 

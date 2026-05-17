@@ -167,6 +167,27 @@ model ContentBlock {
 }
 
 // ============================================
+// 頁面動態附加區塊（首頁、關於我們 ... 都可以用）
+// 後台 /admin/content 依 page 分區顯示，各自可動態新增/排序/隱藏/刪除
+// page 取值：'home'（首頁，渲染於 Testimonials 後 / CtaBanner 前）
+//          'about'（關於我們頁，渲染於故事段後 / CTA 前）
+// type 取值：text_block / cta_banner / image_text / rich_content
+// config 為 JSON：依 type 不同存不同欄位（image / title / body 等）
+// ============================================
+model PageSection {
+  id        Int      @id @default(autoincrement())
+  page      String
+  type      String
+  order     Int      @default(0)
+  isVisible Boolean  @default(true)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([page, order])
+}
+
+// ============================================
 // 首頁「為何選我們」多區塊
 // 每筆 = 一組 section（標題 + 副標 + 三張卡片），可由後台新增/排序
 // cards 為固定 3 張的 JSON 陣列：[{title, desc}, {title, desc}, {title, desc}]

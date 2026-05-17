@@ -3,8 +3,15 @@ import type { Metadata } from 'next'
 import { ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { RichText } from '@/components/rich-text'
-import { getContentBlock, getSiteSettings, getWhyUsSections, getAllContentBlocks } from '@/lib/queries'
+import {
+  getContentBlock,
+  getSiteSettings,
+  getWhyUsSections,
+  getAllContentBlocks,
+  getActivePageSections,
+} from '@/lib/queries'
 import type { WhyUsCard } from '@/lib/why-us'
+import { PageCustomSections } from '../_components/page-custom-sections'
 
 export const metadata: Metadata = {
   title: '關於我們',
@@ -16,11 +23,12 @@ export const metadata: Metadata = {
 export const revalidate = 60
 
 export default async function AboutPage() {
-  const [aboutBlock, settings, beliefSections, blocks] = await Promise.all([
+  const [aboutBlock, settings, beliefSections, blocks, aboutSections] = await Promise.all([
     getContentBlock('about'),
     getSiteSettings(),
     getWhyUsSections({ location: 'about' }),
     getAllContentBlocks(),
+    getActivePageSections('about'),
   ])
   const phoneTel = settings.phoneTel || ''
   const heroBlock = blocks['hero-about'] ?? {}
@@ -110,6 +118,8 @@ export default async function AboutPage() {
           </section>
         )
       })}
+
+      <PageCustomSections sections={aboutSections} phoneTel={phoneTel} />
 
       <section className="container-narrow py-16 md:py-24">
         <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">

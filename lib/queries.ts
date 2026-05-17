@@ -126,3 +126,12 @@ export async function getAllContentBlocks(): Promise<Record<string, Record<strin
   })
   return map
 }
+
+// 取指定 page 的動態附加區塊（僅 isVisible=true），依 order 排序
+// 用於首頁、關於我們等頁面 render <PageCustomSections>
+export async function getActivePageSections(page: 'home' | 'about') {
+  return prisma.pageSection.findMany({
+    where: { page, isVisible: true },
+    orderBy: { order: 'asc' },
+  })
+}
