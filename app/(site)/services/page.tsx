@@ -68,7 +68,7 @@ export default async function ServicesIndexPage() {
                 <h3 className="mt-4 text-2xl font-medium tracking-tight text-ink md:text-3xl">
                   {s.name}
                 </h3>
-                <p className="mt-4 text-sm leading-relaxed text-ink-soft md:text-base">
+                <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-ink-soft md:text-base">
                   {s.shortDesc}
                 </p>
                 <ul className="mt-6 space-y-2 text-sm text-ink-soft">

@@ -23,7 +23,7 @@ export function MoreServicesSection({ others }: Props) {
               <IconByName name={s.icon ?? 'Sparkles'} className="h-4 w-4" />
             </span>
             <h3 className="mt-4 text-lg font-medium text-ink">{s.name}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">{s.shortDesc}</p>
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{s.shortDesc}</p>
           </Link>
         ))}
       </div>

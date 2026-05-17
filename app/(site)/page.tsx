@@ -190,7 +190,7 @@ function ServicesGrid({
                 </span>
                 <h3 className="text-lg font-medium text-ink">{s.name}</h3>
               </div>
-              <p className="mt-4 flex-1 text-sm leading-relaxed text-ink-soft">{s.shortDesc}</p>
+              <p className="mt-4 flex-1 whitespace-pre-line text-sm leading-relaxed text-ink-soft">{s.shortDesc}</p>
               <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-primary-deep">
                 了解詳情
                 <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />

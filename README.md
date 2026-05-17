@@ -567,7 +567,7 @@ return visibleSections.map((section) => (
 
 > 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
 
-**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、faq answer、text_block body、why_with_features longDesc）後台輸入的 `\n` 都會在前台以實際換行渲染。實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。例外：`before_after` 的 `caption` 後台是單行 `<input>`，且 `MoreServicesSection.shortDesc` 用於小卡片，刻意不支援換行。
+**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、faq answer、text_block body、why_with_features longDesc、`Service.shortDesc`）後台輸入的 `\n` 都會在前台以實際換行渲染。實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。`Service.shortDesc` 顯示在四處：首頁服務卡片（`app/(site)/page.tsx`）、服務列表卡片（`app/(site)/services/page.tsx`）、服務詳情頁 Hero（`HeroSection.tsx`）、其他服務區塊（`MoreServicesSection.tsx`），四處皆套用換行支援；唯獨 SEO meta description（`generateMetadata` 與 `lib/seo.ts`）使用原始字串，因 meta 不渲染換行。例外：`before_after` 的 `caption` 後台是單行 `<input>` 不支援。
 
 **服務主欄位編輯入口統一**：原 `/admin/services` 列表的 Sparkles modal（編輯 11 個主欄位：name / shortDesc / longDesc / icon / order / cardImage / heroImage / seoTitle / seoDesc / isActive / isFeatured）已合併進 `/admin/services/[id]/edit` 的 `MainFieldsPanel`，列表只保留 Pencil 一個編輯入口，避免「同一個服務有兩個編輯入口」的認知負擔。列表頁的 `AdminModal` 縮編為 create-only（新增服務），編輯走獨立頁面。後端 API 零變動（`PUT /api/admin/services/[id]` 既有 schema 已支援）。
 
@@ -787,6 +787,7 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 - **8 個 admin form**：`general-faqs/page.tsx`、`testimonials/page.tsx`、`services/page.tsx`、`services/[id]/edit/page.tsx`（longDesc + FAQ）、`section-config-modal.tsx`（intro paragraph1/2/3 + text_block body）的 `<textarea>` 換成 `<RichTextEditor>`
 - **5 個 API route 寫入 sanitize**：`services` POST/PUT、`general-faqs` POST/PUT、`testimonials` POST/PUT、`services/[id]/faqs` POST/PUT、`services/[id]/sections/[sectionId]` PUT（config 內 RICH_TEXT_CONFIG_KEYS）
 - **5 個前台元件**：`IntroSection`、`TextBlockSection`、`WhyWithFeaturesSection`、`faq.tsx`、首頁 testimonial 卡片改用 `<RichText html={...} />`
+- **`WhyWithFeaturesSection` 富文本 margin 覆寫**：容器 className 加上 `[&_*]:my-0`，砍掉 `prose` 預設給段落 / 標題 / 列表的上下 margin。理由是該區塊使用 `leading-loose`（行高 2），段落間距改由行高承擔，避免「行高 + margin」雙重間距視覺鬆散。**副作用**：客戶在 CKEditor 寫多段時，段落之間沒有顯著分隔，若需要分段視覺需自行加空行或標題
 
 **已知顧慮**：
 - **CKEditor 5 GPL 授權**在商業 CMS 屬法律灰色地帶。如未來需上正式商用授權再評估換 Tiptap

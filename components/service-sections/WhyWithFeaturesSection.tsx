@@ -21,7 +21,7 @@ export function WhyWithFeaturesSection({ section, service }: Props) {
           <SectionHeading eyebrow={eyebrow} title={title} />
           <RichText
             html={service.longDesc}
-            className="mt-6 text-base leading-loose text-ink-soft md:text-lg"
+            className="mt-6 text-base leading-loose text-ink-soft md:text-lg [&_*]:my-0"
           />
         </div>
         <aside className="rounded-xl border border-hairline bg-bg-soft p-7">
