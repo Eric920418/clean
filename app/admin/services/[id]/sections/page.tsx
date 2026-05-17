@@ -402,6 +402,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
       </AdminModal>
 
       <SectionConfigModal
+        key={editingSection?.id ?? 'closed'}
         open={!!editingSection}
         onClose={() => setEditingSection(null)}
         serviceId={parseInt(id, 10)}

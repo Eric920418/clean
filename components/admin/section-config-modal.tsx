@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { AdminModal } from './admin-modal'
 import { Field, inputClass, textareaClass } from './form-field'
@@ -65,21 +65,22 @@ const FIELDS_BY_TYPE: Record<
 }
 
 export function SectionConfigModal({ open, onClose, serviceId, section, onSaved }: Props) {
-  const [form, setForm] = useState<ConfigState>({})
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    if (!open || !section) return
+  // 父層 page.tsx 用 key={section.id} 強制 component remount，
+  // 所以 useState 的 lazy initializer 每次 mount 都會用最新 section 算出正確初值，
+  // 不再有「useState({}) + useEffect setForm」兩階段初始化的時序問題（會讓 CKEditor
+  // 在第一次 render 凍住舊內容）。
+  const [form, setForm] = useState<ConfigState>(() => {
+    if (!section) return {}
     const cfg = (section.config ?? {}) as Record<string, unknown>
     const initial: ConfigState = {}
     for (const field of FIELDS_BY_TYPE[section.type]) {
       const v = cfg[field.key]
       initial[field.key] = typeof v === 'string' ? v : ''
     }
-    setForm(initial)
-    setError(null)
-  }, [open, section])
+    return initial
+  })
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   if (!section) return null
   const fields = FIELDS_BY_TYPE[section.type] ?? []
@@ -157,7 +158,6 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
             )}
             {field.kind === 'richtext' && (
               <RichTextEditor
-                key={`${section.id}-${field.key}`}
                 value={form[field.key] ?? ''}
                 onContentChange={(html) => setForm({ ...form, [field.key]: html })}
                 height="200px"

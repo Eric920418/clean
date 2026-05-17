@@ -583,7 +583,17 @@ return visibleSections.map((section) => (
 
 **首頁 CTA Banner 新增「LINE 加好友連結」獨立欄位**：`cta-home` ContentBlock 新增 `lineUrl` 欄位（純 text）。前台 `CtaBanner`（`app/(site)/page.tsx`）條件渲染 LINE 官方「加入好友」按鈕（hardcode 用 `https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png`），lineUrl 有填才顯示。**設計動機**：先前業主想把 LINE button 的 raw HTML 貼進 description 富文本欄位，但 CKEditor toolbar 沒有 `SourceEditing` plugin，會把 `<` `>` 自動 escape 成 entity 存進 DB；與其教業主用 source mode，不如給專屬欄位、零學習成本。LINE button 圖片用 `<img>` raw tag（不走 next/image），避免為一張 36px 圖在 `next.config.ts` 加 remotePatterns。
 
-**`SectionConfigModal` 富文本欄位 stale display 修補**：業主回報 `/admin/services/[id]/sections` 跨 section 切換 modal 時，富文本欄位（intro 的 paragraph1/2/3、text_block 的 body）會殘留前一個 section 的內容。**根因**：`RichTextEditor`（`components/admin/rich-text-editor.tsx:113`）用 `const initialDataRef = useRef(value)` 在 mount 時凍住 CKEditor 的 initialData、之後 prop 變化不會更新；`SectionConfigModal` 切換 section 時只有 form state 重設，CKEditor instance 沒卸載，仍顯示舊內容（DB 實際正確、儲存時寫的也是新 section 真值，純視覺幻覺）。**修法**：在 `section-config-modal.tsx:159` 給 `<RichTextEditor>` 加 `key={`${section.id}-${field.key}`}` —— section 切換時 key 變、React force unmount/remount、initialDataRef 在新 mount 時讀正確值。**未來警告**：所有在「可切換 list / modal」場景使用 `<RichTextEditor>` 的呼叫端都必須加 unique `key`，否則同樣 stale；textarea / input / ImageUploader 是 controlled 不受影響。
+**`SectionConfigModal` 富文本欄位 stale display 修補（兩階段）**：業主回報 `/admin/services/[id]/sections` 跨 section 切換 modal 時，富文本欄位（intro 的 paragraph1/2/3、text_block 的 body）會殘留前一個 section 的內容。
+
+第一次嘗試只給 `<RichTextEditor>` 加 `key={section.id}-${field.key}`，**結果無效**。真正的根因是「**兩階段初始化的時序漏洞**」：`SectionConfigModal` 自己用 `useState<ConfigState>({})` + `useEffect(() => setForm(section.config), [open, section])`，第一次 render 時 form 仍是上一個 section 的內容（useEffect 尚未跑），RichTextEditor 就 mount 並把舊內容凍進 `useRef(value)`；等 useEffect 跑、setForm 變新值時，CKEditor 已 freeze，加 key 也救不回（因為 React 看 key 變 unmount/remount，但第一次 render 時 form 仍 stale）。**且若業主在 stale 狀態下按過儲存，PUT body 會把客廳的內容寫進廚房 section.config，DB 真的被污染**。
+
+**真正修法（兩處同時改）**：
+1. `app/admin/services/[id]/sections/page.tsx` 的 `<SectionConfigModal>` 加 `key={editingSection?.id ?? 'closed'}` —— 父層 force remount。
+2. `components/admin/section-config-modal.tsx` 把 `useState({})` + 那段 `useEffect` 改寫為 `useState(() => 從 section.config 算出 initial)` 的 lazy initializer —— **第一次 render 時 form 就已正確**，RichTextEditor mount 時 `initialDataRef` 凍住的就是正確值，CKEditor 顯示對的內容。同時移除舊的 `useEffect` 與 `useEffect` import，以及子層 `<RichTextEditor>` 上的 key（不再需要）。
+
+**未來警告**：所有「外部 prop 變化要重設 internal state」的 component，避免 `useState 預設值 + useEffect 同步` 兩階段，改用「父層 key force remount + 子層 lazy initializer 一次到位」這個 React 慣用模式，否則任何「mount 時凍住 prop」的 wrapper（如 CKEditor、CodeMirror、Map）都會踩此坑。
+
+**歷史資料污染**：此 bug 在修補前每次「業主在 stale 顯示下按儲存」都會把錯內容寫進 DB。業主需手動進每個 intro section 比對 paragraph1/2/3 內容是否正確，必要時清空或重填。沒有資料庫層級的回復方案（Neon 也沒做 point-in-time recovery）。
 
 **所有 admin 寫入動作主動觸發 ISR revalidate（修「存了沒看到」）**：前台 `/services` 與 `/services/[slug]` 用 `export const revalidate = 60`，預設要等 60 秒。新增 `lib/revalidate-service.ts` 提供 `revalidateService(serviceId)` helper：查 slug → `revalidatePath('/services/${slug}')` + `/services` + `/`。所有 admin write routes（services POST/PUT/DELETE、sections POST/PUT/DELETE、features POST/PUT/DELETE、faqs POST/PUT/DELETE、before-afters POST/PUT/DELETE、gallery POST/PATCH/DELETE）在 DB commit 後呼叫此 helper。`revalidatePath` 是 fire-and-forget，不延遲 API response，但下次前台請求就會立即 regenerate。業主存檔後 hard refresh 就看得到變化、不用再等 60 秒。
 
