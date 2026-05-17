@@ -786,7 +786,44 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
-### 2026-05-17（CKEditor 5 v44 → v47.7.1 升級 + ClassicEditor → DecoupledEditor：根本解掉 modal 內 toolbar 第一個按鈕被自動 focus 的 bug）
+### 2026-05-18（**真正根因找到**：`<Field>` 用 `<label>` 包 RichTextEditor 才是「點輸入框觸發 toolbar 第一個按鈕」的 root cause）
+
+**真正的 root cause**：`components/admin/form-field.tsx` 的 `Field` 元件原本用 `<label>` 包整個 children。HTML `<label>` 標準行為：點 label 內**非 form-control 區域** → 瀏覽器把 click + focus 自動 forward 到 label 內**第一個 focusable form control**（input / button / textarea / select）。
+
+CKEditor 的 toolbar 第一個 button（undo / bold）正好落在 `<Field><RichTextEditor /></Field>` 結構的 `<label>` 內，且 `contenteditable` 編輯區**不算 labelable element**，所以業主點編輯區：
+
+1. 瀏覽器 forward click 到 label 內第一個 button（toolbar 第一個按鈕）
+2. 該 button 變 active + 跳出 tooltip
+3. focus 跑到 button、沒進入 contenteditable
+4. 完全無法打字
+
+**為何「FAQ items 頁正常」**：`components/admin/section-editors/FaqsEditor.tsx` 用 RichTextEditor 時**沒包 `<Field>`**、直接放在 `<div>` 內，所以沒有 label forward 問題。一直以為差別是 inline vs modal — **完全錯**。
+
+**走過的修法路徑（全部是修錯方向）**：
+1. ❌ 各種 `clearBoldOnce` multi-tick hack（tick 0 / microtask / setTimeout 0/50ms / RAF×2 / 500ms focus window）
+2. ❌ 升 CKEditor 5 v44.3.0 → v47.7.1 跨 3 major version、想說 v44 internal bug
+3. ❌ ClassicEditor → DecoupledEditor、想說 toolbar 跟 editable 物理分離
+4. ✅ 改 Field 從 `<label>` → `<div>`、保留 `<span>` 文字顯示
+
+**最終修法**：`components/admin/form-field.tsx` 把外層 `<label>` 改為 `<div>`、label 文字仍用 `<span>` 顯示。功能上失去「點 label 文字 → forward focus 給 input」這個 nice-to-have，但 user 點 input/textarea/select 本身仍然能正常 focus（瀏覽器原生行為），UX 影響極小；換來的是 RichTextEditor 在任何 form 內都能正常 focus + 打字。
+
+**保留下來的修改**（順手做的清理、雖跟此 bug 無關但有正面價值）：
+- ckeditor5 v44.3.0 → v47.7.1（移除 v44 系列潛在 internal bug 風險，所有 41 個 plugin import 仍兼容）
+- `@ckeditor/ckeditor5-react` v9.5.0 → v11.1.2（v47 的 peer dep 要求）
+- ClassicEditor → DecoupledEditor + toolbar 拆到外部 div（沿用 `/Users/eric/Desktop/Contribute/components/CustomEditor.tsx` 結構，user 確認可用）
+- 拔掉 `components/admin/rich-text-editor.tsx` 內所有 v44 hack（mousedown intercept + multi-tick clearBold + 500ms focus window + `[RichTextEditor v15] mounted` console.log），477 行縮到約 340 行
+
+**關鍵檔案**：
+- `components/admin/form-field.tsx` — `<label>` → `<div>`（**真正修這個 bug 的改動**）
+- `package.json` — ckeditor5 `^44.3.0` → `^47.7.1`，`@ckeditor/ckeditor5-react` `^9.5.0` → `^11.1.2`
+- `components/admin/rich-text-editor.tsx` — ClassicEditor → DecoupledEditor + 拔掉所有 v44 hack
+
+**未來警告 — 嚴重程度極高**：
+- **不要把 `Field` 外層的 `<div>` 改回 `<label>`** — 任何用 `<Field>` 包 RichTextEditor 的場景會立刻復活這個 bug。code 內已留長註解警告
+- 加新「複合 widget」（contenteditable / custom editor / iframe-based control）時，用 `<Field>` 包它一定要先確認 widget 內部沒有 form control button（否則會被 label forward）
+- 之前那一年累積的 hack 都是在追幽靈（v44 internal bug 不存在 / sticky toolbar scrolling parent 沒影響），如果未來在 modal 內又看到 toolbar 按鈕怪異 active — 先檢查 `<Field>` 外層是不是 `<label>`，再去懷疑 CKEditor
+
+### 2026-05-17（CKEditor 5 v44 → v47.7.1 升級 + ClassicEditor → DecoupledEditor — 看似修了但其實沒修，真正根因在 2026-05-18 那則）
 
 **動機**：業主回報「所有後台用到富文本編輯器的 modal（新增/編輯 FAQ、評價、服務、流程步驟、區塊內容 modal、對比圖 modal）剛 hover 或 focus 編輯區，toolbar 第一個按鈕（粗體）就會自動進入 active 狀態，看起來像被選取，且根本不能打字」。唯一正常的頁面是 `/admin/services/[id]/sections/[sectionId]/items` 的 FaqsEditor（inline 條件渲染）。
 
