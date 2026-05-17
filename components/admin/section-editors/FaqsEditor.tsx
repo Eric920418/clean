@@ -99,9 +99,11 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             height="180px"
           />
           <p className="text-xs text-ink-muted leading-relaxed">
-            💡 答案支援富文本＋HTML 片段：可貼入「LINE 加好友」按鈕 (
-            <code className="px-1 rounded bg-bg-tint text-[10px]">{'<a href="..."><img ...></a>'}</code>) 等內嵌語法，
-            前台會以可點擊圖片呈現（會自動 sanitize 移除 script/iframe 等危險標籤）。
+            💡 想貼 LINE 加好友按鈕等 HTML 片段（
+            <code className="px-1 rounded bg-bg-tint text-[10px]">{'<a href="..."><img ...></a>'}</code>
+            ）請點 toolbar 上方的「嵌入 HTML」按鈕 (
+            <code className="px-1 rounded bg-bg-tint text-[10px]">{'</>'}</code>) → 在跳出的框內貼程式碼 → 按「儲存」。
+            直接貼到編輯區會被當成純文字（角括號被跳脫）。前台會自動 sanitize 並渲染為可點擊圖片。
           </p>
           <div className="flex justify-end gap-2">
             <button onClick={() => setAdding(false)} className="btn-ghost !py-1.5 !text-sm">
