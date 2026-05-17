@@ -105,8 +105,7 @@ export default function SectionItemsPage({ params }: PageProps) {
           title={`${typeLabel} · 內容管理`}
           breadcrumb={[
             { label: '服務管理', href: '/admin/services' },
-            { label: section.service.name, href: `/admin/services/${id}/edit` },
-            { label: '區塊管理', href: `/admin/services/${id}/sections` },
+            { label: section.service.name, href: `/admin/services/${id}/sections` },
             { label: typeLabel },
           ]}
         />
@@ -126,8 +125,7 @@ export default function SectionItemsPage({ params }: PageProps) {
         description={`管理本區塊的內容；同 service 下的其他「${typeLabel}」區塊各自獨立`}
         breadcrumb={[
           { label: '服務管理', href: '/admin/services' },
-          { label: section.service.name, href: `/admin/services/${id}/edit` },
-          { label: '區塊管理', href: `/admin/services/${id}/sections` },
+          { label: section.service.name, href: `/admin/services/${id}/sections` },
           { label: typeLabel },
         ]}
         actions={
@@ -209,8 +207,6 @@ export default function SectionItemsPage({ params }: PageProps) {
 /**
  * 「為什麼這項服務重要？」主文編輯區。
  * 資料源是 `Service.longDesc`（不是 section.config），所以走 PUT /api/admin/services/[id]。
- * 從 /admin/services/[id]/edit 主欄位面板搬過來——這個欄位實際上是 why_with_features section
- * 的主文，放在這裡符合業主心智模型。
  */
 function WhyMainDescEditor({
   serviceId,

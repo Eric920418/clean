@@ -1,137 +1,14 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
-import Link from 'next/link'
-import { ImageIcon, ArrowLeft, Loader2, Save, LayoutTemplate } from 'lucide-react'
+import { useState } from 'react'
+import { Save } from 'lucide-react'
 import { toast } from 'sonner'
-import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { ImageUploader } from '@/components/admin/image-uploader'
 import type { AdminService } from '@/lib/admin-types'
 
-type PageProps = { params: Promise<{ id: string }> }
-
-export default function ServiceEditPage({ params }: PageProps) {
-  const { id } = use(params)
-  const [service, setService] = useState<AdminService | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  async function fetchService() {
-    setLoading(true)
-    try {
-      const r = await fetch(`/api/admin/services/${id}`)
-      const data = await r.json()
-      if (!r.ok) throw new Error(data.error || '讀取失敗')
-      setService(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '讀取失敗')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchService()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 text-primary-deep animate-spin" />
-      </div>
-    )
-  }
-
-  if (error || !service) {
-    return (
-      <div className="space-y-4">
-        <ErrorBanner message={error ?? '服務不存在'} />
-        <Link href="/admin/services" className="btn-ghost !py-2 !text-sm">
-          <ArrowLeft className="h-4 w-4" />
-          回服務列表
-        </Link>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <AdminPageHeader
-        title={service.name}
-        description="維護服務主欄位，以及對比圖與圖庫子頁連結；FAQ、Hero、特色清單等內容請至「頁面區塊管理」對應區塊編輯"
-        breadcrumb={[
-          { label: '服務管理', href: '/admin/services' },
-          { label: service.name },
-        ]}
-        actions={
-          <Link
-            href={`/services/${service.slug}`}
-            target="_blank"
-            className="btn-ghost !py-2 !text-sm"
-          >
-            前台預覽
-          </Link>
-        }
-      />
-
-      <MainFieldsPanel service={service} onChange={fetchService} />
-
-      {/* 子頁面快速連結 */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 mb-8">
-        <Link
-          href={`/admin/services/${id}/sections`}
-          className="card-hover flex items-center gap-3 rounded-xl border border-primary-deep/30 bg-primary/5 p-5"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white">
-            <LayoutTemplate className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium text-ink">頁面區塊管理</div>
-            <div className="text-xs text-ink-muted">調整顯示順序、新增同類型區塊</div>
-          </div>
-          <span className="text-primary-deep text-sm">前往 →</span>
-        </Link>
-        <Link
-          href={`/admin/services/${id}/before-afters`}
-          className="card-hover flex items-center gap-3 rounded-xl border border-hairline bg-white p-5"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-bg-tint text-primary-deep">
-            <ImageIcon className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium text-ink">前後對比圖管理</div>
-            <div className="text-xs text-ink-muted">
-              {service._count?.beforeAfters ?? 0} 組對比圖
-            </div>
-          </div>
-          <span className="text-primary-deep text-sm">前往 →</span>
-        </Link>
-        <Link
-          href={`/admin/services/${id}/gallery`}
-          className="card-hover flex items-center gap-3 rounded-xl border border-hairline bg-white p-5"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent-deep">
-            <ImageIcon className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium text-ink">服務圖庫</div>
-            <div className="text-xs text-ink-muted">
-              {service._count?.galleryImgs ?? 0} 張展示圖
-            </div>
-          </div>
-          <span className="text-primary-deep text-sm">前往 →</span>
-        </Link>
-      </div>
-
-    </>
-  )
-}
-
-/* ================================================================ */
-function MainFieldsPanel({
+export function ServiceMainFieldsPanel({
   service,
   onChange,
 }: {
@@ -225,14 +102,7 @@ function MainFieldsPanel({
         </Field>
 
         <div className="rounded-md border border-hairline-soft bg-bg-soft px-3 py-2.5 text-xs leading-relaxed text-ink-soft">
-          詳細描述（「為什麼這項服務重要？」主文）已移至 sections 子頁。請到{' '}
-          <Link
-            href={`/admin/services/${service.id}/sections`}
-            className="text-primary-deep underline underline-offset-2 hover:no-underline"
-          >
-            頁面區塊管理
-          </Link>{' '}
-          → 點「重點說明 + 特色清單」進入內容管理頁編輯。
+          詳細描述（「為什麼這項服務重要？」主文）已移至 sections 子頁。請到下方「頁面區塊」點「重點說明 + 特色清單」進入內容管理頁編輯。
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -246,14 +116,7 @@ function MainFieldsPanel({
           <div className="rounded-lg border border-dashed border-hairline bg-bg-soft p-4 text-sm leading-relaxed">
             <div className="font-medium text-ink mb-1">Hero 背景圖在哪改？</div>
             <p className="text-ink-soft">
-              詳情頁頂部 Hero 區塊的大圖請至{' '}
-              <Link
-                href={`/admin/services/${service.id}/sections`}
-                className="text-primary-deep underline underline-offset-2 hover:no-underline"
-              >
-                頁面區塊管理 → Hero 區塊 ✏️
-              </Link>{' '}
-              設定，避免兩個入口設定不一致。
+              詳情頁頂部 Hero 區塊的大圖請至下方「頁面區塊」找 Hero 區塊點 ✏️ 設定，避免兩個入口設定不一致。
             </p>
           </div>
         </div>

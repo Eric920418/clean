@@ -62,9 +62,8 @@
 | `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
 | `/admin/dashboard` | 首頁：QuickActions 兩個大按鈕 + 4 張統計卡 + 最近 5 筆詢問 |
 | `/admin/services` | 服務列表（新增 modal、排序、上下架、刪除、進入詳細編輯） |
-| `/admin/services/[id]/edit` | 服務主欄位編輯頁（FAQ / 服務特色 / Hero 等內容改由 sections 子頁編輯） |
-| `/admin/services/[id]/before-afters` | ⭐ 清潔前後照片管理（每組 modal 上傳） |
-| `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
+| `/admin/services/[id]/sections` | ⭐ 服務唯一編輯入口：主欄位（名稱 / slug / 描述 / 卡片圖 / SEO / 上下架）+ 頁面區塊管理（Hero / Intro / 重點說明 / 對比圖 / 圖庫 / FAQ / CTA / 推薦服務 / 文字塊） |
+| `/admin/services/[id]/sections/[sectionId]/items` | 列表型區塊（特色清單、FAQ、對比圖、相簿）的內容管理子頁 |
 | `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
 | `/admin/inquiries/[id]` | 詢問單詳情（狀態切換） |
 | `/admin/testimonials` | 客人的好話 CRUD |
@@ -392,8 +391,7 @@ model GeneralFaq {                       // /faq 頁一般問題（非特定服�
 | `/admin/login` | 登入 |
 | `/admin/dashboard` | 儀表板 |
 | `/admin/services` | 服務 CRUD |
-| `/admin/services/[id]/before-afters` | ⭐ 對比圖批量上傳與配對 |
-| `/admin/services/[id]/gallery` | 服務圖庫 |
+| `/admin/services/[id]/sections` | ⭐ 服務唯一編輯入口（主欄位 + 區塊管理；對比圖／圖庫由內部區塊承接） |
 | `/admin/inquiries` | 詢問單列表（NEW → CONTACTED → QUOTED → DONE） |
 | `/admin/content` | 首頁區塊內容（ContentBlock） |
 | `/admin/settings` | 站台設定 |

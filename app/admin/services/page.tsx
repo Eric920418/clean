@@ -251,9 +251,9 @@ export default function ServicesAdminPage() {
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
                       <Link
-                        href={`/admin/services/${s.id}/edit`}
+                        href={`/admin/services/${s.id}/sections`}
                         className="rounded-md p-1.5 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition"
-                        title="編輯主欄位、特色、FAQ"
+                        title="編輯服務"
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>

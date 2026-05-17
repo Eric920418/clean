@@ -29,6 +29,7 @@ import { AdminModal } from '@/components/admin/admin-modal'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { SectionConfigModal } from '@/components/admin/section-config-modal'
+import { ServiceMainFieldsPanel } from '@/components/admin/service-main-fields-panel'
 import type { AdminService, AdminServiceSection, ServiceSectionType } from '@/lib/admin-types'
 import { swapOrderByIndex } from '@/lib/admin-reorder'
 
@@ -264,29 +265,35 @@ export default function ServiceSectionsPage({ params }: PageProps) {
   return (
     <>
       <AdminPageHeader
-        title={`${service.name} · 區塊管理`}
-        description="拖拉上下調整顯示順序，可隱藏不需要的區塊，或新增同類型多個區塊"
+        title={service.name}
+        description="維護服務的主欄位、SEO，以及頁面區塊的順序與內容"
         breadcrumb={[
           { label: '服務管理', href: '/admin/services' },
-          { label: service.name, href: `/admin/services/${id}/edit` },
-          { label: '區塊管理' },
+          { label: service.name },
         ]}
         actions={
-          <>
-            <Link href={`/services/${service.slug}`} target="_blank" className="btn-ghost !py-2 !text-sm">
-              前台預覽
-            </Link>
-            <button onClick={() => setCreateOpen(true)} className="btn-primary !py-2 !px-4 !text-sm">
-              <Plus className="h-4 w-4" />
-              新增區塊
-            </button>
-          </>
+          <Link href={`/services/${service.slug}`} target="_blank" className="btn-ghost !py-2 !text-sm">
+            前台預覽
+          </Link>
         }
       />
 
+      <ServiceMainFieldsPanel service={service} onChange={fetchAll} />
+
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-ink">頁面區塊</h2>
+          <p className="text-xs text-ink-muted mt-0.5">拖拉上下調整顯示順序，可隱藏不需要的區塊，或新增同類型多個區塊</p>
+        </div>
+        <button onClick={() => setCreateOpen(true)} className="btn-primary !py-2 !px-4 !text-sm">
+          <Plus className="h-4 w-4" />
+          新增區塊
+        </button>
+      </div>
+
       {sorted.length === 0 ? (
         <div className="rounded-xl border border-dashed border-hairline bg-bg-soft py-20 text-center text-ink-muted">
-          尚未建立任何區塊，點右上「新增區塊」開始
+          尚未建立任何區塊，點上方「新增區塊」開始
         </div>
       ) : (
         <div className="space-y-3">

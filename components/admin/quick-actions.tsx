@@ -9,7 +9,7 @@ type Props = {
 
 /**
  * 首頁兩個大按鈕 — 老闆 80% 高頻動作的捷徑
- * 1. 新增清潔前後照片（直達某個服務的 before-afters 頁）
+ * 1. 進入第一個服務的編輯頁（管理對比圖、特色、FAQ 等所有區塊）
  * 2. 看新問題（連到詢問單，badge 顯示未讀數）
  *
  * 大按鈕高 80px+、icon 24px、文字兩行（標題 + 副標）
@@ -20,7 +20,7 @@ export function QuickActions({ unreadInquiries, firstServiceId }: Props) {
       <Link
         href={
           firstServiceId
-            ? `/admin/services/${firstServiceId}/before-afters`
+            ? `/admin/services/${firstServiceId}/sections`
             : '/admin/services'
         }
         className="group flex items-center gap-4 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-bg-tint to-white p-5 transition hover:border-primary hover:shadow-md"
