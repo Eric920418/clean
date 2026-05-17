@@ -92,13 +92,17 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             placeholder="問題"
             className={inputClass}
           />
-          <textarea
+          <RichTextEditor
             value={a}
-            onChange={(e) => setA(e.target.value)}
-            placeholder="答案"
-            className={textareaClass}
-            rows={3}
+            onContentChange={(html) => setA(html)}
+            placeholder="答案（可直接貼入 LINE 加好友按鈕等 HTML 片段，前台會自動渲染）"
+            height="180px"
           />
+          <p className="text-xs text-ink-muted leading-relaxed">
+            💡 答案支援富文本＋HTML 片段：可貼入「LINE 加好友」按鈕 (
+            <code className="px-1 rounded bg-bg-tint text-[10px]">{'<a href="..."><img ...></a>'}</code>) 等內嵌語法，
+            前台會以可點擊圖片呈現（會自動 sanitize 移除 script/iframe 等危險標籤）。
+          </p>
           <div className="flex justify-end gap-2">
             <button onClick={() => setAdding(false)} className="btn-ghost !py-1.5 !text-sm">
               取消
@@ -165,7 +169,10 @@ function FaqRow({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium text-ink">{faq.question}</div>
-            <p className="mt-1 text-xs text-ink-soft whitespace-pre-line line-clamp-3">{faq.answer}</p>
+            <RichText
+              html={faq.answer}
+              className="mt-1 text-xs text-ink-soft leading-relaxed prose-sm"
+            />
           </div>
           <div className="flex shrink-0 gap-1">
             <button
@@ -191,7 +198,11 @@ function FaqRow({
   return (
     <li className="rounded-lg border border-hairline bg-white p-3 space-y-2">
       <input value={q} onChange={(e) => setQ(e.target.value)} className={inputClass} />
-      <textarea value={a} onChange={(e) => setA(e.target.value)} className={textareaClass} rows={3} />
+      <RichTextEditor
+        value={a}
+        onContentChange={(html) => setA(html)}
+        height="180px"
+      />
       <div className="flex justify-end gap-2">
         <button onClick={() => setEditing(false)} className="btn-ghost !py-1.5 !text-sm">
           取消
