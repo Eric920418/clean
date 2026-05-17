@@ -117,7 +117,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v13] mounted — mousedown closeDropdowns skips toolbar (fix insertTable)')
+    console.log('[RichTextEditor v14] mounted — focus listener only clears bold (preserve user fontSize/Family/Color)')
     return () => setIsReady(false)
   }, [])
 
@@ -365,9 +365,6 @@ export function RichTextEditor({
       }
       model: {
         change: (cb: (writer: { removeSelectionAttribute: (key: string) => void }) => void) => void
-        document: {
-          selection: { getAttributeKeys: () => Iterable<string> }
-        }
       }
       editing: {
         view: { document: { on: (event: string, cb: () => void) => void } }
@@ -389,16 +386,21 @@ export function RichTextEditor({
      * model attribute 加到 selection 上（bold 第一個 → 加 bold attribute；fontSize 第一個 → 加 fontSize）。
      * 結果：user 打字會自動變粗（或大字、或顏色）。已本地 reproduce 確認 editable HTML 變 `<strong>`。
      *
-     * 修法：focus 後等 microtask、把 selection 上所有 attribute 清掉。selection 剛從外
-     * 跳進來通常是 collapsed empty position、attribute 全是 CKEditor 自己誤加的、清掉
-     * 對 user 真正打字無影響。
+     * **只清 `bold`，不要清全部** — 之前清全部會把 user 主動從 fontSize / fontFamily /
+     * fontColor / fontBackgroundColor / highlight 等 dropdown 套用的 attribute 也一起殺掉，
+     * 導致「點 dropdown 選 20pt 後打字卻沒變大」這類業主回報的問題。
+     *
+     * 因為 v44 bug 只會誤加「toolbar 第一個 button」的 attribute、現在 first 是 `bold`，
+     * 所以只需處理 `bold`。如果之後 toolbar 第一個換成別的、要同步調整這裡。
+     *
+     * Tradeoff：user 在空白游標點 bold 按鈕後失去焦點再回來，bold attribute 會被清掉；
+     * 業主用法是「先選字再 bold」而非「先 bold 再打字」，接受這個小代價。
      */
     const clearStaleSelectionAttrs = () => {
       Promise.resolve().then(() => {
         try {
           ed.model.change((writer) => {
-            const keys = Array.from(ed.model.document.selection.getAttributeKeys())
-            keys.forEach((k) => writer.removeSelectionAttribute(k))
+            writer.removeSelectionAttribute('bold')
           })
         } catch {
           // editor 可能 destroy 中、忽略

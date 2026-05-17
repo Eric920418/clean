@@ -5,9 +5,11 @@ import { Plus, Pencil, Trash2, Loader2, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { AdminModal } from '@/components/admin/admin-modal'
-import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { Field, inputClass } from '@/components/admin/form-field'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
+import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
+import { RichText } from '@/components/rich-text'
 import type { AdminProcessStep } from '@/lib/admin-types'
 import { swapOrderByIndex } from '@/lib/admin-reorder'
 
@@ -146,7 +148,10 @@ export default function ProcessStepsPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-ink">{it.title}</h3>
-                  <p className="mt-1 text-sm text-ink-soft">{it.desc}</p>
+                  <RichText
+                    html={it.desc}
+                    className="mt-1 text-sm text-ink-soft prose-sm"
+                  />
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button
@@ -211,14 +216,12 @@ export default function ProcessStepsPage() {
             </Field>
           </div>
 
-          <Field label="描述" required>
-            <textarea
+          <Field label="描述" required hint="支援粗體、列表、超連結、HTML 嵌入等富文本">
+            <RichTextEditor
               value={form.desc}
-              onChange={(e) => setForm({ ...form, desc: e.target.value })}
-              className={textareaClass}
-              rows={3}
+              onContentChange={(html) => setForm({ ...form, desc: html })}
               placeholder="Line 或表單填寫需求，30 分鐘內專人聯繫。"
-              required
+              height="160px"
             />
           </Field>
 

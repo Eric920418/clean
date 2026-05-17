@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 
 export async function GET() {
   const auth = await checkAdminAuth()
@@ -27,7 +29,8 @@ export async function POST(request: NextRequest) {
     if (typeof title !== 'string' || !title.trim()) {
       return errorResponse('標題為必填', 400)
     }
-    if (typeof desc !== 'string' || !desc.trim()) {
+    const cleanDesc = sanitizeRichText(desc)
+    if (!cleanDesc) {
       return errorResponse('描述為必填', 400)
     }
 
@@ -38,8 +41,9 @@ export async function POST(request: NextRequest) {
     }
 
     const item = await prisma.processStep.create({
-      data: { step: step.trim(), title: title.trim(), desc: desc.trim(), order: finalOrder },
+      data: { step: step.trim(), title: title.trim(), desc: cleanDesc, order: finalOrder },
     })
+    revalidatePath('/')
     return successResponse(item, 201)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '建立失敗')
