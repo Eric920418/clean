@@ -75,6 +75,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
     title: '首頁・底部 CTA banner',
     description: '首頁最底部深色預約 banner',
     fields: [
+      { name: 'backgroundImage', label: '背景圖', type: 'image', folder: 'home', hint: '深色濾鏡覆蓋（透明度 25%），建議用較亮或彩色的圖才看得出來。留空使用預設廚房照片。' },
       { name: 'overline', label: '上方小標', type: 'text', hint: '例：BOOK YOUR HOME CARE TODAY' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
       { name: 'titleLine2', label: '主標第二行', type: 'text' },

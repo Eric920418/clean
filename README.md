@@ -581,7 +581,11 @@ return visibleSections.map((section) => (
 
 **MainFieldsPanel 隱藏 `icon` / `order` 欄位**：業主用不到，從 `/admin/services/[id]/edit` 的表單與 form state 移除，UI 不顯示。**後端 API 零變動**（`PUT /api/admin/services/[id]` 已用 `body.xxx !== undefined` 條件式更新，body 沒帶就跳過 DB 寫入）。**現有 `service.icon` / `service.order` 資料保留**，前台仍依 `service.icon` 顯示 lucide 圖示、依 `service.order` 排序。要批次調整排序請改用 `/admin/services` 列表頁的上下移按鈕，icon 需修改可暫時直接改 DB 或臨時加回欄位。
 
-**首頁 CTA Banner 新增「LINE 加好友連結」獨立欄位**：`cta-home` ContentBlock 新增 `lineUrl` 欄位（純 text）。前台 `CtaBanner`（`app/(site)/page.tsx`）條件渲染 LINE 官方「加入好友」按鈕（hardcode 用 `https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png`），lineUrl 有填才顯示。**設計動機**：先前業主想把 LINE button 的 raw HTML 貼進 description 富文本欄位，但 CKEditor toolbar 沒有 `SourceEditing` plugin，會把 `<` `>` 自動 escape 成 entity 存進 DB；與其教業主用 source mode，不如給專屬欄位、零學習成本。LINE button 圖片用 `<img>` raw tag（不走 next/image），避免為一張 36px 圖在 `next.config.ts` 加 remotePatterns。
+**首頁 CTA Banner 新增「LINE 加好友連結」與「背景圖」獨立欄位**：`cta-home` ContentBlock 新增兩個欄位：
+- `lineUrl`（純 text）：前台條件渲染 LINE 官方「加入好友」按鈕（hardcode 用 `https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png`），lineUrl 有填才顯示。設計動機：CKEditor toolbar 沒 `SourceEditing` plugin，業主貼 raw HTML 會被 escape；給專屬欄位零學習成本。
+- `backgroundImage`（image，folder 'home'）：原本 `app/(site)/page.tsx` CtaBanner 背景圖是 hardcode unsplash 廚房照片、admin 無入口；改為「有填用 ContentBlock 圖、未填 fallback 到原 unsplash URL」。前端 `<Image>` 統一加 `unoptimized`（先前 hardcode 路徑沒加是 bug，會吃 Next.js image quota）。
+
+LINE button 圖片用 `<img>` raw tag、CTA 背景與 unsplash fallback 用 `<Image unoptimized>`，都避免 `next.config.ts` 為單一 host 增加 remotePatterns。
 
 **`SectionConfigModal` 富文本欄位 stale display 修補（兩階段）**：業主回報 `/admin/services/[id]/sections` 跨 section 切換 modal 時，富文本欄位（intro 的 paragraph1/2/3、text_block 的 body）會殘留前一個 section 的內容。
 
