@@ -329,7 +329,11 @@ function Process({
                 {p.step}
               </span>
               <h3 className="mt-3 text-base font-medium text-ink">{p.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{p.desc}</p>
+              <RichText
+                html={p.desc}
+                className="mt-2 text-sm leading-relaxed text-ink-soft prose-sm"
+              />
+
               {idx < steps.length - 1 && (
                 <ArrowRight className="absolute -right-3 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-primary-soft md:block" />
               )}
