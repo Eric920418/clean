@@ -117,7 +117,7 @@ export function RichTextEditor({
     setIsReady(true)
     // Deploy 驗證標記：production console 看到這條才代表新版 bundle 已生效
     // eslint-disable-next-line no-console
-    console.log('[RichTextEditor v14] mounted — focus listener only clears bold (preserve user fontSize/Family/Color)')
+    console.log('[RichTextEditor v15] mounted — multi-tick + 500ms window cleanup')
     return () => setIsReady(false)
   }, [])
 
@@ -365,6 +365,13 @@ export function RichTextEditor({
       }
       model: {
         change: (cb: (writer: { removeSelectionAttribute: (key: string) => void }) => void) => void
+        document: {
+          selection: {
+            hasAttribute: (key: string) => boolean
+            isCollapsed: boolean
+            on: (event: string, cb: () => void) => void
+          }
+        }
       }
       editing: {
         view: { document: { on: (event: string, cb: () => void) => void } }
@@ -396,16 +403,24 @@ export function RichTextEditor({
      * Tradeoff：user 在空白游標點 bold 按鈕後失去焦點再回來，bold attribute 會被清掉；
      * 業主用法是「先選字再 bold」而非「先 bold 再打字」，接受這個小代價。
      */
+    const clearBoldOnce = () => {
+      try {
+        ed.model.change((writer) => {
+          writer.removeSelectionAttribute('bold')
+        })
+      } catch {
+        // editor 可能 destroy 中、忽略
+      }
+    }
+
+    // 多時刻清理 — CKEditor 在 focus 後不同 tick 都可能設 bold，得每個 tick 都打一次
+    // 才能贏。一次 cleanup 已被驗證會被 CKEditor 後續 microtask 覆寫掉。
     const clearStaleSelectionAttrs = () => {
-      Promise.resolve().then(() => {
-        try {
-          ed.model.change((writer) => {
-            writer.removeSelectionAttribute('bold')
-          })
-        } catch {
-          // editor 可能 destroy 中、忽略
-        }
-      })
+      clearBoldOnce()
+      Promise.resolve().then(clearBoldOnce)
+      setTimeout(clearBoldOnce, 0)
+      setTimeout(clearBoldOnce, 50)
+      requestAnimationFrame(() => requestAnimationFrame(clearBoldOnce))
     }
 
     // mousedown 後 CKEditor 會在 microtask 內把 dropdown open
@@ -424,7 +439,16 @@ export function RichTextEditor({
     })
 
     // focus editable → 清掉 CKEditor v44 誤加的 selection attribute
-    ed.editing.view.document.on('focus', clearStaleSelectionAttrs)
+    // 配合 focus 窗口：focus 後 500ms 內任何 selection attribute 變動都視為「stale set」、清掉
+    // 超過 500ms 則信任使用者操作（避免破壞 user click bold 後立刻打字）
+    let focusedAt = 0
+    ed.editing.view.document.on('focus', () => {
+      focusedAt = Date.now()
+      clearStaleSelectionAttrs()
+    })
+    ed.model.document.selection.on('change', () => {
+      if (Date.now() - focusedAt < 500) clearBoldOnce()
+    })
   }
 
   return (
