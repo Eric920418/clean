@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Save, Trash2, Pencil } from 'lucide-react'
+import { Plus, Save, Trash2, Pencil, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { inputClass } from '@/components/admin/form-field'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { RichText } from '@/components/rich-text'
+import { swapOrderByIndex, nextOrder } from '@/lib/admin-reorder'
 import type { AdminServiceFaq } from '@/lib/admin-types'
 
 type Props = {
@@ -33,7 +34,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
         body: JSON.stringify({
           question: q.trim(),
           answer: a.trim(),
-          order: faqs.length,
+          order: nextOrder(faqs),
           sectionId,
         }),
       })
@@ -71,6 +72,20 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
     })
   }
 
+  async function move(id: number, dir: 'up' | 'down') {
+    try {
+      const moved = await swapOrderByIndex(
+        faqs,
+        id,
+        dir,
+        (fid) => `/api/admin/services/${serviceId}/faqs/${fid}`,
+      )
+      if (moved) onChange()
+    } catch (err) {
+      toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
+    }
+  }
+
   return (
     <>
       <ul className="space-y-3 mb-4">
@@ -79,8 +94,17 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             此區塊尚未新增任何 FAQ
           </li>
         )}
-        {faqs.map((f) => (
-          <FaqRow key={f.id} faq={f} serviceId={serviceId} onChange={onChange} onDelete={remove} />
+        {faqs.map((f, idx) => (
+          <FaqRow
+            key={f.id}
+            faq={f}
+            serviceId={serviceId}
+            onChange={onChange}
+            onDelete={remove}
+            onMove={move}
+            index={idx}
+            total={faqs.length}
+          />
         ))}
       </ul>
 
@@ -137,11 +161,17 @@ function FaqRow({
   serviceId,
   onChange,
   onDelete,
+  onMove,
+  index,
+  total,
 }: {
   faq: AdminServiceFaq
   serviceId: number
   onChange: () => void
   onDelete: (id: number) => void
+  onMove: (id: number, dir: 'up' | 'down') => void
+  index: number
+  total: number
 }) {
   const [editing, setEditing] = useState(false)
   const [q, setQ] = useState(faq.question)
@@ -177,6 +207,22 @@ function FaqRow({
             />
           </div>
           <div className="flex shrink-0 gap-1">
+            <button
+              onClick={() => onMove(faq.id, 'up')}
+              disabled={index === 0}
+              className="text-ink-soft hover:text-primary-deep hover:bg-primary/10 rounded-md p-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed"
+              title="上移"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onMove(faq.id, 'down')}
+              disabled={index === total - 1}
+              className="text-ink-soft hover:text-primary-deep hover:bg-primary/10 rounded-md p-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed"
+              title="下移"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
             <button
               onClick={() => setEditing(true)}
               className="text-ink-soft hover:text-primary-deep hover:bg-primary/10 rounded-md p-1.5 transition"
