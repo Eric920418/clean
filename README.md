@@ -62,7 +62,7 @@
 | `/admin/login` | 登入頁（首次用 `.env` 中的 ADMIN_USERNAME/PASSWORD，自動 bcrypt 寫入 DB） |
 | `/admin/dashboard` | 首頁：QuickActions 兩個大按鈕 + 4 張統計卡 + 最近 5 筆詢問 |
 | `/admin/services` | 服務列表（新增 modal、排序、上下架、刪除、進入詳細編輯） |
-| `/admin/services/[id]/edit` | 服務主欄位 + FAQ 統一編輯頁（服務特色已改由 sections 子頁的 `FeaturesEditor` 編輯） |
+| `/admin/services/[id]/edit` | 服務主欄位編輯頁（FAQ / 服務特色 / Hero 等內容改由 sections 子頁編輯） |
 | `/admin/services/[id]/before-afters` | ⭐ 清潔前後照片管理（每組 modal 上傳） |
 | `/admin/services/[id]/gallery` | 服務圖庫批量上傳 |
 | `/admin/inquiries` | 客人問問題列表（手機卡片、桌機表格、狀態 chip 篩選） |
