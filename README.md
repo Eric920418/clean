@@ -869,6 +869,19 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 **為什麼 fixed type 不能刪除**：刪了下次 ensureFixedSections 會自動 backfill 到尾巴破壞順序。「隱藏」達到同樣效果且 reversible。
 
+**收尾簡化：移除下方 home/about 重複編輯入口**
+
+業主追問「合併後下方固定欄位的首頁/關於我們不就可以移除嗎」。確認後改：
+- 新建 `app/admin/content/_components/ContentBlockModal.tsx` — 包裝 ContentBlock 的 fetch/render/save 邏輯為 modal
+- 新建 `app/admin/content/_components/content-block-defs.ts` — 把 BLOCK_DEFS / BlockGroup / OTHER_GROUPS 從 page.tsx 抽出，供 page 跟 modal 共用
+- `ContentAdminPage` 大幅簡化（~370 行 → ~90 行）：
+  - 拿掉 BlockEditor function、`expandedKey` / `dirtyKey` state、`handleToggle`
+  - 拿掉下方「首頁」「關於我們」兩組固定欄位 accordion（內容已能透過上方 manager 的 fixed section ✏️ 按鈕用 modal 編輯）
+  - 保留其他 5 組（contact / faq / services / works / global）— 改成 button list，每個 button 點開同個 modal
+  - 統一進出口：`editingBlockKey` state 一個 + `<ContentBlockModal>` 一個，所有 ContentBlock 編輯都走它
+
+**為什麼下方保留其他 5 組**：它們是「沒被任何 page manager 涵蓋」的頁面文案（contact / faq / services / works / global 沒有動態 sections 系統，全靠這幾個 ContentBlock）。完全移除會讓業主沒地方編。未來如果這些頁面也做動態化，這 5 組可以一併拿掉。
+
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 
 **動機**：業主端不能放假圖。但專案多處有「後台沒設圖就 fallback 到 unsplash」的邏輯，加上 seed 與 mock-data 把 unsplash URL 寫進 DB，導致就算後台不設圖也會顯示假圖。
