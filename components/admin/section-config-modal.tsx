@@ -35,9 +35,7 @@ const FIELDS_BY_TYPE: Record<
     { key: 'eyebrow', label: '小標籤', hint: '例：Our Story', kind: 'text' },
     { key: 'title', label: '標題', kind: 'text' },
     { key: 'image', label: '故事圖', kind: 'image' },
-    { key: 'paragraph1', label: '段落 1', kind: 'richtext' },
-    { key: 'paragraph2', label: '段落 2', kind: 'richtext' },
-    { key: 'paragraph3', label: '段落 3', kind: 'richtext' },
+    { key: 'body', label: '內文', hint: '可分多段；直接在編輯器內按 Enter 換段即可', kind: 'richtext' },
   ],
   why_with_features: [
     { key: 'eyebrow', label: '小標籤', hint: '預設：Why this matters', kind: 'text' },
@@ -76,6 +74,14 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
     for (const field of FIELDS_BY_TYPE[section.type]) {
       const v = cfg[field.key]
       initial[field.key] = typeof v === 'string' ? v : ''
+    }
+    // intro 舊資料相容：body 空但 paragraph1/2/3 有值 → 串接當初值，存檔時舊欄位會被一併清掉
+    if (section.type === 'intro' && !initial.body) {
+      const legacy = ['paragraph1', 'paragraph2', 'paragraph3']
+        .map((k) => (typeof cfg[k] === 'string' ? (cfg[k] as string) : ''))
+        .filter((v) => v.trim())
+        .join('')
+      if (legacy) initial.body = legacy
     }
     return initial
   })

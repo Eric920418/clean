@@ -13,15 +13,18 @@ export function IntroSection({ section, service }: Props) {
   const eyebrow = configString(section.config, 'eyebrow')
   const title = configString(section.config, 'title')
   const image = configString(section.config, 'image')
+  const body = configString(section.config, 'body')
+  // 舊資料相容：尚未經過後台重存的 intro section 仍保有 paragraph1/2/3
   const paragraph1 = configString(section.config, 'paragraph1')
   const paragraph2 = configString(section.config, 'paragraph2')
   const paragraph3 = configString(section.config, 'paragraph3')
 
-  if (!title && !image && !paragraph1 && !paragraph2 && !paragraph3) return null
+  if (!title && !image && !body && !paragraph1 && !paragraph2 && !paragraph3) return null
 
-  const paragraphs = [paragraph1, paragraph2, paragraph3].filter(
+  const legacyParagraphs = [paragraph1, paragraph2, paragraph3].filter(
     (p): p is string => Boolean(p && p.trim()),
   )
+  const hasContent = Boolean(body) || legacyParagraphs.length > 0
 
   return (
     <section className="section pt-12 md:pt-16">
@@ -30,11 +33,13 @@ export function IntroSection({ section, service }: Props) {
           {title && (
             <SectionHeading eyebrow={eyebrow ?? undefined} title={title} />
           )}
-          {paragraphs.length > 0 && (
+          {hasContent && (
             <div className="mt-6 space-y-4 text-base leading-loose text-ink-soft">
-              {paragraphs.map((p, i) => (
-                <RichText key={i} html={p} />
-              ))}
+              {body ? (
+                <RichText html={body} />
+              ) : (
+                legacyParagraphs.map((p, i) => <RichText key={i} html={p} />)
+              )}
             </div>
           )}
         </div>

@@ -27,7 +27,7 @@ function defaultConfig(type: SectionType, serviceName: string): Record<string, u
     case 'more_services':
       return {}
     case 'intro':
-      return { eyebrow: null, title: null, image: null, paragraph1: null, paragraph2: null, paragraph3: null }
+      return { eyebrow: null, title: null, image: null, body: null }
     case 'why_with_features':
       return { eyebrow: null, title: null }
     case 'before_after':

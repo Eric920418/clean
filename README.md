@@ -571,7 +571,7 @@ return visibleSections.map((section) => (
 | Type | 可編輯欄位 |
 |---|---|
 | `hero` | heroImage（覆寫 service.heroImage）、eyebrow、title、description、ctaText |
-| `intro` | eyebrow、title、image、paragraph1/2/3 |
+| `intro` | eyebrow、title、image、body（單一富文本，可分多段）。**舊資料相容**：未重存的 section 仍讀 `paragraph1/2/3`；後台第一次開 modal 會自動把舊三段串接到 `body` 當初值，按存檔後舊欄位被一併清除 |
 | `why_with_features` | eyebrow、title（主文沿用 service.longDesc） |
 | `cta` | title、description |
 | `text_block` | eyebrow、title、body |
@@ -580,7 +580,7 @@ return visibleSections.map((section) => (
 
 > 點複雜 type（before_after / gallery / faq / more_services）的 ✏️ 會顯示 toast 提示「請走舊路徑管理該 service 全部 X — section-scoped 內容管理在 C3c 上線」。
 
-**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、intro paragraph1-3、cta description、before_after description、text_block body、why_with_features longDesc、`Service.shortDesc`）後台輸入的 `\n` 都會在前台以實際換行渲染。（FAQ answer 已改為 RichTextEditor，走 HTML 渲染路徑，不在此清單內。）實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。`Service.shortDesc` 顯示在四處：首頁服務卡片（`app/(site)/page.tsx`）、服務列表卡片（`app/(site)/services/page.tsx`）、服務詳情頁 Hero（`HeroSection.tsx`）、其他服務區塊（`MoreServicesSection.tsx`），四處皆套用換行支援；唯獨 SEO meta description（`generateMetadata` 與 `lib/seo.ts`）使用原始字串，因 meta 不渲染換行。例外：`before_after` 的 `caption` 後台是單行 `<input>` 不支援。
+**Textarea 換行保留**：sections modal 與子頁中所有 `<textarea>` 欄位（hero/intro/cta description、cta description、before_after description、text_block body、why_with_features longDesc、`Service.shortDesc`）後台輸入的 `\n` 都會在前台以實際換行渲染。（FAQ answer 已改為 RichTextEditor，走 HTML 渲染路徑，不在此清單內。）實作方式：對應的渲染容器加 `whitespace-pre-line` Tailwind class（純 CSS，無 markdown / `<br/>` / XSS 風險）。共用元件 `components/section-heading.tsx` 的 description 已套用，所以任何透過 `SectionHeading` 顯示副標的 section 自動支援。`Service.shortDesc` 顯示在四處：首頁服務卡片（`app/(site)/page.tsx`）、服務列表卡片（`app/(site)/services/page.tsx`）、服務詳情頁 Hero（`HeroSection.tsx`）、其他服務區塊（`MoreServicesSection.tsx`），四處皆套用換行支援；唯獨 SEO meta description（`generateMetadata` 與 `lib/seo.ts`）使用原始字串，因 meta 不渲染換行。例外：`before_after` 的 `caption` 後台是單行 `<input>` 不支援。
 
 **服務主欄位編輯入口統一**：原 `/admin/services` 列表的 Sparkles modal（編輯 11 個主欄位：name / shortDesc / longDesc / icon / order / cardImage / heroImage / seoTitle / seoDesc / isActive / isFeatured）已合併進 `/admin/services/[id]/edit` 的 `MainFieldsPanel`，列表只保留 Pencil 一個編輯入口，避免「同一個服務有兩個編輯入口」的認知負擔。列表頁的 `AdminModal` 縮編為 create-only（新增服務），編輯走獨立頁面。後端 API 零變動（`PUT /api/admin/services/[id]` 既有 schema 已支援）。
 
