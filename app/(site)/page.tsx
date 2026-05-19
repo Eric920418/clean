@@ -401,7 +401,7 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
         {block.backgroundImage && (
-          <div className="absolute inset-0 opacity-25">
+          <div className="absolute inset-0 opacity-60">
             <Image
               src={block.backgroundImage}
               alt=""
@@ -413,21 +413,24 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
           </div>
         )}
         <div className="relative max-w-2xl">
-          <span className="text-xs font-medium tracking-[0.2em] text-primary-soft">
-            {block.overline || 'BOOK YOUR HOME CARE TODAY'}
+          <span className="text-xs text-white! font-medium tracking-[0.2em] ">
+            {block.overline || "BOOK YOUR HOME CARE TODAY"}
           </span>
-          <h2 className="mt-4 text-3xl font-medium leading-tight md:text-4xl">
-            {block.titleLine1 || '把專業交給我們，'}
+          <h2 className="mt-4 text-white! text-3xl font-medium leading-tight md:text-4xl">
+            {block.titleLine1 || "把專業交給我們，"}
             <br />
-            {block.titleLine2 || '把時間留給家人。'}
+            {block.titleLine2 || "把時間留給家人。"}
           </h2>
           <RichText
-            html={block.description || '一通電話，專人為您現場評估，給您完整透明的報價。'}
+            html={
+              block.description ||
+              "一通電話，專人為您現場評估，給您完整透明的報價。"
+            }
             className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 md:text-base"
           />
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
-              {block.primaryCta || '立即來電預約'}
+              {block.primaryCta || "立即來電預約"}
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link
@@ -457,5 +460,5 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
         </div>
       </div>
     </section>
-  )
+  );
 }

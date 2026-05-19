@@ -88,7 +88,7 @@ function CtaBanner({
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
         {backgroundImage && (
-          <div className="absolute inset-0 opacity-25">
+          <div className="absolute inset-0 opacity-60">
             <Image
               src={backgroundImage}
               alt=""
@@ -101,12 +101,12 @@ function CtaBanner({
         )}
         <div className="relative max-w-2xl">
           {overline && (
-            <span className="text-xs font-medium tracking-[0.2em] text-primary-soft">
+            <span className="text-xs text-white! font-medium tracking-[0.2em] ">
               {overline}
             </span>
           )}
           {(titleLine1 || titleLine2) && (
-            <h2 className="mt-4 text-3xl font-medium leading-tight md:text-4xl">
+            <h2 className="mt-4 text-white! text-3xl font-medium leading-tight md:text-4xl">
               {titleLine1}
               {titleLine1 && titleLine2 && <br />}
               {titleLine2}
