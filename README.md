@@ -571,7 +571,7 @@ return visibleSections.map((section) => (
 | Type | 可編輯欄位 |
 |---|---|
 | `hero` | heroImage（覆寫 service.heroImage）、eyebrow、title、description、ctaText |
-| `intro` | eyebrow、title、image、body（單一富文本，可分多段）。**舊資料相容**：未重存的 section 仍讀 `paragraph1/2/3`；後台第一次開 modal 會自動把舊三段串接到 `body` 當初值，按存檔後舊欄位被一併清除 |
+| `intro` | eyebrow、title、image、body（單一富文本，可分多段）、`imagePosition`（`'left'` / `'right'`，預設 `'right'`，後台用 segmented buttons 切換；控制桌機 2 欄排版，手機 1 欄也跟著切換圖文先後順序）。**舊資料相容**：未重存的 section 仍讀 `paragraph1/2/3`；後台第一次開 modal 會自動把舊三段串接到 `body` 當初值，按存檔後舊欄位被一併清除 |
 | `why_with_features` | eyebrow、title（主文沿用 service.longDesc） |
 | `cta` | title、description |
 | `text_block` | eyebrow、title、body |

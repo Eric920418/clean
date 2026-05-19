@@ -19,11 +19,19 @@ type Props = {
 
 type ConfigState = Record<string, string>
 
+type FieldDef = {
+  key: string
+  label: string
+  hint?: string
+  kind: 'text' | 'textarea' | 'richtext' | 'image' | 'segmented'
+  // segmented 專用：兩段以上選項，用視覺按鈕呈現
+  options?: { value: string; label: string }[]
+  // segmented 預設值（未存值時 form 初值）
+  defaultValue?: string
+}
+
 // 每種 type 要編輯的欄位
-const FIELDS_BY_TYPE: Record<
-  ServiceSectionType,
-  { key: string; label: string; hint?: string; kind: 'text' | 'textarea' | 'richtext' | 'image' }[]
-> = {
+const FIELDS_BY_TYPE: Record<ServiceSectionType, FieldDef[]> = {
   hero: [
     { key: 'heroImage', label: 'Hero 背景圖（可選）', hint: '若留空則使用「服務主圖」', kind: 'image' },
     { key: 'eyebrow', label: '小標籤（可選）', kind: 'text' },
@@ -35,6 +43,17 @@ const FIELDS_BY_TYPE: Record<
     { key: 'eyebrow', label: '小標籤', hint: '例：Our Story', kind: 'text' },
     { key: 'title', label: '標題', kind: 'text' },
     { key: 'image', label: '故事圖', kind: 'image' },
+    {
+      key: 'imagePosition',
+      label: '版面（圖片位置）',
+      hint: '只在桌機 2 欄時生效；手機單欄也跟著切換，圖在前 / 文在前',
+      kind: 'segmented',
+      defaultValue: 'right',
+      options: [
+        { value: 'right', label: '左文・右圖' },
+        { value: 'left', label: '左圖・右文' },
+      ],
+    },
     { key: 'body', label: '內文', hint: '可分多段；直接在編輯器內按 Enter 換段即可', kind: 'richtext' },
   ],
   why_with_features: [
@@ -73,7 +92,7 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
     const initial: ConfigState = {}
     for (const field of FIELDS_BY_TYPE[section.type]) {
       const v = cfg[field.key]
-      initial[field.key] = typeof v === 'string' ? v : ''
+      initial[field.key] = typeof v === 'string' ? v : (field.defaultValue ?? '')
     }
     // intro 舊資料相容：body 空但 paragraph1/2/3 有值 → 串接當初值，存檔時舊欄位會被一併清掉
     if (section.type === 'intro' && !initial.body) {
@@ -174,6 +193,28 @@ export function SectionConfigModal({ open, onClose, serviceId, section, onSaved 
                 onChange={(url) => setForm({ ...form, [field.key]: url })}
                 folder={`service-section-${section.id}`}
               />
+            )}
+            {field.kind === 'segmented' && (
+              <div className="inline-flex rounded-lg border border-hairline bg-bg-soft p-1">
+                {(field.options ?? []).map((opt) => {
+                  const active = (form[field.key] ?? field.defaultValue ?? '') === opt.value
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm({ ...form, [field.key]: opt.value })}
+                      className={
+                        'px-4 py-1.5 rounded-md text-sm font-medium transition ' +
+                        (active
+                          ? 'bg-white text-ink shadow-sm'
+                          : 'text-ink-soft hover:text-ink')
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
             )}
           </Field>
         ))}
