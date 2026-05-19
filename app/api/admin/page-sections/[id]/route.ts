@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { sanitizeRichText } from '@/lib/sanitize-html'
 import { deleteImageFromR2 } from '@/lib/r2'
+import { isFixedType, type PageSectionPage } from '@/lib/admin-types'
 
 // 對應 page-sections 的富文本 / 圖片欄位（依 type 不同）
 const RICH_TEXT_CONFIG_KEYS = ['body', 'description', 'html'] as const
@@ -89,6 +90,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     const sectionId = parseInt(id, 10)
     const existing = await prisma.pageSection.findUnique({ where: { id: sectionId } })
     if (!existing) return errorResponse('找不到該區塊', 404)
+
+    // 固定區塊不能刪 — 業主只能排序或隱藏
+    if (isFixedType(existing.page as PageSectionPage, existing.type)) {
+      return errorResponse('固定區塊不能刪除，請改用「隱藏」', 400)
+    }
 
     // 刪除前收集 R2 圖片做 fire-and-forget 清理
     const cfg = (existing.config ?? {}) as Record<string, unknown>

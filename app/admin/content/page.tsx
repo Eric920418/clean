@@ -217,6 +217,22 @@ export default function ContentAdminPage() {
     setDirtyKey(null)
   }
 
+  // PageSectionsManager 對 fixed section 點編輯時 → 展開對應 ContentBlock + 該 group + scroll
+  function handleEditFixed(contentBlockKey: string) {
+    const def = BLOCK_DEFS[contentBlockKey]
+    if (!def) return
+    // 強制展開該 group（HTMLDetailsElement.open 是 imperative 可寫）
+    const groupEl = document.getElementById(`group-${def.group}`)
+    if (groupEl instanceof HTMLDetailsElement) groupEl.open = true
+    setExpandedKey(contentBlockKey)
+    // 等下一個 paint 再 scroll（讓 details 展開 + BlockEditor 展開 layout 後位置才對）
+    setTimeout(() => {
+      document
+        .getElementById(`block-${contentBlockKey}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 120)
+  }
+
   return (
     <>
       <AdminPageHeader
@@ -225,19 +241,19 @@ export default function ContentAdminPage() {
       />
 
       <section className="mb-10">
-        <h2 className="text-base font-semibold text-ink">首頁・附加區塊（動態）</h2>
+        <h2 className="text-base font-semibold text-ink">首頁・區塊排序</h2>
         <p className="mt-1 mb-4 text-xs text-ink-muted">
-          可動態新增、排序、刪除。渲染位置：首頁「客戶評價」之後、底部 CTA banner 之前
+          固定區塊（🔒 Hero / 服務 / 為何選我們 / 對比作品 / 流程 / 評價 / CTA）+ 動態區塊可互相換順序；固定區塊只能排序與隱藏、不能刪
         </p>
-        <PageSectionsManager page="home" />
+        <PageSectionsManager page="home" onEditFixed={handleEditFixed} />
       </section>
 
       <section className="mb-10">
-        <h2 className="text-base font-semibold text-ink">關於我們・附加區塊（動態）</h2>
+        <h2 className="text-base font-semibold text-ink">關於我們・區塊排序</h2>
         <p className="mt-1 mb-4 text-xs text-ink-muted">
-          可動態新增、排序、刪除。渲染位置：About 頁「品牌信念」之後、底部 CTA 之前
+          固定區塊（🔒 Hero / 故事 / 信念 / CTA）+ 動態區塊可互相換順序
         </p>
-        <PageSectionsManager page="about" />
+        <PageSectionsManager page="about" onEditFixed={handleEditFixed} />
       </section>
 
       <section>
@@ -252,6 +268,7 @@ export default function ContentAdminPage() {
             return (
               <details
                 key={g.key}
+                id={`group-${g.key}`}
                 open={g.defaultOpen}
                 className="group rounded-xl border border-hairline bg-white overflow-hidden"
               >
@@ -371,7 +388,7 @@ function BlockEditor({
   }
 
   return (
-    <section className="rounded-xl border border-hairline bg-white">
+    <section id={`block-${blockKey}`} className="rounded-xl border border-hairline bg-white scroll-mt-24">
       <header
         onClick={onToggle}
         className="flex items-center justify-between gap-3 p-4 sm:p-5 cursor-pointer hover:bg-bg-soft/60 transition rounded-xl"

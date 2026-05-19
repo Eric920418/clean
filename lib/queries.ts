@@ -2,6 +2,69 @@
 // 集中查詢，方便日後擴展（如 caching、loaders）
 
 import { prisma } from './prisma'
+import { FIXED_TYPES_BY_PAGE, type PageSectionPage } from './admin-types'
+
+/**
+ * 確保指定 page 的所有固定 section 在 DB 中存在（idempotent）。
+ *
+ * 行為：
+ * - 第一次跑（DB 完全沒 fixed 紀錄）：把現有 dynamic sections order +100 騰位置，
+ *   然後 insert fixed types 用 order 1, 2, 3... 對應 FIXED_TYPES_BY_PAGE 的順序
+ * - 中間狀態（業主手動刪了部分 fixed）：把缺的補到最後（業主可再排序）
+ * - 全部都在：no-op
+ *
+ * 在 home/about page server component 跟 admin API GET 兩個入口都應該呼叫，
+ * 避免新 deploy / 新環境忘記 seed。
+ */
+export async function ensureFixedSections(page: PageSectionPage) {
+  const fixedTypes = [...FIXED_TYPES_BY_PAGE[page]]
+  const existing = await prisma.pageSection.findMany({
+    where: { page, type: { in: fixedTypes } },
+    select: { type: true },
+  })
+  if (existing.length === fixedTypes.length) return
+
+  const existingTypes = new Set(existing.map((s) => s.type))
+  const missing = fixedTypes.filter((t) => !existingTypes.has(t))
+
+  await prisma.$transaction(async (tx) => {
+    if (existing.length === 0) {
+      // 第一次：shift 現有 dynamic 騰出 order 1..N 給 fixed
+      const dynamicCount = await tx.pageSection.count({ where: { page } })
+      if (dynamicCount > 0) {
+        await tx.pageSection.updateMany({
+          where: { page },
+          data: { order: { increment: 100 } },
+        })
+      }
+      await tx.pageSection.createMany({
+        data: missing.map((type) => ({
+          page,
+          type,
+          order: fixedTypes.indexOf(type) + 1,
+          isVisible: true,
+          config: {},
+        })),
+      })
+    } else {
+      // 部分缺失：補到尾巴，業主自己拖回想要的位置
+      const maxOrder = await tx.pageSection.aggregate({
+        where: { page },
+        _max: { order: true },
+      })
+      let nextOrder = (maxOrder._max.order ?? 0) + 1
+      await tx.pageSection.createMany({
+        data: missing.map((type) => ({
+          page,
+          type,
+          order: nextOrder++,
+          isVisible: true,
+          config: {},
+        })),
+      })
+    }
+  })
+}
 
 // 「為何選我們」多區塊（含 cards JSON），預設只取首頁 location
 // 若需要 about 頁的同型區塊，傳 { location: 'about' }
@@ -127,9 +190,11 @@ export async function getAllContentBlocks(): Promise<Record<string, Record<strin
   return map
 }
 
-// 取指定 page 的動態附加區塊（僅 isVisible=true），依 order 排序
-// 用於首頁、關於我們等頁面 render <PageCustomSections>
-export async function getActivePageSections(page: 'home' | 'about') {
+// 取指定 page 的所有 section（fixed + dynamic，僅 isVisible=true），依 order 排序
+// 前台 home / about page 用這個結果做 sections.map dispatch render
+// 第一次進入會 lazy ensure 該 page 的 fixed sections（idempotent）
+export async function getActivePageSections(page: PageSectionPage) {
+  await ensureFixedSections(page)
   return prisma.pageSection.findMany({
     where: { page, isVisible: true },
     orderBy: { order: 'asc' },

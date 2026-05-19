@@ -160,7 +160,26 @@ export type AdminContentBlock = {
 
 export type PageSectionPage = 'home' | 'about'
 
-export type PageSectionType = 'text_block' | 'cta_banner' | 'image_text' | 'rich_content'
+// 各頁面的固定 section type（不能新增、不能刪除，業主只能排序/隱藏）
+// 「hero」「cta」在 home / about 命名重複是刻意的 — 各自代表該頁的 hero / cta，
+// 透過 page 欄位區分；render dispatch 與 ensure 邏輯都以 (page, type) 為單位
+export const FIXED_TYPES_BY_PAGE = {
+  home: ['hero', 'services_grid', 'why_us', 'featured_works', 'process', 'testimonials', 'cta'],
+  about: ['hero', 'story', 'beliefs', 'cta'],
+} as const
+
+export type FixedHomeSectionType = (typeof FIXED_TYPES_BY_PAGE)['home'][number]
+export type FixedAboutSectionType = (typeof FIXED_TYPES_BY_PAGE)['about'][number]
+export type FixedPageSectionType = FixedHomeSectionType | FixedAboutSectionType
+
+// 動態 section type — 業主可任意新增/刪除
+export type DynamicPageSectionType = 'text_block' | 'cta_banner' | 'image_text' | 'rich_content'
+
+export type PageSectionType = FixedPageSectionType | DynamicPageSectionType
+
+export function isFixedType(page: PageSectionPage, type: string): boolean {
+  return (FIXED_TYPES_BY_PAGE[page] as readonly string[]).includes(type)
+}
 
 export type AdminPageSection = {
   id: number

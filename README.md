@@ -841,6 +841,34 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 業主提過「14 個固定欄位混在一起難找、想自由排序」。前台 render 順序是寫死在 JSX 的，後台清單順序改了前台不會動 — 直接做「自由排序」是浪費工。改做：在 `BLOCK_DEFS` 每個 entry 加 `group` 欄位（`home` / `about` / `contact` / `faq` / `services` / `works` / `global`），`ContentAdminPage` 用 HTML `<details>` 按 group 折疊，預設只展開「首頁」組。HTML 原生 details 的好處：無 JS 也能 work、業主誤折疊不會 unmount 內部 BlockEditor（dirty tracking 保留）。Chevron 用 Tailwind 4 `group-open:rotate-90` variant 配 `[&::-webkit-details-marker]:hidden` 自訂視覺。
 
+### 2026-05-18（首頁 + About 完整 layout 動態化：固定 + 動態 sections 統一排序）
+
+**動機**：業主追加「想把固定欄位跟動態合併，自由換順序」。前一輪做了 dynamic section 插在 fixed 尾巴的設計，但業主想要的是「Hero / 服務 / 評價 等 fixed sections 也能拖拉互換」+「dynamic 能插在固定中間」。
+
+**設計核心**：把首頁 7 個寫死的 JSX section（Hero / ServicesGrid / WhyUs / FeaturedWorks / Process / Testimonials / CtaBanner）跟 About 4 個固定 section（Hero / Story / Beliefs / CTA）也表示成 `PageSection` 紀錄，跟 dynamic 共用同一張表的 `order` 欄位，前台改用 `sections.map(...)` 依 order 依 type 分派 render。
+
+**fixed types**（一律 ensure 存在、不能新增/刪除，只能排序與隱藏）：
+- home: `hero` / `services_grid` / `why_us` / `featured_works` / `process` / `testimonials` / `cta`
+- about: `hero` / `story` / `beliefs` / `cta`
+
+**Idempotent ensure**：`lib/queries.ts` 的 `ensureFixedSections(page)` 在前台 server query 跟 admin API GET 都呼叫。第一次跑：把現有 dynamic order +100 騰位置、insert 該頁所有 fixed types 用 order 1..N（依 `FIXED_TYPES_BY_PAGE` 順序）。後續：no-op 或補缺失的 type 到尾巴。
+
+**API 保護**：POST 拒絕 fixed type（業主不能再建）；DELETE 拒絕 fixed type（只能「隱藏」）。
+
+**後台 manager**：fixed + dynamic 統一列表。fixed 顯示 🔒 鎖頭 chip + 無刪除按鈕。固定區塊「編輯」按鈕：
+- 有對應 ContentBlock（hero/services_grid/story/cta 等）→ `onEditFixed(contentBlockKey)` callback 由 `ContentAdminPage` 處理：imperatively 把該 group `<details>.open = true`、`setExpandedKey()` 展開該 BlockEditor、`scrollIntoView` 滾動到視窗中央
+- 沒有對應 ContentBlock（why_us / beliefs，內容由 `/admin/why-us-sections` 管理）→ 顯示 ExternalLink icon 跳轉到對應管理頁
+
+**前台 render 改寫**：
+- 新建 `app/(site)/_components/home-sections.tsx`：HomeSections dispatcher + 7 個 fixed component（從原 page.tsx 搬出）
+- 新建 `app/(site)/_components/about-sections.tsx`：對應 about 頁 4 種 fixed
+- `app/(site)/page.tsx` / `about/page.tsx` 退化成 thin wrapper
+- `page-custom-sections.tsx` export `DynamicSection` 供 home / about dispatcher 重用
+
+**為什麼用 type 命名而不加 `isFixed` 欄位**：type 名稱本身就是判斷依據（`isFixedType(page, type)` 查 `FIXED_TYPES_BY_PAGE`），加欄位冗餘。schema 不動省一輪 migration。
+
+**為什麼 fixed type 不能刪除**：刪了下次 ensureFixedSections 會自動 backfill 到尾巴破壞順序。「隱藏」達到同樣效果且 reversible。
+
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 
 **動機**：業主端不能放假圖。但專案多處有「後台沒設圖就 fallback 到 unsplash」的邏輯，加上 seed 與 mock-data 把 unsplash URL 寫進 DB，導致就算後台不設圖也會顯示假圖。

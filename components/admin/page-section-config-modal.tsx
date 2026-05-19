@@ -7,7 +7,10 @@ import { Field, inputClass, textareaClass } from './form-field'
 import { ErrorBanner } from './error-banner'
 import { ImageUploader } from './image-uploader'
 import { RichTextEditor } from './rich-text-editor-loader'
-import type { AdminPageSection, PageSectionType } from '@/lib/admin-types'
+import type {
+  AdminPageSection,
+  DynamicPageSectionType,
+} from '@/lib/admin-types'
 
 type Props = {
   open: boolean
@@ -25,8 +28,8 @@ type FieldDef = {
   options?: { value: string; label: string }[]  // select only
 }
 
-// 每種 type 要編輯的欄位
-const FIELDS_BY_TYPE: Record<PageSectionType, FieldDef[]> = {
+// 每種 dynamic type 要編輯的欄位（fixed type 不走此 modal，由 onEditFixed 跳轉到 ContentBlock）
+const FIELDS_BY_TYPE: Record<DynamicPageSectionType, FieldDef[]> = {
   text_block: [
     { key: 'eyebrow', label: '小標籤（可選）', hint: '例：Latest News', kind: 'text' },
     { key: 'title', label: '標題', kind: 'text' },
@@ -78,7 +81,7 @@ const FIELDS_BY_TYPE: Record<PageSectionType, FieldDef[]> = {
   ],
 }
 
-const TITLE_BY_TYPE: Record<PageSectionType, string> = {
+const TITLE_BY_TYPE: Record<DynamicPageSectionType, string> = {
   text_block: '萬用文字塊',
   cta_banner: 'CTA 行動呼籲橫幅',
   image_text: '圖文並陳',
@@ -88,11 +91,13 @@ const TITLE_BY_TYPE: Record<PageSectionType, string> = {
 type ConfigState = Record<string, string>
 
 export function PageSectionConfigModal({ open, onClose, section, onSaved }: Props) {
+  // caller (PageSectionsManager) 已保證只有 dynamic section 會進來 — fixed 走另一條跳轉到 ContentBlock
+  const dynamicType = section?.type as DynamicPageSectionType | undefined
   const [form, setForm] = useState<ConfigState>(() => {
-    if (!section) return {}
+    if (!section || !dynamicType || !FIELDS_BY_TYPE[dynamicType]) return {}
     const cfg = (section.config ?? {}) as Record<string, unknown>
     const initial: ConfigState = {}
-    for (const field of FIELDS_BY_TYPE[section.type]) {
+    for (const field of FIELDS_BY_TYPE[dynamicType]) {
       const v = cfg[field.key]
       // select 欄位若 cfg 沒值，用第一個 option 當預設
       if (field.kind === 'select' && (v === undefined || v === null || v === '')) {
@@ -106,8 +111,8 @@ export function PageSectionConfigModal({ open, onClose, section, onSaved }: Prop
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (!section) return null
-  const fields = FIELDS_BY_TYPE[section.type] ?? []
+  if (!section || !dynamicType || !FIELDS_BY_TYPE[dynamicType]) return null
+  const fields = FIELDS_BY_TYPE[dynamicType] ?? []
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -149,7 +154,7 @@ export function PageSectionConfigModal({ open, onClose, section, onSaved }: Prop
       open={open}
       onClose={onClose}
       size="xl"
-      title={`編輯：${TITLE_BY_TYPE[section.type]}`}
+      title={`編輯：${TITLE_BY_TYPE[dynamicType]}`}
       description="留空欄位代表不顯示；可隨時新增、刪除、調順序"
     >
       <form onSubmit={handleSubmit} className="space-y-5">

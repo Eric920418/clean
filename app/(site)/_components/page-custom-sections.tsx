@@ -18,23 +18,37 @@ export function PageCustomSections({ sections, phoneTel }: Props) {
   if (sections.length === 0) return null
   return (
     <>
-      {sections.map((s) => {
-        const cfg = (s.config ?? {}) as Record<string, unknown>
-        switch (s.type) {
-          case 'text_block':
-            return <TextBlock key={s.id} cfg={cfg} />
-          case 'cta_banner':
-            return <CtaBanner key={s.id} cfg={cfg} phoneTel={phoneTel} />
-          case 'image_text':
-            return <ImageText key={s.id} cfg={cfg} />
-          case 'rich_content':
-            return <RichContent key={s.id} cfg={cfg} />
-          default:
-            return null
-        }
-      })}
+      {sections.map((s) => (
+        <DynamicSection key={s.id} section={s} phoneTel={phoneTel} />
+      ))}
     </>
   )
+}
+
+/**
+ * 渲染單個 dynamic section — home/about 的 sections.map dispatch 從這裡分派 4 種 dynamic type
+ * 非 dynamic type 回 null（fixed type 不歸這裡管）
+ */
+export function DynamicSection({
+  section,
+  phoneTel,
+}: {
+  section: PageSection
+  phoneTel: string
+}) {
+  const cfg = (section.config ?? {}) as Record<string, unknown>
+  switch (section.type) {
+    case 'text_block':
+      return <TextBlock cfg={cfg} />
+    case 'cta_banner':
+      return <CtaBanner cfg={cfg} phoneTel={phoneTel} />
+    case 'image_text':
+      return <ImageText cfg={cfg} />
+    case 'rich_content':
+      return <RichContent cfg={cfg} />
+    default:
+      return null
+  }
 }
 
 function str(v: unknown): string | null {
