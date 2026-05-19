@@ -11,9 +11,14 @@ import { PageSectionsManager } from './_components/PageSectionsManager'
 
 type FieldType = 'text' | 'richtext' | 'image'
 
+// group：用於後台分組折疊；每個 key 對應一個前台頁面
+// home / about / contact / faq / services / works / global
+type BlockGroup = 'home' | 'about' | 'contact' | 'faq' | 'services' | 'works' | 'global'
+
 type BlockDef = {
   title: string
   description: string
+  group: BlockGroup
   fields: { name: string; label: string; type: FieldType; hint?: string; folder?: string }[]
 }
 
@@ -23,6 +28,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-home': {
     title: '首頁 Hero（主視覺）',
     description: '首頁最上方的標題、副標、按鈕文字、4 條 checklist、主視覺圖片',
+    group: 'home',
     fields: [
       { name: 'heroImage', label: '主視覺圖片', type: 'image', folder: 'home', hint: '建議 4:5 比例、800×1000px 以上。未填則使用首頁精選對比圖' },
       { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：Invisible Care · 居家健康守護' },
@@ -40,6 +46,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'section-services-home': {
     title: '首頁・服務項目區塊標題',
     description: 'Our Services 區塊的 eyebrow 與標題',
+    group: 'home',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -49,6 +56,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'section-works-home': {
     title: '首頁・精選作品區塊標題',
     description: 'Real Results 區塊的 eyebrow、標題與「查看全部」按鈕',
+    group: 'home',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -59,6 +67,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'section-process-home': {
     title: '首頁・服務流程區塊標題',
     description: 'How it works 區塊的 eyebrow 與標題（流程步驟在「服務流程」管理）',
+    group: 'home',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -67,6 +76,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'section-testimonials-home': {
     title: '首頁・客戶評價區塊標題',
     description: 'Customer Voices 區塊的 eyebrow 與標題（評價內容在「客人的好話」管理）',
+    group: 'home',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -75,6 +85,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'cta-home': {
     title: '首頁・底部 CTA banner',
     description: '首頁最底部深色預約 banner',
+    group: 'home',
     fields: [
       { name: 'backgroundImage', label: '背景圖', type: 'image', folder: 'home', hint: '深色濾鏡覆蓋（透明度 25%），建議用較亮或彩色的圖才看得出來。留空使用預設廚房照片。' },
       { name: 'overline', label: '上方小標', type: 'text', hint: '例：BOOK YOUR HOME CARE TODAY' },
@@ -89,6 +100,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-about': {
     title: '關於我們・Hero',
     description: 'About 頁最上方的標題段',
+    group: 'about',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text', hint: '例：About invisible care' },
       { name: 'titleLine1', label: '主標第一行', type: 'text' },
@@ -99,6 +111,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   about: {
     title: '關於我們・故事段',
     description: 'About 頁中段的「Our story」與三段故事',
+    group: 'about',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -111,6 +124,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'cta-about': {
     title: '關於我們・底部 CTA',
     description: 'About 頁底部的呼籲區塊',
+    group: 'about',
     fields: [
       { name: 'title', label: '標題', type: 'text' },
       { name: 'description', label: '副標', type: 'richtext' },
@@ -121,6 +135,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-contact': {
     title: '預約諮詢・Hero',
     description: 'Contact 頁最上方標題段',
+    group: 'contact',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -130,6 +145,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-faq': {
     title: '常見問題・Hero 與區塊文字',
     description: 'FAQ 頁的 Hero、「一般服務」標題、底部聯絡卡片文案',
+    group: 'faq',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: 'Hero 標題', type: 'text' },
@@ -142,6 +158,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-services': {
     title: '服務項目列表・Hero',
     description: 'Services 列表頁的標題段',
+    group: 'services',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -151,6 +168,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   'hero-works': {
     title: '服務案例・Hero',
     description: 'Works 頁的標題段',
+    group: 'works',
     fields: [
       { name: 'eyebrow', label: 'Eyebrow', type: 'text' },
       { name: 'title', label: '標題', type: 'text' },
@@ -161,6 +179,7 @@ const BLOCK_DEFS: Record<string, BlockDef> = {
   navigation: {
     title: '導覽列與 Footer 文字',
     description: '導覽列的 5 個分頁 label、主要按鈕文字、Footer 法律聲明',
+    group: 'global',
     fields: [
       { name: 'navServicesLabel', label: '導覽：服務項目', type: 'text' },
       { name: 'navWorksLabel', label: '導覽：服務案例', type: 'text' },
@@ -224,23 +243,59 @@ export default function ContentAdminPage() {
       <section>
         <h2 className="text-base font-semibold text-ink">頁面文案（固定欄位）</h2>
         <p className="mt-1 mb-4 text-xs text-ink-muted">
-          各頁面預設區塊的標題、副標、按鈕文字、圖片
+          各頁面預設區塊的標題、副標、按鈕文字、圖片。點頁面名稱展開該頁面的全部欄位。
         </p>
         <div className="space-y-3">
-          {Object.keys(BLOCK_DEFS).map((key) => (
-            <BlockEditor
-              key={key}
-              blockKey={key}
-              isExpanded={expandedKey === key}
-              onToggle={() => handleToggle(key)}
-              onDirtyChange={(dirty) => setDirtyKey(dirty ? key : null)}
-            />
-          ))}
+          {GROUPS.map((g) => {
+            const keys = Object.keys(BLOCK_DEFS).filter((k) => BLOCK_DEFS[k].group === g.key)
+            if (keys.length === 0) return null
+            return (
+              <details
+                key={g.key}
+                open={g.defaultOpen}
+                className="group rounded-xl border border-hairline bg-white overflow-hidden"
+              >
+                <summary className="flex items-center justify-between gap-3 cursor-pointer p-4 sm:p-5 hover:bg-bg-soft/60 transition select-none list-none [&::-webkit-details-marker]:hidden">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ChevronRight className="h-5 w-5 text-ink-soft shrink-0 transition group-open:rotate-90" />
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-ink truncate">{g.label}</h3>
+                      <p className="text-xs text-ink-muted mt-0.5 truncate">
+                        {keys.length} 個欄位
+                      </p>
+                    </div>
+                  </div>
+                </summary>
+                <div className="border-t border-hairline-soft p-3 sm:p-4 space-y-3 bg-bg-soft/30">
+                  {keys.map((key) => (
+                    <BlockEditor
+                      key={key}
+                      blockKey={key}
+                      isExpanded={expandedKey === key}
+                      onToggle={() => handleToggle(key)}
+                      onDirtyChange={(dirty) => setDirtyKey(dirty ? key : null)}
+                    />
+                  ))}
+                </div>
+              </details>
+            )
+          })}
         </div>
       </section>
     </>
   )
 }
+
+// 後台分組顯示順序（依前台頁面）— defaultOpen=true 的進頁面就展開，其他要點才看
+const GROUPS: { key: BlockGroup; label: string; defaultOpen?: boolean }[] = [
+  { key: 'home', label: '首頁', defaultOpen: true },
+  { key: 'about', label: '關於我們' },
+  { key: 'contact', label: '預約諮詢' },
+  { key: 'faq', label: '常見問題' },
+  { key: 'services', label: '服務列表' },
+  { key: 'works', label: '服務案例' },
+  { key: 'global', label: '全站導覽 / Footer' },
+]
 
 function BlockEditor({
   blockKey,

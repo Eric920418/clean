@@ -70,7 +70,7 @@
 | `/admin/why-us-sections` | ⭐ 首頁「為何選我們」+ 關於頁「三項職人信仰」多區塊 CRUD（依 location 區分） |
 | `/admin/process-steps` | ⭐ 首頁「服務流程」步驟 CRUD（標準 4 步，可增減） |
 | `/admin/general-faqs` | ⭐ `/faq` 頁「一般問題」CRUD（非特定服務的常見問題） |
-| `/admin/content` | ⭐ 頁面內容：上方「首頁附加區塊（動態）」+「關於我們附加區塊（動態）」可新增/排序/隱藏/刪除（4 種 type）；下方保留 14 個固定欄位 ContentBlock 編輯（hero / cta / nav / about 文案） |
+| `/admin/content` | ⭐ 頁面內容：上方「首頁附加區塊（動態）」+「關於我們附加區塊（動態）」可新增/排序/隱藏/刪除（4 種 type）；下方 14 個固定欄位 ContentBlock 依所屬頁面分組折疊（首頁 / 關於我們 / 預約諮詢 / 常見問題 / 服務列表 / 服務案例 / 全站導覽） |
 | `/admin/settings` | 站台設定（進階） |
 | `/admin/more` | 手機版「更多」入口（評價 + 進階摺疊區 + 登出） |
 
@@ -802,7 +802,7 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ### 2026-05-18（`/admin/content` 加入動態附加區塊：首頁 + 關於我們）
 
-**動機**：原本 `/admin/content` 只能編輯 14 個寫死 key 的 `ContentBlock`，業主想加「促銷橫幅、品牌故事、認證說明」這類額外段落無從下手。
+**動機**：原本 `/admin/content` 只能編輯 14 個寫死 key 的 `ContentBlock`，業主想加「促銷橫幅、品牌故事、認證說明」這類額外段落無從下手。固定欄位 14 個還會混在一起、找起來累。
 
 **設計選擇**：
 - 不破壞既有 14 個 ContentBlock；新增 `PageSection` 表並存（兩者各司其職：ContentBlock 管固定區塊的文案、PageSection 管動態插入的整段區塊）
@@ -836,6 +836,10 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 **為什麼不沿用 `ServiceSection`**：強制 `serviceId` 又綁 4 張子表（features/faqs/before-after/gallery），首頁附加區塊全用 config JSON 就夠。`PageSection` 結構小、index 快、未來擴 contact/faq/works 也獨立。
 
 **為什麼 4 種 type 各自獨立而不全用 `rich_content`**：`rich_content` 雖能塞所有內容，但業主後台會失去結構化欄位提示。`text_block` / `cta_banner` / `image_text` 給業主清楚的填空框，`rich_content` 留給真正自由排版場景。
+
+**附加：固定欄位區塊按頁面分組**
+
+業主提過「14 個固定欄位混在一起難找、想自由排序」。前台 render 順序是寫死在 JSX 的，後台清單順序改了前台不會動 — 直接做「自由排序」是浪費工。改做：在 `BLOCK_DEFS` 每個 entry 加 `group` 欄位（`home` / `about` / `contact` / `faq` / `services` / `works` / `global`），`ContentAdminPage` 用 HTML `<details>` 按 group 折疊，預設只展開「首頁」組。HTML 原生 details 的好處：無 JS 也能 work、業主誤折疊不會 unmount 內部 BlockEditor（dirty tracking 保留）。Chevron 用 Tailwind 4 `group-open:rotate-90` variant 配 `[&::-webkit-details-marker]:hidden` 自訂視覺。
 
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 
