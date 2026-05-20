@@ -301,16 +301,29 @@
     .section { padding-top: 4rem; padding-bottom: 4rem; }
   }
 
-  /* 內容寬度 */
+  /* 內容寬度 — 寬版桌面容器 (1440px)，比舊版 1200 寬 240px，
+     但仍保留兩側氣口，header/footer/內容全站共用 */
   .container-narrow {
-    max-width: 1200px;
+    max-width: 1440px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
   @media (min-width: 768px) {
-    .container-narrow { padding-left: 2rem; padding-right: 2rem; }
+    .container-narrow { padding-left: 1.75rem; padding-right: 1.75rem; }
+  }
+  @media (min-width: 1280px) {
+    .container-narrow { padding-left: 2.5rem; padding-right: 2.5rem; }
+  }
+
+  /* Tailwind Typography 對 .prose strong 強制套 --tw-prose-bold（黑），
+   * 會把 CKEditor 寫的 <span style="color:..."><strong>…</strong></span> 內層覆蓋成黑色，
+   * 造成「紅字加粗看不到顏色、但同樣結構放在 h1~h4 內可以」（h* strong 已是 color: inherit）。
+   * 統一改成 inherit：預設情境下 strong 仍繼承 p 的 prose-body 色（視覺不變），
+   * 包在 inline color span 內時才會跟著變色。 */
+  .prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    color: inherit;
   }
 
   /* Eyebrow 文字（章節標籤） */

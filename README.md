@@ -802,6 +802,22 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（修補：富文本 `<p><strong>` 內 inline color 被 prose 強蓋黑色）
+
+**現象**：業主在 Intro / WhyWithFeatures 等 body 富文本內，用 CKEditor 把「粗體字」改紅色看不到顏色，但同樣的「粗體 + 顏色」放在 h2/h3 標題裡卻看得到（測試案例：紅色 `hsl(0,100%,50%)` 在 `<p>` 內 fail，藍色 `hsl(210,75%,60%)` 在 `<h2>` 內 work）。
+
+**根因**：`@tailwindcss/typography` v0.5+ 對 prose 內 `<strong>` 強制套 `color: var(--tw-prose-bold)`（黑），但對 `<h1>~<h4>` / `<blockquote>` / `<a>` 內的 strong 用 `color: inherit`。CKEditor fontColor plugin 的輸出結構是「外層 `<span style="color:...">` → 內層 `<strong>`」，所以：
+- 在 `<h2>` 內：`prose h2 strong { color: inherit }` → strong 繼承父 span 的 inline 紅色 ✓
+- 在 `<p>` 內：`prose strong { color: var(--tw-prose-bold) }` 直接覆蓋繼承鏈 → 看不到紅色 ✗
+
+inline style on 外層 span 的 specificity (1,0,0) 是對 span 自己生效；對 child strong 來說，prose 規則直接套在 strong 上的 color 永遠贏繼承。
+
+**修法（`app/globals.css` @layer utilities）**：加一條覆寫 `.prose :where(strong):not(:where([class~="not-prose"], [class~="not-prose"] *)) { color: inherit; }`，shape 與 typography plugin 原規則一致、source order 在後贏。
+
+**為什麼安全**：預設情境（無 inline color 包覆）下 strong 仍會繼承到 p 的 `--tw-prose-body` 色 = 黑色，視覺上沒退步；只有「外層 span 套 inline color 包住 strong」時 strong 才會跟著變色 —— 這正是 CKEditor fontColor 的預期行為。另一個好處：原本 `<a><strong>` 在 p 內被強蓋黑、看起來不像 link 的 bug 也順手修了（現在 strong 會繼承 a 的 link 色）。
+
+**既有資料無需重存**：DB 內的 HTML 一直都有 inline style（用 `lib/sanitize-html.ts` 的 `allowedStyles` 白名單放行），只是 CSS 把它覆蓋掉；改 CSS 後立即生效。
+
 ### 2026-05-20（Footer LINE 雙按鈕爆版修補：文字短化 + 縮尺寸 + nowrap）
 
 **問題**：上一輪把 footer LINE 按鈕改成 `grid grid-cols-2 + px-3 py-2.5 text-sm gap-2 + icon h-4`，在 desktop footer 第 4 欄塞不下 —— 「加 LINE 好友」5 字被擠成「加 / LINE / 好友」3 行，「LINE 通話」也擠成 2 行，兩顆按鈕高度不同視覺崩壞。
