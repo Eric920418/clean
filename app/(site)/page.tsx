@@ -28,6 +28,8 @@ export default async function HomePage() {
       getActivePageSections('home'),
     ])
   const phoneTel = settings.phoneTel || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
+  const lineCallUrl = settings.lineCallUrl || ''
 
   const ratingAvg =
     testimonials.length > 0
@@ -50,6 +52,8 @@ export default async function HomePage() {
         processSteps={processSteps}
         blocks={blocks}
         phoneTel={phoneTel}
+        lineFriendUrl={lineFriendUrl}
+        lineCallUrl={lineCallUrl}
       />
     </>
   )

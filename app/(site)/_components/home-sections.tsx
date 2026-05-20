@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, CheckCircle2, Star } from 'lucide-react'
+import { ArrowRight, CheckCircle2, MessageCircle, PhoneCall, Star } from 'lucide-react'
 import type { PageSection } from '@prisma/client'
 import { SectionHeading } from '@/components/section-heading'
 import { BeforeAfterPair } from '@/components/before-after-pair'
@@ -18,6 +18,8 @@ export type HomeSectionsData = {
   processSteps: HomeProcessStep[]
   blocks: Record<string, Record<string, string>>
   phoneTel: string
+  lineFriendUrl: string
+  lineCallUrl: string
 }
 
 // 對應 lib/queries 各函數的回傳形狀（避免循環 import，這裡定義最小必要欄位）
@@ -122,6 +124,8 @@ export function HomeSections({
                 key={s.id}
                 block={data.blocks['cta-home'] ?? {}}
                 phoneTel={data.phoneTel}
+                lineFriendUrl={data.lineFriendUrl}
+                lineCallUrl={data.lineCallUrl}
               />
             )
           default:
@@ -455,7 +459,18 @@ function Testimonials({
 /* ============================================================
  * CTA Banner
  * ============================================================ */
-function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string, string> }) {
+function CtaBanner({
+  phoneTel,
+  block,
+  lineFriendUrl,
+  lineCallUrl,
+}: {
+  phoneTel: string
+  block: Record<string, string>
+  lineFriendUrl: string
+  lineCallUrl: string
+}) {
+  const lineBookUrl = block.lineUrl || lineFriendUrl
   return (
     <section className="container-narrow pb-16 md:pb-24">
       <div className="relative overflow-hidden rounded-2xl bg-ink px-8 py-12 text-white md:px-14 md:py-16">
@@ -489,27 +504,26 @@ function CtaBanner({ phoneTel, block }: { phoneTel: string; block: Record<string
               {block.primaryCta || '立即來電預約'}
               <ArrowRight className="h-4 w-4" />
             </a>
-            <Link
-              href="/contact"
-              className="btn-ghost border-white/40 bg-white/10 text-white hover:bg-white/15 hover:border-white"
-            >
-              填寫表單
-            </Link>
-            {block.lineUrl && (
+            {lineBookUrl && (
               <a
-                href={block.lineUrl}
+                href={lineBookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="加入 LINE 好友"
-                className="inline-flex items-center"
+                className="inline-flex items-center gap-2 rounded-md bg-[#06C755] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png"
-                  alt="加入 LINE 好友"
-                  height={36}
-                  className="h-9 w-auto"
-                />
+                <MessageCircle className="h-4 w-4" />
+                加 LINE 預約
+              </a>
+            )}
+            {lineCallUrl && (
+              <a
+                href={lineCallUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-[#06C755] bg-white/5 px-4 py-2 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/15 transition"
+              >
+                <PhoneCall className="h-4 w-4" />
+                LINE 通話
               </a>
             )}
           </div>

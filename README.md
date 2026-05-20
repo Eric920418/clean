@@ -800,6 +800,23 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（首頁 CTA Banner 次要按鈕「填寫表單」→「加 LINE 預約」＋新增「LINE 通話」）
+
+**動機**：業主反映首頁 CtaBanner 的「填寫表單」轉換率不理想，多數客戶寧願直接走 LINE 預約。次要按鈕應該對齊 contact / footer 已建立的 LINE 雙按鈕模式（加好友 + LINE 通話）。
+
+**變更**：
+- `app/(site)/page.tsx` — 從 `settings` 額外取 `lineFriendUrl` / `lineCallUrl` 傳進 `HomeSections`
+- `app/(site)/_components/home-sections.tsx`：
+  - `HomeSectionsData` 加 `lineFriendUrl` / `lineCallUrl` 兩個 prop
+  - `CtaBanner` 接這兩個 prop；「填寫表單」`<Link href="/contact">` 換成「加 LINE 預約」`<a target="_blank">`，連結優先用 block-level `block.lineUrl`、fallback 到 site-wide `lineFriendUrl`
+  - 旁邊新增「LINE 通話」按鈕，連 site-wide `lineCallUrl`
+  - 移除原本依 `block.lineUrl` 條件渲染的 line-apps 官方「加入好友」圖片按鈕（功能跟新的「加 LINE 預約」重複）
+  - 視覺：實心綠 `bg-[#06C755]` 文字白 = 加 LINE 預約；描邊綠 + `bg-white/5` 微透明白底 = LINE 通話（深底 `bg-ink` 純描邊辨識度不足，所以加 5% 白）
+
+**為什麼 lineBookUrl 用 `block.lineUrl || lineFriendUrl` fallback、lineCallUrl 只吃 site settings**：CTA Banner 既有的 block.lineUrl 是每個 CTA block 可獨立配置（限時活動、特殊頻道），保留向後相容；LINE 通話沒有「按 banner 走不同號碼」的需求，全站統一即可，避免 admin 重複填欄。
+
+**為什麼移除官方圖片按鈕**：原本的 line-apps.com 官方「加入好友」PNG 按鈕跟新的文字版「加 LINE 預約」功能重疊；保留會出現 2 個 CTA 指向同一個 LINE URL 造成業主與訪客混淆。文字版的好處：可控字級／顏色／與「LINE 通話」對齊、不依賴外部 CDN。
+
 ### 2026-05-20（`/admin/settings` 新增「站台介紹」欄位）
 
 **動機**：DB `SiteSetting` 早就有 `description` key（seed 寫入、`components/site-footer.tsx:47` 在用），但 admin UI 一直沒曝光，業主只能改站台名稱、Tagline，無法調整頁尾與 SEO meta 的站台介紹。
