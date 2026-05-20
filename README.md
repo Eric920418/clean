@@ -442,6 +442,8 @@ model PageSection {                      // 動態附加區塊（後台 /admin/c
 
 **`aspect-[4/5]` 容器一律用 `object-contain`**：四處 portrait 框（首頁 hero、`page-custom-sections` imageCol、`about-sections` 師傅施作中、`IntroSection`）統一用 `object-contain`，保證業主上傳的橫圖也完整顯示不被裁切；代價是橫圖會在容器內上下留白（用 `bg-bg-soft` 灰底襯底）。若不想留白要靠業主上傳直式 4:5 原圖。
 
+**`BeforeAfterPair` 也用 `object-contain`**：對比圖容器 `aspect-[4/3]` 橫向、但業主常上傳手機直拍 portrait 圖，`object-cover` 會把重點裁掉。改 contain 後 portrait 圖在容器內左右留灰底（`bg-bg-soft`），但 before/after 兩格保證對齊、不會因裁切位置不同而誤判改善幅度。此改動同步影響 `/works`、首頁「親眼見證的反差」、服務詳情頁 `BeforeAfterSection`（三處共用同一元件）。
+
 ---
 
 ## 前台圖片放大（Lightbox）
@@ -801,6 +803,21 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-20（Footer logo 換成正式 `public/logo.jpg`，與 header 對齊）
+
+**動機**：業主反映 footer 還在用 `ShieldCheck` lucide 圖示色塊，跟 header 早就換成 `public/logo.jpg`（見 2026-05-17 條目）對不上 —— 同一站點頁首頁尾兩個品牌標識視覺不一致。
+
+**修法（`components/site-footer.tsx`）**：
+- import `next/image`、把 `ShieldCheck` 從 lucide-react import 移除（footer 內無其他用途）
+- logo block 從 `<span class="bg-primary"> + <ShieldCheck>` 換成 `<Image src="/logo.jpg" w/h=40 class="h-10 w-10 rounded-md object-contain">`
+- 文字塊跟 header 對齊：原本只有一行「invisible care」改成兩行 stack（主標 + tagline「看不見的守護」），用 `flex flex-col leading-none`
+- `alt` 用 `settings.siteName`（既有變數，不寫死字串）
+- 不加 `priority` —— footer 在 viewport 外、首屏不需要
+
+**為什麼 footer logo 不放大到跟 header 一樣權重**：footer 是次級層，主視覺權重給聯絡資訊與服務列表，logo 維持 40×40 即可、不需要更大。
+
+**未處理（沿用 header 既有 2026-05-17 待釐清項）**：logo 圖含 "ProShake" wordmark vs 站名「invisible care」雙品牌問題，footer 現在也跟著一起呈現雙品牌；解法仍是兩條路（改名或換純圖示版 logo），等業主決定後一起換。
 
 ### 2026-05-20（修補：富文本 `<p><strong>` 內 inline color 被 prose 強蓋黑色）
 

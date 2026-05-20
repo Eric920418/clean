@@ -74,7 +74,7 @@ function Pane({
         alt={`${label}${caption ? ` · ${caption}` : ''}`}
         fill
         sizes="(min-width: 768px) 50vw, 100vw"
-        className="object-cover transition duration-500 group-hover:scale-[1.02]"
+        className="object-contain transition duration-500 group-hover:scale-[1.02]"
         priority={priority}
         caption={caption ? `${label} · ${caption}` : label}
       />

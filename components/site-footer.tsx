@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Clock, ShieldCheck, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
+import Image from 'next/image'
+import { Phone, Mail, MapPin, Clock, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
 import { getActiveServices } from '@/lib/queries'
 import { RichText } from '@/components/rich-text'
 
@@ -35,12 +36,21 @@ export async function SiteFooter({
     <footer className="mt-16 border-t border-hairline bg-bg-soft">
       <div className="container-narrow grid grid-cols-1 gap-10 py-12 md:grid-cols-4">
         <div className="md:col-span-2">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white">
-              <ShieldCheck className="h-5 w-5" strokeWidth={2.2} />
-            </span>
-            <span className="text-base font-semibold tracking-tight">
-              invisible <span className="text-primary-deep">care</span>
+          <Link href="/" className="inline-flex items-center gap-2 group">
+            <Image
+              src="/logo.jpg"
+              alt={siteName}
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-md object-contain transition group-hover:opacity-90"
+            />
+            <span className="flex flex-col leading-none">
+              <span className="text-base font-semibold tracking-tight text-ink">
+                invisible <span className="text-primary-deep">care</span>
+              </span>
+              <span className="mt-0.5 text-[11px] tracking-widest text-ink-muted">
+                看不見的守護
+              </span>
             </span>
           </Link>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-ink-soft">
