@@ -24,6 +24,8 @@ export default async function AboutPage() {
     getActivePageSections('about'),
   ])
   const phoneTel = settings.phoneTel || ''
+  const lineFriendUrl = settings.lineFriendUrl || ''
+  const lineCallUrl = settings.lineCallUrl || ''
 
   return (
     <AboutSections
@@ -31,6 +33,8 @@ export default async function AboutPage() {
       blocks={blocks}
       beliefSections={beliefSections}
       phoneTel={phoneTel}
+      lineFriendUrl={lineFriendUrl}
+      lineCallUrl={lineCallUrl}
     />
   )
 }

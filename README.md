@@ -800,6 +800,27 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（About 底部 CTA / FAQ 底部聯絡 box 一併替換成 LINE 雙按鈕）
+
+**動機**：延續首頁 CtaBanner 改 LINE 雙按鈕的調整，業主反映 `/about` 底部「立即來電預約」單顆按鈕、`/faq` 底部「聯絡我們」單顆按鈕也應該對齊「加 LINE 預約 + LINE 通話」推 LINE 預約的轉換路徑。
+
+**變更**：
+- `app/(site)/about/page.tsx` — 額外取 `lineFriendUrl` / `lineCallUrl` 傳進 `AboutSections`
+- `app/(site)/_components/about-sections.tsx`：
+  - `AboutSectionsData` 加兩個 prop；`Cta` 不再接 `phoneTel`，改接 `lineFriendUrl` / `lineCallUrl`
+  - 整顆「立即來電預約」phone button 移除，換成「加 LINE 預約」（實心綠）+「LINE 通話」（描邊綠）並排
+  - `ArrowRight` import 替換為 `MessageCircle` / `PhoneCall`
+- `app/(site)/faq/page.tsx`：
+  - 加 `getSiteSettings` 到 `Promise.all`，取 `lineFriendUrl` / `lineCallUrl`
+  - 底部 contact box 的 `<Link href="/contact">聯絡我們</Link>` 整顆移除，換成同一組 LINE 雙按鈕
+  - `Link` / `ArrowRight` import 換成 `MessageCircle` / `PhoneCall`
+
+**為什麼直接砍掉電話 / 聯絡頁按鈕、不採三顆並排**：首頁 CtaBanner 是站台主推銷區、保留主要 phone CTA 合理；about 跟 faq 的底部 CTA 是「彩蛋型」二次轉換點，業主要的是把流量導 LINE 預約。電話入口在 nav top bar / footer / FAB 都還在，使用者要打仍打得到。
+
+**為什麼 about Cta 還留 `block.primaryCta` 欄位定義**：`cta-about` ContentBlock 仍保留 `primaryCta` 欄位（admin 可填、前台不再渲染）。沒一併清掉是避免 scope creep；若業主未來反映「admin 那欄填了沒效果」再從 `content-block-defs.ts` 移除即可。`block.title` / `block.description` 仍照舊使用，沒影響。
+
+**視覺差異**：about Cta 是 `from-bg-tint to-white` 淡色卡片、faq box 是 `bg-bg-soft`，LINE 通話描邊按鈕 hover 用 `bg-[#06C755]/10`；首頁 CtaBanner 是深色 `bg-ink`、描邊按鈕需要加 `bg-white/5` 微透明白底浮起來——按鈕底色處理依背景明度走，不是統一規格。
+
 ### 2026-05-20（首頁 CTA Banner 次要按鈕「填寫表單」→「加 LINE 預約」＋新增「LINE 通話」）
 
 **動機**：業主反映首頁 CtaBanner 的「填寫表單」轉換率不理想，多數客戶寧願直接走 LINE 預約。次要按鈕應該對齊 contact / footer 已建立的 LINE 雙按鈕模式（加好友 + LINE 通話）。

@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { ArrowRight } from 'lucide-react'
+import { MessageCircle, PhoneCall } from 'lucide-react'
 import type { PageSection } from '@prisma/client'
 import { SectionHeading } from '@/components/section-heading'
 import { RichText } from '@/components/rich-text'
@@ -10,6 +10,8 @@ export type AboutSectionsData = {
   blocks: Record<string, Record<string, string>>
   beliefSections: AboutBelief[]
   phoneTel: string
+  lineFriendUrl: string
+  lineCallUrl: string
 }
 
 type AboutBelief = {
@@ -45,7 +47,8 @@ export function AboutSections({
               <Cta
                 key={s.id}
                 block={data.blocks['cta-about'] ?? {}}
-                phoneTel={data.phoneTel}
+                lineFriendUrl={data.lineFriendUrl}
+                lineCallUrl={data.lineCallUrl}
               />
             )
           default:
@@ -162,7 +165,15 @@ function Beliefs({ sections }: { sections: AboutBelief[] }) {
   )
 }
 
-function Cta({ block, phoneTel }: { block: Record<string, string>; phoneTel: string }) {
+function Cta({
+  block,
+  lineFriendUrl,
+  lineCallUrl,
+}: {
+  block: Record<string, string>
+  lineFriendUrl: string
+  lineCallUrl: string
+}) {
   return (
     <section className="container-narrow py-16 md:py-24">
       <div className="rounded-2xl border border-hairline bg-gradient-to-br from-bg-tint to-white p-10 text-center md:p-16">
@@ -173,10 +184,30 @@ function Cta({ block, phoneTel }: { block: Record<string, string>; phoneTel: str
           html={block.description || '讓專業的職人團隊，為您的愛家注入全新的生命力。'}
           className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-ink-soft"
         />
-        <a href={phoneTel} className="btn-primary mt-8">
-          {block.primaryCta || '立即來電預約'}
-          <ArrowRight className="h-4 w-4" />
-        </a>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {lineFriendUrl && (
+            <a
+              href={lineFriendUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md bg-[#06C755] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
+            >
+              <MessageCircle className="h-4 w-4" />
+              加 LINE 預約
+            </a>
+          )}
+          {lineCallUrl && (
+            <a
+              href={lineCallUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/10 transition"
+            >
+              <PhoneCall className="h-4 w-4" />
+              LINE 通話
+            </a>
+          )}
+        </div>
       </div>
     </section>
   )

@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { MessageCircle, PhoneCall } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { Faq } from '@/components/faq'
-import { getActiveServices, getGeneralFaqs, getContentBlock } from '@/lib/queries'
+import { getActiveServices, getGeneralFaqs, getContentBlock, getSiteSettings } from '@/lib/queries'
 
 export const revalidate = 60
 
@@ -13,12 +12,15 @@ export const metadata: Metadata = {
 }
 
 export default async function FaqPage() {
-  const [services, generalFaqs, heroBlock] = await Promise.all([
+  const [services, generalFaqs, heroBlock, settings] = await Promise.all([
     getActiveServices(),
     getGeneralFaqs(),
     getContentBlock('hero-faq').catch(() => null),
+    getSiteSettings(),
   ])
   const hero = heroBlock ?? {}
+  const lineFriendUrl = settings.lineFriendUrl || ''
+  const lineCallUrl = settings.lineCallUrl || ''
   return (
     <>
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
@@ -59,10 +61,30 @@ export default async function FaqPage() {
             <p className="text-base text-ink-soft">
               {hero.contactBoxText || "還有其他疑問？"}
             </p>
-            <Link href="/contact" className="btn-primary mt-4">
-              {hero.contactBoxButton || "聯絡我們"}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              {lineFriendUrl && (
+                <a
+                  href={lineFriendUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md bg-[#06C755] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  加 LINE 預約
+                </a>
+              )}
+              {lineCallUrl && (
+                <a
+                  href={lineCallUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-[#06C755] px-4 py-2 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/10 transition"
+                >
+                  <PhoneCall className="h-4 w-4" />
+                  LINE 通話
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </section>
