@@ -1,8 +1,19 @@
 export type Reorderable = { id: number; order: number }
 
 /**
- * 互換相鄰兩筆位置：按 sorted 結果找鄰居，把「新 index」寫回兩筆 order。
- * 與舊版「互換 order 數字」不同 — 當兩筆 order 相同時舊版完全失效（互換相同數字 = 沒動），本實作仍正確。
+ * 互換相鄰兩筆位置，並 rebalance 整個 list 為連續 order 0..N-1。
+ *
+ * 為什麼要 rebalance（2026-05-18 修）：
+ * 舊版「把對方在 sorted array 的 index 寫回我的 order」演算法只在 order 連續 0,1,2,...
+ * 時才等價於「swap 兩個 order 值」。但我們的 PageSection 有 fixed (1-7) + dynamic (101+)
+ * 的 order gap，互換時會產生 duplicate order（例如 A=1 跟 C=101 互換 → A=1 不變、C=1，跟 A 衝突）。
+ *
+ * 新策略：先在 sorted array 互換兩個位置，然後把全 list rebalance 成 0..N-1，只 PUT 有變動的。
+ * - 結果保證 order 連續、無 duplicate
+ * - 多數情況只 update 2-3 個 items（被 swap 那兩個 + order gap 跨越區的鄰居）
+ *
+ * caller 傳的 items 必須是同個排序空間（例如 PageSectionsManager 傳該 page 的 sections）— 否則
+ * rebalance 會把不同空間的 order 攪混。
  *
  * @returns true 已成功提交變動；false 已在邊界（無動作）
  * @throws  任一 PUT 非 2xx（caller 自行 toast）
@@ -19,20 +30,24 @@ export async function swapOrderByIndex(
   const swapIdx = dir === 'up' ? idx - 1 : idx + 1
   if (swapIdx < 0 || swapIdx >= sorted.length) return false
 
-  const a = sorted[idx]
-  const b = sorted[swapIdx]
-  const responses = await Promise.all([
-    fetch(putUrl(a.id), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order: swapIdx }),
-    }),
-    fetch(putUrl(b.id), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order: idx }),
-    }),
-  ])
+  // 互換 sorted 內兩位置產生新順序
+  const next = sorted.slice()
+  ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
+
+  // Rebalance 為 0..N-1，只 PUT order 真的改變的
+  const updates = next
+    .map((item, newOrder) => ({ item, newOrder }))
+    .filter(({ item, newOrder }) => item.order !== newOrder)
+
+  const responses = await Promise.all(
+    updates.map(({ item, newOrder }) =>
+      fetch(putUrl(item.id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: newOrder }),
+      }),
+    ),
+  )
   for (const r of responses) {
     if (!r.ok) {
       const data = await r.json().catch(() => ({}))

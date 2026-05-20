@@ -110,7 +110,7 @@ function Story({ block }: { block: Record<string, string> }) {
               alt="師傅施作中"
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
-              className="object-cover"
+              className="object-contain"
               unoptimized
             />
           </div>

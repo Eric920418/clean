@@ -83,6 +83,7 @@ export function HomeSections({
                 featured={data.featured[0]}
                 phoneTel={data.phoneTel}
                 lineFriendUrl={data.lineFriendUrl}
+                lineCallUrl={data.lineCallUrl}
               />
             )
           case 'services_grid':
@@ -145,11 +146,13 @@ function Hero({
   phoneTel,
   hero,
   lineFriendUrl,
+  lineCallUrl,
 }: {
   featured?: HomeFeatured
   phoneTel: string
   hero: Record<string, string>
   lineFriendUrl: string
+  lineCallUrl: string
 }) {
   const checklist = [hero.checklist1, hero.checklist2, hero.checklist3, hero.checklist4].filter(
     (s): s is string => Boolean(s && s.trim()),
@@ -173,12 +176,11 @@ function Hero({
             }
             className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base prose-p:my-0"
           />
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href={phoneTel} className="btn-primary">
+          <div className="mt-8 grid max-w-md grid-cols-2 items-center gap-2 md:gap-3">
+            <a href={phoneTel} className="btn-primary px-2 text-sm md:text-base">
               {hero.primaryCta || '立即來電預約'}
-              <ArrowRight className="h-4 w-4" />
             </a>
-            <Link href="/works" className="btn-ghost">
+            <Link href="/works" className="btn-ghost px-2 text-sm md:text-base">
               {hero.secondaryCta || '看服務案例'}
             </Link>
             {lineFriendUrl && (
@@ -186,10 +188,21 @@ function Hero({
                 href={lineFriendUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-6 py-3.5 min-h-12 text-base font-medium text-white hover:opacity-90 transition"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-2 py-3.5 min-h-12 text-sm font-medium text-white hover:opacity-90 transition md:text-base"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4 shrink-0" />
                 加 LINE 預約
+              </a>
+            )}
+            {lineCallUrl && (
+              <a
+                href={lineCallUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-[#06C755] bg-white px-2 py-3.5 min-h-12 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/10 transition md:text-base"
+              >
+                <PhoneCall className="h-4 w-4 shrink-0" />
+                LINE 通話
               </a>
             )}
           </div>
@@ -219,7 +232,7 @@ function Hero({
                   alt={heroImageAlt}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
+                  className="object-contain"
                   priority
                   unoptimized
                 />

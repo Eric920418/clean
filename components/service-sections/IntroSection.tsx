@@ -52,7 +52,7 @@ export function IntroSection({ section, service }: Props) {
         alt={title ?? service.name}
         fill
         sizes="(min-width: 768px) 50vw, 100vw"
-        className="object-cover"
+        className="object-contain"
         unoptimized
         caption={title ?? service.name}
       />

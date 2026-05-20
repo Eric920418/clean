@@ -201,7 +201,7 @@ function ImageText({ cfg }: { cfg: Record<string, unknown> }) {
         alt={title ?? ''}
         fill
         sizes="(min-width: 768px) 50vw, 100vw"
-        className="object-cover"
+        className="object-contain"
         unoptimized
       />
     </div>

@@ -111,37 +111,17 @@ export async function SiteFooter({
             )}
 
             {(lineFriendUrl || lineCallUrl) && (
-              <li className="flex flex-wrap gap-2 pt-1">
+              <li className="grid grid-cols-2 gap-2 pt-1">
                 {lineFriendUrl && (
                   <a
                     href={lineFriendUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="免費估價，加 LINE 官方帳號"
-                    className="inline-flex items-center gap-3 rounded-md bg-[#06C755] px-4 py-2 text-white shadow-sm hover:opacity-90 transition"
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-3 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition"
                   >
-                    <svg
-                      viewBox="0 0 32 32"
-                      className="h-7 w-7 shrink-0"
-                      aria-hidden="true"
-                    >
-                      <rect x="3" y="5" width="26" height="20" rx="5" fill="white" />
-                      <text
-                        x="16"
-                        y="19"
-                        textAnchor="middle"
-                        fontSize="10"
-                        fontWeight="900"
-                        fill="#06C755"
-                        fontFamily="-apple-system, system-ui, sans-serif"
-                      >
-                        LINE
-                      </text>
-                    </svg>
-                    <span className="flex flex-col leading-tight">
-                      <span className="text-[11px] font-medium opacity-90">免費估價</span>
-                      <span className="text-base font-bold tracking-wide">LINE@</span>
-                    </span>
+                    <MessageCircle className="h-4 w-4 shrink-0" />
+                    加 LINE 好友
                   </a>
                 )}
                 {lineCallUrl && (
@@ -149,9 +129,9 @@ export async function SiteFooter({
                     href={lineCallUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-[#06C755] px-3 py-1.5 text-xs font-medium text-[#06C755] hover:bg-[#06C755]/5 transition"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[#06C755] px-3 py-2.5 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/10 transition"
                   >
-                    <PhoneCall className="h-3.5 w-3.5" />
+                    <PhoneCall className="h-4 w-4 shrink-0" />
                     LINE 通話
                   </a>
                 )}

@@ -440,6 +440,8 @@ model PageSection {                      // 動態附加區塊（後台 /admin/c
 
 **首頁 Hero 例外**：Hero 不放 pair（避免縮成迷你尺寸）。改用單張「清洗後實況」大圖搭配 `aspect-[4/5]` 海報感框；對比展示交給下方「親眼見證的反差」區塊滿版呈現。
 
+**`aspect-[4/5]` 容器一律用 `object-contain`**：四處 portrait 框（首頁 hero、`page-custom-sections` imageCol、`about-sections` 師傅施作中、`IntroSection`）統一用 `object-contain`，保證業主上傳的橫圖也完整顯示不被裁切；代價是橫圖會在容器內上下留白（用 `bg-bg-soft` 灰底襯底）。若不想留白要靠業主上傳直式 4:5 原圖。
+
 ---
 
 ## 前台圖片放大（Lightbox）
@@ -800,6 +802,36 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（首頁 Hero 加第四顆「LINE 通話」+ 改 2×2 排列 / Footer LINE 雙按鈕對稱化）
+
+**動機**：業主要 Hero 區加「LINE 通話」按鈕（跟 footer 一致），4 顆按鈕改 2×2 排列；Footer 原本「LINE@」大按鈕（帶 SVG logo + 雙行文字）跟「LINE 通話」小描邊按鈕視覺權重落差太大，業主要兩顆並排大小一致。
+
+**變更**：
+- `home-sections.tsx` Hero：
+  - props 新增 `lineCallUrl`，dispatcher 一併傳入
+  - 按鈕容器 `grid grid-cols-3` → `grid grid-cols-2 max-w-md` （4 顆 2×2），`max-w-md` (28rem) 限縮容器避免 desktop 被拉到滿半邊散開
+  - 加第 4 顆「LINE 通話」描邊綠按鈕，跟另外 3 顆同高（`py-3.5 min-h-12 text-sm md:text-base`）
+- `components/site-footer.tsx` 兩顆 LINE 按鈕：
+  - 容器 `flex flex-wrap gap-2` → `grid grid-cols-2 gap-2`（強制等寬）
+  - 「加 LINE 好友」（原「LINE@」按鈕）：移除 inline SVG「LINE」logo、雙行「免費估價/LINE@」文字，改成單行 `MessageCircle icon + 加 LINE 好友` 對齊「LINE 通話」設計
+  - 兩顆統一 `px-3 py-2.5 text-sm font-medium gap-2`，描邊版 hover 從 `bg-[#06C755]/5` 升 `bg-[#06C755]/10` 對應前面 about/faq 規格
+
+**為什麼把 footer 的 LINE@ SVG logo + 雙行文字砍掉**：原版 LINE@ 是視覺權重最重的元素（h-7 SVG + 雙行文字、padding gap-3），跟 LINE 通話的小描邊膠囊（px-3 py-1.5 text-xs）落差很大；業主說「大小一致」就是要視覺對稱優先。若未來業主反映「想要那個 LINE@ 標誌」可加回，但兩顆都得改成同樣帶 logo 才能維持對稱。
+
+**為什麼 Hero 用 `max-w-md` 而非 grid 自然滿寬**：Hero 文字側 desktop ~540px，4 顆按鈕 2×2 若 grid 滿寬會被拉得太鬆（每顆 ~260px），視覺重量壓過 description；`max-w-md`（448px）讓每顆 ~220px、跟主標 / 描述視覺比例平衡。
+
+### 2026-05-20（首頁 Hero 三顆按鈕改 grid-cols-3 強制同排）
+
+**動機**：上一輪加完第三顆「加 LINE 預約」後，`flex flex-wrap` 在 mobile 跟 md 邊緣會把第三顆 wrap 到第二行；業主要求三顆始終同一排。
+
+**變更**（`home-sections.tsx` Hero 按鈕區）：
+- 容器 `flex flex-wrap` → `grid grid-cols-3 gap-2 md:gap-3`（強制三等寬同排，無 wrap）
+- 三顆按鈕 mobile 縮 padding / font-size：`px-2 text-sm md:px-4 md:text-base`，因 mobile ~340px ÷ 3 ≈ 113px / 格，原 `.btn-primary` `padding: 0.875rem 1.5rem` + 16px 字會撐爆
+- 「立即來電預約」拿掉 ArrowRight icon —— 三等寬時 icon 擠到字會疊行；LINE 按鈕 MessageCircle 加 `shrink-0` 防被擠扁
+- 不用 `!important` —— Tailwind v4 layer 順序 components < utilities，utility class 自然贏 `.btn-primary` 的 `padding` / `font-size`
+
+**為什麼用 grid 不用 flex-nowrap**：`flex flex-nowrap` 三顆按鈕會依文字自然寬度（一大一小），業主改文案就破版；`grid grid-cols-3` 三等寬，按鈕視覺對齊永遠一致。
+
 ### 2026-05-20（首頁 Hero 加第三顆「加 LINE 預約」按鈕＋RichText 段落 margin 修補）
 
 **動機**：業主反映首頁 Hero 主視覺區「立即來電預約」「看服務案例」兩顆按鈕應該再加一顆「加 LINE 預約」對應 LINE 預約轉換路徑；同時 Hero description（`prose prose-neutral max-w-none mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base`）的段落上下間距太大。
@@ -960,6 +992,24 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 **modal-in-modal 設計**：外層「為何選我們」modal 內按「新增區塊」開啟內層編輯 modal — AdminModal 的 z-50 stacking 自然處理視覺，按 escape 兩個都會關（業主誤觸可 reopen，影響小）。沒有重寫成 inline-expand-card UI，因為工程量大且 mobile 體驗也不見得好。
 
 **Bundle size**：`/admin/content` 從 9.89 kB → 11 kB；`/admin/why-us-sections` 從 ~9 kB → 216 B（只剩 redirect）。
+
+### 2026-05-18（修 swapOrderByIndex bug：order 不連續時 swap 產生 duplicate）
+
+**症狀**：業主拖拉 fixed section 跟 dynamic section 互換時，後續排序錯亂。
+
+**根因**：`lib/admin-reorder.ts` 的 `swapOrderByIndex` 用「把對方在 sorted array 的 index 寫回我的 order」這個演算法 — 只在 order 連續 0,1,2,... 時才等價於「swap order 值」。但 `ensureFixedSections` 把 fixed sections 的 order 設為 1..N、把現有 dynamic shift +100 變 101+，**order 有 gap 不連續**。
+
+具體 bug 例子：A(order=1), B(order=2), C(order=101) — 想 swap B↔C → 演算法把 B 的 order 改成 2（沒變！）、C 的 order 改成 1 → **A 跟 C 都變成 order=1，duplicate**，後續排序行為依 secondary key (id) 不可預期。
+
+**修法**：演算法改成「在 sorted array 內互換兩位置 → rebalance 整個 list 為連續 0..N-1 → 只 PUT order 真的改變的 items」。
+
+- 第一次跨 gap swap：N 個 PUT（rebalance 全部）— N 通常 ≤ 15，可接受
+- 後續 swap：只 2 個 PUT（list 已連續，只動 swap 兩個）
+- 保證：order 永遠連續、無 duplicate
+
+**驗證**：寫 pure-function 模擬三種 case（跨 gap、rebalanced 後、邊界）全 pass，無 duplicate。
+
+**為什麼不直接「全動態化」拿掉 fixed/dynamic 區分**：業主提案「全動態」但根因不在 fixed/dynamic 設計，而在 swap 演算法。全動態會引入新問題（業主能刪 Hero、能新增第二個 Hero、失去 ensure backfill 保護），且無法解決 swap 邏輯本身的 bug。修演算法是最小範圍正確解法。
 
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 
