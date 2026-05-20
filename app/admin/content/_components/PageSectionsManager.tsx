@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import {
   ArrowUp,
   ArrowDown,
@@ -23,13 +22,13 @@ import {
   Workflow,
   MessageSquare,
   BookOpen,
-  ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminModal } from '@/components/admin/admin-modal'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { PageSectionConfigModal } from '@/components/admin/page-section-config-modal'
+import { WhyUsSectionsModal } from './WhyUsSectionsModal'
 import {
   isFixedType,
   type AdminPageSection,
@@ -45,8 +44,8 @@ type FixedMeta = {
   tone: string
   // 對應下方「頁面文案（固定欄位）」accordion 的 ContentBlock key（按下編輯時自動展開該 block）
   contentBlockKey?: string
-  // 沒有對應 ContentBlock 時跳轉外部頁面（例如 why_us / beliefs 在 /admin/why-us-sections 管理）
-  externalHref?: string
+  // 此 fixed type 由 WhyUsSectionsModal 編輯（why_us / beliefs）— 跟 contentBlockKey 互斥
+  usesWhyUsEditor?: boolean
 }
 
 const FIXED_META_BY_PAGE: Record<PageSectionPage, Record<string, FixedMeta>> = {
@@ -67,10 +66,10 @@ const FIXED_META_BY_PAGE: Record<PageSectionPage, Record<string, FixedMeta>> = {
     },
     why_us: {
       label: '為何選我們',
-      description: '由「為何選我們」CMS（多筆 location=home）組成；點編輯跳轉管理頁',
+      description: '可多組區塊，每組 3 張卡片；點 ✏️ 開啟編輯器',
       Icon: Sparkles,
       tone: 'text-amber-700 bg-amber-50',
-      externalHref: '/admin/why-us-sections',
+      usesWhyUsEditor: true,
     },
     featured_works: {
       label: '精選作品（前後對比）',
@@ -118,10 +117,10 @@ const FIXED_META_BY_PAGE: Record<PageSectionPage, Record<string, FixedMeta>> = {
     },
     beliefs: {
       label: '品牌信念（Belief sections）',
-      description: '由「為何選我們」CMS（多筆 location=about）組成；點編輯跳轉管理頁',
+      description: '可多組區塊，每組 3 張卡片；點 ✏️ 開啟編輯器',
       Icon: Sparkles,
       tone: 'text-amber-700 bg-amber-50',
-      externalHref: '/admin/why-us-sections',
+      usesWhyUsEditor: true,
     },
     cta: {
       label: '底部 CTA',
@@ -185,6 +184,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [editingSection, setEditingSection] = useState<AdminPageSection | null>(null)
+  const [whyUsModalOpen, setWhyUsModalOpen] = useState(false)
   const { confirm, node: confirmNode } = useConfirm()
 
   async function fetchAll() {
@@ -282,15 +282,15 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
   function handleEdit(section: AdminPageSection) {
     if (isFixedType(page, section.type)) {
       const fixedMeta = FIXED_META_BY_PAGE[page][section.type]
+      if (fixedMeta?.usesWhyUsEditor) {
+        setWhyUsModalOpen(true)
+        return
+      }
       if (fixedMeta?.contentBlockKey && onEditFixed) {
         onEditFixed(fixedMeta.contentBlockKey)
         return
       }
-      if (fixedMeta?.externalHref) {
-        window.location.href = fixedMeta.externalHref
-        return
-      }
-      toast.info('此區塊無文案可編輯（由其他管理頁維護）')
+      toast.info('此區塊無文案可編輯')
       return
     }
     setEditingSection(section)
@@ -335,8 +335,6 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
             if (!meta) return null
             const Icon = meta.Icon
             const summary = fixedMeta ? fixedMeta.description : dynamicSummary(section)
-            const isExternalFixed =
-              !!fixedMeta && !fixedMeta.contentBlockKey && !!fixedMeta.externalHref
             return (
               <article
                 key={section.id}
@@ -396,23 +394,13 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
                         <EyeOff className="h-4 w-4" />
                       )}
                     </button>
-                    {isExternalFixed && fixedMeta?.externalHref ? (
-                      <Link
-                        href={fixedMeta.externalHref}
-                        className="rounded-md p-2 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition"
-                        title="到對應管理頁編輯"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => handleEdit(section)}
-                        className="rounded-md p-2 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition"
-                        title={fixed ? '編輯文案（會展開下方固定欄位）' : '編輯內容'}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleEdit(section)}
+                      className="rounded-md p-2 text-ink-soft hover:text-primary-deep hover:bg-primary/10 transition"
+                      title={fixed ? '編輯內容' : '編輯內容'}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
                     {!fixed && (
                       <button
                         onClick={() => remove(section)}
@@ -469,6 +457,12 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
         onClose={() => setEditingSection(null)}
         section={editingSection}
         onSaved={fetchAll}
+      />
+
+      <WhyUsSectionsModal
+        open={whyUsModalOpen}
+        location={whyUsModalOpen ? page : null}
+        onClose={() => setWhyUsModalOpen(false)}
       />
 
       {confirmNode}

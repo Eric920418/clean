@@ -13,7 +13,6 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-  BadgeCheck,
   Workflow,
   HelpCircle,
   ChevronDown,
@@ -35,7 +34,7 @@ const PRIMARY_ITEMS = [
   { title: NAV_LABELS.services, href: '/admin/services', icon: Sparkles },
   { title: NAV_LABELS.inquiries, href: '/admin/inquiries', icon: Inbox },
   { title: NAV_LABELS.testimonials, href: '/admin/testimonials', icon: Quote },
-  { title: NAV_LABELS.whyUs, href: '/admin/why-us-sections', icon: BadgeCheck },
+  // 「為何選我們」已合併到 /admin/content 的首頁/關於我們區塊管理（2026-05-18）
   { title: NAV_LABELS.processSteps, href: '/admin/process-steps', icon: Workflow },
   { title: NAV_LABELS.generalFaqs, href: '/admin/general-faqs', icon: HelpCircle },
 ]

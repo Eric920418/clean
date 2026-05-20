@@ -82,6 +82,7 @@ export function HomeSections({
                 hero={data.blocks['hero-home'] ?? {}}
                 featured={data.featured[0]}
                 phoneTel={data.phoneTel}
+                lineFriendUrl={data.lineFriendUrl}
               />
             )
           case 'services_grid':
@@ -143,10 +144,12 @@ function Hero({
   featured,
   phoneTel,
   hero,
+  lineFriendUrl,
 }: {
   featured?: HomeFeatured
   phoneTel: string
   hero: Record<string, string>
+  lineFriendUrl: string
 }) {
   const checklist = [hero.checklist1, hero.checklist2, hero.checklist3, hero.checklist4].filter(
     (s): s is string => Boolean(s && s.trim()),
@@ -168,7 +171,7 @@ function Hero({
               hero.description ||
               '從空氣、水源到家電，我們用職人精神拆解每一處被忽略的細節。讓家，回歸最純粹、最令人安心的模樣。'
             }
-            className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base"
+            className="mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base prose-p:my-0"
           />
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a href={phoneTel} className="btn-primary">
@@ -178,6 +181,17 @@ function Hero({
             <Link href="/works" className="btn-ghost">
               {hero.secondaryCta || '看服務案例'}
             </Link>
+            {lineFriendUrl && (
+              <a
+                href={lineFriendUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-6 py-3.5 min-h-12 text-base font-medium text-white hover:opacity-90 transition"
+              >
+                <MessageCircle className="h-4 w-4" />
+                加 LINE 預約
+              </a>
+            )}
           </div>
 
           {checklist.length > 0 && (

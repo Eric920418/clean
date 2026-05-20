@@ -800,6 +800,22 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（首頁 Hero 加第三顆「加 LINE 預約」按鈕＋RichText 段落 margin 修補）
+
+**動機**：業主反映首頁 Hero 主視覺區「立即來電預約」「看服務案例」兩顆按鈕應該再加一顆「加 LINE 預約」對應 LINE 預約轉換路徑；同時 Hero description（`prose prose-neutral max-w-none mt-6 max-w-2xl text-sm leading-relaxed text-ink-soft md:text-base`）的段落上下間距太大。
+
+**變更**：
+- `home-sections.tsx` Hero：
+  - 元件 props 新增 `lineFriendUrl`，dispatcher case 'hero' 傳入
+  - 按鈕區加第三顆 LINE 按鈕，className 為 `inline-flex … px-6 py-3.5 min-h-12 text-base font-medium`，刻意對齊 `.btn-primary` 的 `padding 0.875rem 1.5rem` / `min-height 48px` / `font-size 1rem` —— 三顆按鈕等高、視覺重量一致
+  - RichText className 加 `prose-p:my-0`，砍掉 `@tailwindcss/typography` 預設的 `<p> { margin: 1.25em 0 }`；保留 `leading-relaxed` 行高
+
+**為什麼 padding 用 `px-6 py-3.5` 而非 `px-4 py-2`（與 about / faq LINE 按鈕不同尺寸）**：about / faq 的 LINE 按鈕是 secondary 二次轉換點、用較小尺寸；首頁 Hero 是主視覺、按鈕跟 `btn-primary` 同等級才不會「一大一小」。各場景按需求調整、不強求統一規格。
+
+**為什麼不抽出 `.btn-line` 共用 class**：首頁深底（CtaBanner `bg-ink`）/ 淡底（about / faq / Hero `bg-medical-glow`）的 LINE 描邊按鈕需要不同底色處理（前者 `bg-white/5`、後者 transparent + hover `bg-[#06C755]/10`）；統一 class 反而失去場景彈性。等 LINE 按鈕擴到 5+ 處同色背景再抽不晚。
+
+**為什麼 RichText 不在元件層面砍 prose-p margin**：不同 RichText 使用場景對段落間距需求不同（文章長段落需要呼吸空間、CTA description 通常只一段話）；在 call site 用 `prose-p:my-0` variant 精準控制最安全，不會影響其他頁面的渲染。
+
 ### 2026-05-20（About 底部 CTA / FAQ 底部聯絡 box 一併替換成 LINE 雙按鈕）
 
 **動機**：延續首頁 CtaBanner 改 LINE 雙按鈕的調整，業主反映 `/about` 底部「立即來電預約」單顆按鈕、`/faq` 底部「聯絡我們」單顆按鈕也應該對齊「加 LINE 預約 + LINE 通話」推 LINE 預約的轉換路徑。

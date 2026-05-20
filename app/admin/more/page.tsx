@@ -5,7 +5,6 @@ import { signOut } from 'next-auth/react'
 import { useState } from 'react'
 import {
   Quote,
-  BadgeCheck,
   Workflow,
   HelpCircle,
   FileText,
@@ -33,12 +32,7 @@ const COMMON_ITEMS = [
     description: '客人留下的好評，會出現在首頁',
     icon: Quote,
   },
-  {
-    href: '/admin/why-us-sections',
-    label: NAV_LABELS.whyUs,
-    description: '首頁「為何選我們」與關於頁「三項職人信仰」',
-    icon: BadgeCheck,
-  },
+  // 「為何選我們」已合併到 /admin/content 的首頁/關於我們區塊管理（2026-05-18）
   {
     href: '/admin/process-steps',
     label: NAV_LABELS.processSteps,
