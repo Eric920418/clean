@@ -59,7 +59,7 @@ const FIXED_META_BY_PAGE: Record<PageSectionPage, Record<string, FixedMeta>> = {
       contentBlockKey: 'hero-home',
     },
     services_grid: {
-      label: '六大服務項目',
+      label: '服務項目',
       description: '從「服務管理」自動帶入卡片；標題文案在固定欄位編輯',
       Icon: Grid3x3,
       tone: 'text-emerald-700 bg-emerald-50',

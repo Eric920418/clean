@@ -800,6 +800,17 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（`/admin/settings` 新增「站台介紹」欄位）
+
+**動機**：DB `SiteSetting` 早就有 `description` key（seed 寫入、`components/site-footer.tsx:47` 在用），但 admin UI 一直沒曝光，業主只能改站台名稱、Tagline，無法調整頁尾與 SEO meta 的站台介紹。
+
+**變更**：
+- `app/admin/settings/page.tsx` — 「基本資訊」分組加入 `description` 欄位，label「站台介紹」
+- `SettingField` 型別加 `multiline?: boolean`；multiline 欄位渲染為 `<textarea>` 並 `md:col-span-2` 跨整列，避免長文字被擠進窄欄
+- 沒動 schema、沒動 API（key-value 結構天然支援新 key），純 UI 補洞
+
+**為什麼用 textarea 而不是 input**：站台介紹通常 1–3 句話，input 單行會把長文字截斷顯示，業主編輯體驗差；textarea 4 rows 給足空間。
+
 ### 2026-05-18（`/admin/content` 加入動態附加區塊：首頁 + 關於我們）
 
 **動機**：原本 `/admin/content` 只能編輯 14 個寫死 key 的 `ContentBlock`，業主想加「促銷橫幅、品牌故事、認證說明」這類額外段落無從下手。固定欄位 14 個還會混在一起、找起來累。

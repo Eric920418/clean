@@ -4,14 +4,27 @@ import { useEffect, useState } from 'react'
 import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
-import { Field, inputClass } from '@/components/admin/form-field'
+import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 
-const SETTING_GROUPS: { title: string; fields: { key: string; label: string; hint?: string }[] }[] = [
+type SettingField = {
+  key: string
+  label: string
+  hint?: string
+  multiline?: boolean
+}
+
+const SETTING_GROUPS: { title: string; fields: SettingField[] }[] = [
   {
     title: '基本資訊',
     fields: [
       { key: 'siteName', label: '站台名稱', hint: '預設 invisible care' },
       { key: 'tagline', label: 'Tagline', hint: '預設「看不見的守護」' },
+      {
+        key: 'description',
+        label: '站台介紹',
+        hint: '頁尾與 SEO meta 會用到的站台簡介，建議 1–3 句話',
+        multiline: true,
+      },
     ],
   },
   {
@@ -115,12 +128,26 @@ export default function SettingsPage() {
               </h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {group.fields.map((f) => (
-                  <Field key={f.key} label={f.label} hint={f.hint}>
-                    <input
-                      value={values[f.key] ?? ''}
-                      onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
-                      className={inputClass}
-                    />
+                  <Field
+                    key={f.key}
+                    label={f.label}
+                    hint={f.hint}
+                    className={f.multiline ? 'md:col-span-2' : undefined}
+                  >
+                    {f.multiline ? (
+                      <textarea
+                        value={values[f.key] ?? ''}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                        rows={4}
+                        className={textareaClass}
+                      />
+                    ) : (
+                      <input
+                        value={values[f.key] ?? ''}
+                        onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}
+                        className={inputClass}
+                      />
+                    )}
                   </Field>
                 ))}
               </div>
