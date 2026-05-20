@@ -802,6 +802,19 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-20（Footer LINE 雙按鈕爆版修補：文字短化 + 縮尺寸 + nowrap）
+
+**問題**：上一輪把 footer LINE 按鈕改成 `grid grid-cols-2 + px-3 py-2.5 text-sm gap-2 + icon h-4`，在 desktop footer 第 4 欄塞不下 —— 「加 LINE 好友」5 字被擠成「加 / LINE / 好友」3 行，「LINE 通話」也擠成 2 行，兩顆按鈕高度不同視覺崩壞。
+
+**根因（grid math）**：`container-narrow 1200px - padding 64 = 1136px / md:grid-cols-4 - gap-10×3 = ~254px/欄`，第 4 欄再 `grid-cols-2 gap-2` = ~123px/按鈕。原 className 需 ~138px，超 15px 觸發換行。
+
+**修法（`components/site-footer.tsx`）**：
+- `whitespace-nowrap` 強制單行不換行
+- 縮 padding `px-3 → px-2`、gap `gap-2 → gap-1.5`、icon `h-4 → h-3.5`
+- 文字短化：「加 LINE 好友」→「加好友」（3 字夠表達、上方「LINE ID: xxx」行已建立 LINE 語境）
+- 加 `min-w-0`（grid item 預設 min-width: auto 會阻止收縮，明確設 0 才能讓 grid track 完全控制按鈕寬度）
+- `aria-label` 補完整語意「免費估價，加 LINE 官方帳號」/「撥打 LINE 通話」，文字短化不損失無障礙
+
 ### 2026-05-20（首頁 Hero 加第四顆「LINE 通話」+ 改 2×2 排列 / Footer LINE 雙按鈕對稱化）
 
 **動機**：業主要 Hero 區加「LINE 通話」按鈕（跟 footer 一致），4 顆按鈕改 2×2 排列；Footer 原本「LINE@」大按鈕（帶 SVG logo + 雙行文字）跟「LINE 通話」小描邊按鈕視覺權重落差太大，業主要兩顆並排大小一致。

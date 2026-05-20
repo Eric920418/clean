@@ -118,10 +118,10 @@ export async function SiteFooter({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="免費估價，加 LINE 官方帳號"
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[#06C755] px-3 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition"
+                    className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md bg-[#06C755] px-2 py-2.5 text-sm font-medium whitespace-nowrap text-white shadow-sm hover:opacity-90 transition"
                   >
-                    <MessageCircle className="h-4 w-4 shrink-0" />
-                    加 LINE 好友
+                    <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                    加好友
                   </a>
                 )}
                 {lineCallUrl && (
@@ -129,9 +129,10 @@ export async function SiteFooter({
                     href={lineCallUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-[#06C755] px-3 py-2.5 text-sm font-medium text-[#06C755] hover:bg-[#06C755]/10 transition"
+                    aria-label="撥打 LINE 通話"
+                    className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md border border-[#06C755] px-2 py-2.5 text-sm font-medium whitespace-nowrap text-[#06C755] hover:bg-[#06C755]/10 transition"
                   >
-                    <PhoneCall className="h-4 w-4 shrink-0" />
+                    <PhoneCall className="h-3.5 w-3.5 shrink-0" />
                     LINE 通話
                   </a>
                 )}
