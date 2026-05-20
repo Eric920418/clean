@@ -16,7 +16,7 @@ export function WhyWithFeaturesSection({ section, service }: Props) {
 
   return (
     <section className="section">
-      <div className="container-narrow grid grid-cols-1 gap-14 lg:grid-cols-3">
+      <div className="container-narrow grid grid-cols-1 gap-2 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <SectionHeading eyebrow={eyebrow} title={title} />
           <RichText

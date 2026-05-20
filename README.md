@@ -277,7 +277,7 @@ pnpm db:studio            # 開啟 Prisma Studio
 
 `globals.css` 提供以下 utility class：
 - `.section` — 上下 6rem / md:8rem padding
-- `.container-narrow` — max-w 1200px + 1.5rem padding
+- `.container-narrow` — max-w **1440px** + 響應式 padding（mobile 1.25rem / md 1.75rem / xl 2.5rem）。全站 header / footer / 內容皆引用此 class，調寬於 2026-05-20 從 1200 → 1440，理由：1920 螢幕下舊版兩側留白 360px 過大，內文字過早換行；維持有兩側氣口（≥240px）所以不是滿寬
 - `.btn-primary` / `.btn-ghost` — 主 / 次 CTA
 - `.eyebrow` — 章節小標籤（含左側細線）
 - `.bg-medical-glow` — Hero 漸層藥水暈染背景
