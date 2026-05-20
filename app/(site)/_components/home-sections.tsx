@@ -242,10 +242,6 @@ function Hero({
                 </div>
               )
             })()}
-            <span className="pointer-events-none absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-primary/95 px-3 py-1 text-xs font-medium tracking-wide text-white shadow-sm">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
-              服務後實況
-            </span>
           </div>
           <div className="pointer-events-none absolute -bottom-6 -left-6 hidden h-24 w-24 rounded-full bg-primary-soft/40 blur-2xl md:block" />
           <div className="pointer-events-none absolute -top-8 -right-8 hidden h-32 w-32 rounded-full bg-accent-soft/40 blur-3xl md:block" />
