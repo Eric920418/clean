@@ -947,6 +947,20 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 **為什麼下方保留其他 5 組**：它們是「沒被任何 page manager 涵蓋」的頁面文案（contact / faq / services / works / global 沒有動態 sections 系統，全靠這幾個 ContentBlock）。完全移除會讓業主沒地方編。未來如果這些頁面也做動態化，這 5 組可以一併拿掉。
 
+**再簡化：合併 /admin/why-us-sections 進 /admin/content**
+
+業主追問「why-us-sections 是不是多餘」。確認後改：原本固定 section `why_us` / `beliefs` 點 ✏️ 會跳轉到獨立頁 `/admin/why-us-sections` — 體驗不一致。現改成 inline modal：
+- 抽 `app/admin/content/_components/WhyUsSectionsEditor.tsx`（接 `location` prop 的 CRUD 編輯器）+ `WhyUsSectionsModal.tsx`（AdminModal wrapper）
+- `PageSectionsManager` 對 `why_us` / `beliefs` 點 ✏️ 改成 `setWhyUsModalOpen(true)`，不再跳頁
+- `FixedMeta.externalHref` 移除，改用 `usesWhyUsEditor` flag 標記此 type 由 WhyUsSectionsModal 處理
+- 移除 sidebar (`PRIMARY_ITEMS`) 跟手機版 more (`COMMON_ITEMS`) 內的「為何選我們」入口
+- 舊 `/admin/why-us-sections/page.tsx` 改成 server-side `redirect('/admin/content')`，保護業主舊書籤
+- API routes `/api/admin/why-us-sections` 保留不動（被 editor 用）
+
+**modal-in-modal 設計**：外層「為何選我們」modal 內按「新增區塊」開啟內層編輯 modal — AdminModal 的 z-50 stacking 自然處理視覺，按 escape 兩個都會關（業主誤觸可 reopen，影響小）。沒有重寫成 inline-expand-card UI，因為工程量大且 mobile 體驗也不見得好。
+
+**Bundle size**：`/admin/content` 從 9.89 kB → 11 kB；`/admin/why-us-sections` 從 ~9 kB → 216 B（只剩 redirect）。
+
 ### 2026-05-18（移除所有假圖 fallback：源碼 + seed + DB 三層清乾淨）
 
 **動機**：業主端不能放假圖。但專案多處有「後台沒設圖就 fallback 到 unsplash」的邏輯，加上 seed 與 mock-data 把 unsplash URL 寫進 DB，導致就算後台不設圖也會顯示假圖。
