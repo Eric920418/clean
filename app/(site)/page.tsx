@@ -10,7 +10,7 @@ import {
 } from '@/lib/queries'
 import { HomeSections } from './_components/home-sections'
 import { JsonLd } from '@/components/json-ld'
-import { localBusinessJsonLd } from '@/lib/seo'
+import { localBusinessJsonLd, itemListJsonLd, reviewListJsonLd } from '@/lib/seo'
 
 // ISR：每 60 秒 background revalidation；首次以外的訪客都讀 cache
 export const revalidate = 60
@@ -36,13 +36,34 @@ export default async function HomePage() {
       ? testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length
       : undefined
 
-  const businessJsonLd = localBusinessJsonLd(
-    ratingAvg ? { rating: { average: ratingAvg, count: testimonials.length } } : undefined,
+  const businessJsonLd = localBusinessJsonLd({
+    rating: ratingAvg ? { average: ratingAvg, count: testimonials.length } : undefined,
+    image: settings.ogImage || undefined,
+    knowsAbout: services.map((s) => s.name),
+  })
+
+  const servicesList = itemListJsonLd(
+    services.map((s) => ({
+      name: s.name,
+      url: `/services/${s.slug}`,
+      description: s.shortDesc,
+    })),
+  )
+
+  const reviewList = reviewListJsonLd(
+    testimonials.map((t) => ({
+      author: t.authorName,
+      rating: t.rating,
+      content: t.content,
+      createdAt: t.createdAt,
+    })),
   )
 
   return (
     <>
       <JsonLd data={businessJsonLd} />
+      <JsonLd data={servicesList} />
+      {reviewList && <JsonLd data={reviewList} />}
       <HomeSections
         sections={sections}
         services={services}

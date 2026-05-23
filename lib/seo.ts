@@ -2,47 +2,119 @@ import { siteConfig } from './site-config'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
-export function localBusinessJsonLd(opts?: {
-  rating?: { average: number; count: number }
-}) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'HomeAndConstructionBusiness',
-    name: siteConfig.brandName,
-    description: siteConfig.description,
-    url: baseUrl,
-    telephone: siteConfig.contact.phone,
-    email: siteConfig.contact.email,
+/**
+ * 共用 entity anchor。所有 schema 透過 @id 引用，形成 entity graph，
+ * 幫助 Google Knowledge Graph 把整個網站理解為「同一個商業實體的多面向」。
+ */
+export const BUSINESS_ID = `${baseUrl}#business`
+export const ORG_ID = `${baseUrl}#organization`
+export const WEBSITE_ID = `${baseUrl}#website`
+
+type City = string
+
+function cityArray(cities?: City[]): Array<Record<string, unknown>> {
+  return (cities ?? siteConfig.contact.serviceCities).map((name) => ({
+    '@type': 'City',
+    name,
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'TW',
       addressRegion: '台灣',
-      addressLocality: siteConfig.contact.serviceArea,
+      addressLocality: name,
     },
-    areaServed: siteConfig.contact.serviceArea,
+  }))
+}
+
+export function localBusinessJsonLd(opts?: {
+  rating?: { average: number; count: number }
+  image?: string
+  knowsAbout?: string[]
+  cities?: City[]
+}) {
+  const cities = cityArray(opts?.cities)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'HomeAndConstructionBusiness',
+    '@id': BUSINESS_ID,
+    name: siteConfig.brandName,
+    alternateName: siteConfig.brandShort,
+    description: siteConfig.description,
+    slogan: siteConfig.brandTagline,
+    url: baseUrl,
+    telephone: siteConfig.contact.phone,
+    email: siteConfig.contact.email,
+    image: opts?.image ?? `${baseUrl}/logo.jpg`,
+    priceRange: '$$',
+    currenciesAccepted: 'TWD',
+    paymentAccepted: '現金、銀行轉帳、LINE Pay',
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'TW',
+      addressRegion: '台灣',
+    },
+    areaServed: cities,
+    knowsAbout: opts?.knowsAbout ?? [
+      '冷氣清洗',
+      '洗衣機清洗',
+      '水塔清洗',
+      '居家深度清潔',
+      '裝潢後細清',
+      '全戶濾水',
+      '防霾紗網',
+    ],
     openingHoursSpecification: [
       {
         '@type': 'OpeningHoursSpecification',
-        dayOfWeek: [
-          'Monday',
-          'Tuesday',
-          'Wednesday',
-          'Thursday',
-          'Friday',
-          'Saturday',
-        ],
+        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
         opens: '09:00',
         closes: '19:00',
       },
     ],
-    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram].filter(Boolean),
-    ...(opts?.rating && {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: opts.rating.average.toFixed(1),
-        reviewCount: opts.rating.count,
-      },
-    }),
+    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram].filter(
+      (u) => u && !u.endsWith('//') && !u.endsWith('.com/'),
+    ),
+    ...(opts?.rating && opts.rating.count > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: opts.rating.average.toFixed(1),
+            reviewCount: opts.rating.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+  }
+}
+
+export function organizationJsonLd(opts?: { image?: string; foundingDate?: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': ORG_ID,
+    name: siteConfig.brandName,
+    alternateName: siteConfig.brandShort,
+    url: baseUrl,
+    logo: opts?.image ?? `${baseUrl}/logo.jpg`,
+    description: siteConfig.description,
+    email: siteConfig.contact.email,
+    telephone: siteConfig.contact.phone,
+    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram].filter(
+      (u) => u && !u.endsWith('//') && !u.endsWith('.com/'),
+    ),
+    ...(opts?.foundingDate ? { foundingDate: opts.foundingDate } : {}),
+  }
+}
+
+export function websiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': WEBSITE_ID,
+    url: baseUrl,
+    name: siteConfig.brandName,
+    inLanguage: 'zh-TW',
+    publisher: { '@id': BUSINESS_ID },
   }
 }
 
@@ -50,19 +122,158 @@ export function serviceJsonLd(service: {
   name: string
   shortDesc: string
   slug: string
+  heroImage?: string | null
+  longDesc?: string | null
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: service.name,
-    description: service.shortDesc,
+    description: service.longDesc ?? service.shortDesc,
     url: `${baseUrl}/services/${service.slug}`,
-    provider: {
-      '@type': 'HomeAndConstructionBusiness',
-      name: siteConfig.brandName,
-      url: baseUrl,
-    },
-    areaServed: siteConfig.contact.serviceArea,
     serviceType: service.name,
+    ...(service.heroImage ? { image: service.heroImage } : {}),
+    provider: { '@id': BUSINESS_ID },
+    areaServed: cityArray(),
+    offers: {
+      '@type': 'Offer',
+      availability: 'https://schema.org/InStock',
+      areaServed: cityArray(),
+      priceCurrency: 'TWD',
+      url: `${baseUrl}/services/${service.slug}`,
+    },
   }
 }
+
+export function faqPageJsonLd(faqs: Array<{ question: string; answer: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.answer,
+      },
+    })),
+  }
+}
+
+export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: `${baseUrl}${item.path}`,
+    })),
+  }
+}
+
+export function reviewListJsonLd(testimonials: Array<{
+  author: string
+  rating: number
+  content: string
+  createdAt?: Date | string
+}>) {
+  if (testimonials.length === 0) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: testimonials.map((t, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Review',
+        author: { '@type': 'Person', name: t.author },
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: t.rating,
+          bestRating: 5,
+          worstRating: 1,
+        },
+        reviewBody: t.content,
+        itemReviewed: { '@id': BUSINESS_ID },
+        ...(t.createdAt
+          ? { datePublished: new Date(t.createdAt).toISOString().slice(0, 10) }
+          : {}),
+      },
+    })),
+  }
+}
+
+export function itemListJsonLd(items: Array<{ name: string; url: string; description?: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: item.url.startsWith('http') ? item.url : `${baseUrl}${item.url}`,
+      name: item.name,
+      ...(item.description ? { description: item.description } : {}),
+    })),
+  }
+}
+
+export function imageGalleryJsonLd(pairs: Array<{
+  beforeUrl: string
+  afterUrl: string
+  caption?: string | null
+  location?: string | null
+  serviceName?: string
+}>) {
+  if (pairs.length === 0) return null
+  const images = pairs.flatMap((p) => {
+    const captionPrefix = p.serviceName ? `${p.serviceName} · ` : ''
+    const baseCaption = p.caption ?? ''
+    const tail = baseCaption ? ` · ${baseCaption}` : ''
+    return [
+      {
+        '@type': 'ImageObject',
+        contentUrl: p.beforeUrl,
+        caption: `${captionPrefix}服務前${tail}`,
+        ...(p.location ? { contentLocation: p.location } : {}),
+      },
+      {
+        '@type': 'ImageObject',
+        contentUrl: p.afterUrl,
+        caption: `${captionPrefix}服務後${tail}`,
+        ...(p.location ? { contentLocation: p.location } : {}),
+      },
+    ]
+  })
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ImageGallery',
+    name: `${siteConfig.brandName} 服務前後對比`,
+    description: '實際施作前後對比，所有照片皆為實拍。',
+    associatedMedia: images,
+    isPartOf: { '@id': BUSINESS_ID },
+  }
+}
+
+export function aboutPageJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: `關於 ${siteConfig.brandName}`,
+    url: `${baseUrl}/about`,
+    mainEntity: { '@id': BUSINESS_ID },
+  }
+}
+
+export function contactPageJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: `預約諮詢 - ${siteConfig.brandName}`,
+    url: `${baseUrl}/contact`,
+    mainEntity: { '@id': BUSINESS_ID },
+  }
+}
+
+export { baseUrl }

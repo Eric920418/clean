@@ -1,8 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
 import { getServiceBySlugFull, getActiveServices, getSiteSettings } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
-import { serviceJsonLd } from '@/lib/seo'
+import {
+  serviceJsonLd,
+  breadcrumbJsonLd,
+  faqPageJsonLd,
+  reviewListJsonLd,
+} from '@/lib/seo'
 import { SectionRenderer } from '@/components/service-sections/SectionRenderer'
 
 type Params = { slug: string }
@@ -38,10 +44,17 @@ export async function generateMetadata({
   return {
     title: service.seoTitle ?? service.name,
     description: service.seoDesc ?? service.shortDesc,
+    alternates: { canonical: `/services/${service.slug}` },
     openGraph: {
       title: service.name,
       description: service.shortDesc,
       images: service.heroImage ? [{ url: service.heroImage }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: service.name,
+      description: service.shortDesc,
+      images: service.heroImage ? [service.heroImage] : undefined,
     },
   }
 }
@@ -68,11 +81,51 @@ export default async function ServiceDetailPage({
     .filter((s) => s.isVisible)
     .sort((a, b) => a.order - b.order)
 
+  // 從 sections 攤平 faqs 給 FAQPage schema 用
+  const faqs = service.sections.flatMap((sec) => sec.faqs ?? [])
+
+  // 拉該服務對應的 testimonials（schema 用，不影響原版面）
+  const testimonials = await prisma.testimonial
+    .findMany({
+      where: { isActive: true, serviceId: service.id },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      take: 10,
+    })
+    .catch(() => [])
+
+  const breadcrumb = breadcrumbJsonLd([
+    { name: '首頁', path: '/' },
+    { name: '服務項目', path: '/services' },
+    { name: service.name, path: `/services/${service.slug}` },
+  ])
+
+  const serviceSchema = serviceJsonLd({
+    name: service.name,
+    shortDesc: service.shortDesc,
+    slug: service.slug,
+    heroImage: service.heroImage,
+    longDesc: service.longDesc,
+  })
+
+  const faqSchema = faqs.length > 0 ? faqPageJsonLd(faqs) : null
+  const reviewSchema =
+    testimonials.length > 0
+      ? reviewListJsonLd(
+          testimonials.map((t) => ({
+            author: t.authorName,
+            rating: t.rating,
+            content: t.content,
+            createdAt: t.createdAt,
+          })),
+        )
+      : null
+
   return (
     <>
-      <JsonLd
-        data={serviceJsonLd({ name: service.name, shortDesc: service.shortDesc, slug: service.slug })}
-      />
+      <JsonLd data={breadcrumb} />
+      <JsonLd data={serviceSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
+      {reviewSchema && <JsonLd data={reviewSchema} />}
       {visibleSections.map((section) => (
         <SectionRenderer
           key={section.id}

@@ -3,6 +3,8 @@ import { Phone, Mail, Clock, MapPin, MessageCircle, PhoneCall } from 'lucide-rea
 import { SectionHeading } from '@/components/section-heading'
 import { ContactForm } from '@/components/contact-form'
 import { getSiteSettings, getContentBlock } from '@/lib/queries'
+import { JsonLd } from '@/components/json-ld'
+import { breadcrumbJsonLd, contactPageJsonLd } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -10,6 +12,7 @@ export const metadata: Metadata = {
   title: '預約諮詢',
   description:
     '填寫預約諮詢表單，30 分鐘內專人聯繫您；或撥打專線、加 LINE 預約 invisible care 居家服務。',
+  alternates: { canonical: '/contact' },
 }
 
 export default async function ContactPage() {
@@ -26,8 +29,14 @@ export default async function ContactPage() {
   const lineCallUrl = settings.lineCallUrl || ''
   const hours = settings.hours || ''
   const serviceArea = settings.serviceArea || ''
+  const breadcrumb = breadcrumbJsonLd([
+    { name: '首頁', path: '/' },
+    { name: '預約諮詢', path: '/contact' },
+  ])
   return (
     <>
+      <JsonLd data={breadcrumb} />
+      <JsonLd data={contactPageJsonLd()} />
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading

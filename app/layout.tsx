@@ -4,6 +4,8 @@ import { Toaster } from 'sonner'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { getSiteSettings } from '@/lib/queries'
+import { JsonLd } from '@/components/json-ld'
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
 import './globals.css'
 
 const noto = Noto_Sans_TC({
@@ -31,7 +33,14 @@ export async function generateMetadata(): Promise<Metadata> {
   }
   const siteName = settings.siteName || 'invisible care'
   const tagline = settings.tagline || '看不見的守護，才是家最頂級的豪華'
-  const description = settings.description || ''
+  const description =
+    settings.description ||
+    'invisible care 整合冷氣／洗衣機深度拆洗、水塔清洗、全戶濾水、防霾紗網與精緻居家清潔，服務全台主要城市。'
+  // 業主應於後台 SiteSetting 設定 `ogImage`（建議 1200×630），未設定時退到 logo.jpg
+  // 雖然 logo.jpg 不是標準 OG 尺寸，但比 404 強；社群預覽至少有東西可見
+  const ogImage = settings.ogImage || `${baseUrl}/logo.jpg`
+  const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || settings.googleVerification
+
   return {
     metadataBase: new URL(baseUrl),
     title: {
@@ -39,13 +48,24 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s · ${siteName}`,
     },
     description,
+    alternates: { canonical: '/' },
     openGraph: {
       title: `${siteName} · ${tagline}`,
       description,
       type: 'website',
       locale: 'zh_TW',
+      siteName,
+      url: baseUrl,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: siteName }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${siteName} · ${tagline}`,
+      description,
+      images: [ogImage],
     },
     robots: { index: true, follow: true },
+    ...(googleVerification ? { verification: { google: googleVerification } } : {}),
   }
 }
 
@@ -57,6 +77,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${noto.variable} ${inter.variable}`}
     >
       <body className="font-sans antialiased">
+        <JsonLd data={websiteJsonLd()} />
+        <JsonLd data={organizationJsonLd()} />
         {children}
         <Toaster position="top-center" richColors closeButton />
         <Analytics />

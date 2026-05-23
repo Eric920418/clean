@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { SectionHeading } from '@/components/section-heading'
 import { WorksGallery } from '@/components/works-gallery'
 import { getAllBeforeAfters, getActiveServices, getContentBlock } from '@/lib/queries'
+import { JsonLd } from '@/components/json-ld'
+import { breadcrumbJsonLd, imageGalleryJsonLd } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -9,6 +11,7 @@ export const metadata: Metadata = {
   title: '服務案例',
   description:
     '所有清洗前後對比圖均為實際施作案例，未經修飾濾鏡，已取得客戶授權。可依服務分類篩選查看。',
+  alternates: { canonical: '/works' },
 }
 
 export default async function WorksPage() {
@@ -39,8 +42,24 @@ export default async function WorksPage() {
     })),
   ].filter((f) => f.count > 0)
 
+  const breadcrumb = breadcrumbJsonLd([
+    { name: '首頁', path: '/' },
+    { name: '服務案例', path: '/works' },
+  ])
+  const gallerySchema = imageGalleryJsonLd(
+    allBeforeAfters.map((p) => ({
+      beforeUrl: p.beforeUrl,
+      afterUrl: p.afterUrl,
+      caption: p.caption,
+      location: p.location,
+      serviceName: p.serviceName,
+    })),
+  )
+
   return (
     <>
+      <JsonLd data={breadcrumb} />
+      {gallerySchema && <JsonLd data={gallerySchema} />}
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading

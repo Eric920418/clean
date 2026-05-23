@@ -39,6 +39,31 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+
+  // 安全 headers — 技術 SEO「信任分」項目，Google 會把這些當品質訊號
+  // 不加 CSP（會被 Vercel Analytics / CKEditor / R2 image 誤殺，後續另開）
+  async headers() {
+    const securityHeaders = [
+      {
+        key: 'Strict-Transport-Security',
+        value: 'max-age=63072000; includeSubDomains; preload',
+      },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      {
+        key: 'Permissions-Policy',
+        value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+      },
+    ]
+    return [
+      {
+        // 套用到所有路由（含 admin），但排除 _next 靜態資源以免影響 CDN cache
+        source: '/((?!_next/static|_next/image).*)',
+        headers: securityHeaders,
+      },
+    ]
+  },
 }
 
 export default nextConfig

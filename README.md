@@ -26,8 +26,9 @@
 | 設計系統（純淨醫療感配色） | ✅ 已完成 |
 | Prisma schema + seed.ts | ✅ 已完成 |
 | 預約諮詢表單（前端 → 公開 API → DB） | ✅ 已完成 |
-| sitemap.xml / robots.txt / generateMetadata | ✅ 已完成 |
-| LocalBusiness + Service JSON-LD（SEO 結構化資料） | ✅ 已完成 |
+| sitemap.xml / robots.txt / generateMetadata（含 image sitemap） | ✅ 已完成 |
+| LocalBusiness + Service + FAQPage + Breadcrumb + Review + ImageGallery JSON-LD 完整實體圖 | ✅ 已完成 |
+| OG / Twitter card / canonical / security headers / `public/llms.txt`（GEO） | ✅ 已完成 |
 | **後台 CMS**（11 頁完整管理介面） | ✅ 已完成 |
 | NextAuth 登入 + middleware 保護 + R2 圖片上傳 | ✅ 已完成 |
 | 業主可自助操作：服務 CRUD / 對比圖 / 詢問單 / 評價 / 內容 / 設定 | ✅ 已完成 |
@@ -803,6 +804,55 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-05-23（SEO + GEO 強化，不改 DB schema 不開新頁）
+
+**動機**：原 SEO 基礎不弱（已有 LocalBusiness/Service JSON-LD、ISR sitemap、robots、next/image），但留了幾個明顯漏洞：FAQ 頁有 FAQ 資料卻沒輸出 `FAQPage` schema（rich snippet 白丟）、`areaServed` 是「雙北・桃園・新竹」一個字串（與「全台都接」目標不符）、作品頁前後對比圖核心賣點沒任何 `ImageGallery` 結構化、`app/layout.tsx` 沒設預設 OG/Twitter、缺 `BreadcrumbList`/`Review`/`Organization`、GEO（AI 引用）面向幾乎空白。**約束**：不動 DB、不開 Blog / 不開城市落地頁，只強化現有 7 頁。
+
+**改動範圍**：
+
+1. **`lib/seo.ts` 全面升級**（新增 9 個 schema generator）
+   - `localBusinessJsonLd()` 升級：`@id` entity anchor、`areaServed` 改成 `City[]`（從 `siteConfig.contact.serviceCities` 讀，預設全台 7 都）、`priceRange`、`knowsAbout`（動態從 active services）、`paymentAccepted`、`currenciesAccepted`、`aggregateRating` 加 `bestRating/worstRating`
+   - `serviceJsonLd()` 升級：用 `@id` 引用 LocalBusiness、加 `offers`/`image`/`longDesc`
+   - 新增 `faqPageJsonLd` / `breadcrumbJsonLd` / `reviewListJsonLd` / `itemListJsonLd` / `imageGalleryJsonLd` / `organizationJsonLd` / `websiteJsonLd` / `aboutPageJsonLd` / `contactPageJsonLd`
+   - 所有 schema 透過 `BUSINESS_ID`/`ORG_ID`/`WEBSITE_ID` 串成 entity graph，提升 Knowledge Graph 收錄機率
+
+2. **各頁面注入對應 schema**（共 7 頁）
+   - `/`：升級版 LocalBusiness + ItemList（服務列表）+ Review（testimonials）
+   - `/services`：BreadcrumbList + ItemList + canonical
+   - `/services/[slug]`：BreadcrumbList + 升級版 Service + FAQPage（該服務 faqs）+ Review（該服務 testimonials）+ canonical + Twitter card
+   - `/works`：BreadcrumbList + **ImageGallery（核心：前後對比圖配 contentLocation）** + canonical
+   - `/about`：BreadcrumbList + AboutPage + canonical
+   - `/faq`：BreadcrumbList + **FAQPage（合併 general + 各服務 faq 各 5 題）**+ canonical — 這是本次最大低垂果實
+   - `/contact`：BreadcrumbList + ContactPage + canonical
+   - `app/layout.tsx`：root 注入 Website + Organization；補預設 OG image / siteName / url / Twitter card / canonical / `GOOGLE_SITE_VERIFICATION` env
+
+3. **`lib/site-config.ts`**：`serviceArea` 文字改成「全台主要城市」；新增 `serviceCities` 陣列（台北・新北・桃園・新竹市・新竹縣・台中・台南・高雄）給 schema 用，後台可後續加 `SiteSetting.serviceCities` JSON 覆寫
+
+4. **`app/sitemap.ts`**：補 image sitemap（每個 service 帶 `heroImage`、`/works` 帶前 10 張 featured before-after）、調整 priority 階層（首頁 1.0 → services 0.9 → service detail / works 0.8 → 其他 0.6）
+
+5. **`next.config.ts`**：加 security headers（HSTS / X-Content-Type-Options / Referrer-Policy / X-Frame-Options / Permissions-Policy），技術 SEO 信任分項目；排除 `_next/static` 與 `_next/image` 以免影響 CDN cache。**沒加 CSP** —— Vercel Analytics / CKEditor / R2 image 會被誤殺，後續另開 PR 評估
+
+6. **`public/llms.txt`**：GEO（AI 引用）核心檔。llmstxt.org 標準格式，第一行 H1 品牌名、blockquote 一句話定位、用 H2 分區（核心服務、服務區域、預約方式、品質承諾、引用指引）。引導 ChatGPT / Perplexity / AI Overview 抓正確上下文
+
+**業主後台需補的內容**（不寫 code，操作指引）：
+- `SiteSetting` 新增/編輯：`ogImage`（上傳 1200×630 品牌主視覺）、`googleVerification`（Search Console 驗證碼，也可走 `GOOGLE_SITE_VERIFICATION` env）
+- 各服務的 `seoTitle` / `seoDesc`：寫入「服務 + 城市」變體（例：「冷氣清洗 · 全台到府 · invisible care」）
+- `GeneralFaq` 補題：「invisible care 服務哪些縣市？」「冷氣多久該清洗一次？」「裝潢後清潔費用怎麼算？」答案**第一句**就給結論 + 帶品牌名 + 帶城市，passage-level 可被 AI Overview 引用
+- 各 `Service.sections` 加一個 `text_block` 「服務區域」，內文模板：「本服務提供全台主要城市，含台北、新北、桃園、新竹、台中、台南、高雄。預約請⋯⋯」
+
+**驗證方式**：
+- `pnpm exec tsc --noEmit`：全綠（已驗證）
+- Build 後抓 HTML：每頁 `<script type="application/ld+json">` 區塊應該都有
+- Google Rich Results Test：FAQPage / Service / LocalBusiness / Review 四個 schema 應 valid
+- `validator.schema.org`：entity graph 引用正確
+- 訪問 `/llms.txt`、`/sitemap.xml`、`/robots.txt`：皆 200
+- Search Console 重新提交 sitemap，等 1-2 週看 impression / CTR
+
+**不做的事**（明確排除）：
+- ❌ 不開 Blog / 不改 DB / 不開「服務 × 城市」程式化矩陣頁 / 不加 hreflang / 不加 GBP 同步 / 不重做 metadata template
+
+**已知策略性 trade-off**：「全台都接」+「不開城市落地頁」會在每個城市的本地排名都是中段班、難以突破單一城市。未來若要爆款，第一個該回頭評估的就是「桃園冷氣清洗」這類意圖頁。目前 Schema `areaServed: City[]` + `Service.offers.areaServed` 是榨乾現有結構的最後一招。
 
 ### 2026-05-20（Footer logo 換成正式 `public/logo.jpg`，與 header 對齊）
 

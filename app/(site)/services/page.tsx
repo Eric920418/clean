@@ -5,6 +5,8 @@ import { ArrowRight, Sparkles } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { IconByName } from '@/components/icon-by-name'
 import { getActiveServices, getContentBlock } from '@/lib/queries'
+import { JsonLd } from '@/components/json-ld'
+import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
 
 export const revalidate = 60
 
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
   title: '服務項目',
   description:
     'invisible care 提供冷氣、洗衣機、水塔、防霾紗網、全戶濾水與精緻居家清潔等專業服務，由內而外守護家人的健康。',
+  alternates: { canonical: '/services' },
 }
 
 export default async function ServicesIndexPage() {
@@ -20,8 +23,21 @@ export default async function ServicesIndexPage() {
     getContentBlock('hero-services').catch(() => null),
   ])
   const hero = heroBlock ?? {}
+  const breadcrumb = breadcrumbJsonLd([
+    { name: '首頁', path: '/' },
+    { name: '服務項目', path: '/services' },
+  ])
+  const list = itemListJsonLd(
+    services.map((s) => ({
+      name: s.name,
+      url: `/services/${s.slug}`,
+      description: s.shortDesc,
+    })),
+  )
   return (
     <>
+      <JsonLd data={breadcrumb} />
+      <JsonLd data={list} />
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading

@@ -17,7 +17,22 @@ export const siteConfig = {
     lineFriendUrl: 'https://lin.ee/WuFCNig',
     /** LINE 語音通話連結 */
     lineCallUrl: 'https://lin.ee/cQe8Hhz',
-    serviceArea: '雙北・桃園・新竹',
+    /** 顯示用字串（footer、JSON-LD areaServed 文字 fallback） */
+    serviceArea: '全台主要城市（雙北・桃園・新竹・台中・台南・高雄）',
+    /**
+     * Schema.org `areaServed` 用的城市陣列，每個城市會輸出為 `City` 實體。
+     * 排序：六都 + 新竹（科技走廊轉介量大）。後台 SiteSetting.serviceCities (JSON) 可覆寫。
+     */
+    serviceCities: [
+      '台北市',
+      '新北市',
+      '桃園市',
+      '新竹市',
+      '新竹縣',
+      '台中市',
+      '台南市',
+      '高雄市',
+    ],
     hours: '週一至週六 09:00 – 19:00',
   },
   social: {
