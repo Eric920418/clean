@@ -40,6 +40,7 @@ export default async function HomePage() {
     rating: ratingAvg ? { average: ratingAvg, count: testimonials.length } : undefined,
     image: settings.ogImage || undefined,
     knowsAbout: services.map((s) => s.name),
+    sameAs: [settings.fbUrl, settings.igUrl],
   })
 
   const servicesList = itemListJsonLd(

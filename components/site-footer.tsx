@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Phone, Mail, MapPin, Clock, MessageCircle, PhoneCall, Apple, ExternalLink } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, MessageCircle, PhoneCall, Apple, ExternalLink, Facebook, Instagram } from 'lucide-react'
 import { getActiveServices } from '@/lib/queries'
+import { isValidSocialUrl } from '@/lib/seo'
 import { RichText } from '@/components/rich-text'
 
 export async function SiteFooter({
@@ -31,6 +32,9 @@ export async function SiteFooter({
   const siteName = settings.siteName || 'invisible care'
   const iosAppUrl = settings.iosAppUrl || ''
   const proshakeUrl = settings.proshakeUrl || ''
+  const fbUrl = settings.fbUrl || ''
+  const igUrl = settings.igUrl || ''
+  const hasSocial = isValidSocialUrl(fbUrl) || isValidSocialUrl(igUrl)
 
   return (
     <footer className="mt-16 border-t border-hairline bg-bg-soft">
@@ -71,6 +75,38 @@ export async function SiteFooter({
                 <Apple className="h-4 w-4" fill="currentColor" />
                 App Store 下載 iOS 版
               </a>
+            </div>
+          )}
+
+          {hasSocial && (
+            <div className="mt-5">
+              <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+                追蹤我們
+              </p>
+              <div className="mt-2 flex items-center gap-3">
+                {isValidSocialUrl(fbUrl) && (
+                  <a
+                    href={fbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Facebook"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink-soft transition hover:border-primary-deep hover:text-primary-deep"
+                  >
+                    <Facebook className="h-4 w-4" />
+                  </a>
+                )}
+                {isValidSocialUrl(igUrl) && (
+                  <a
+                    href={igUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink-soft transition hover:border-primary-deep hover:text-primary-deep"
+                  >
+                    <Instagram className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </div>

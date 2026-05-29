@@ -69,7 +69,15 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // 取站台設定供 Organization JSON-LD 的 sameAs 使用（社群網址）；DB 不可用時退到空物件
+  let settings: Record<string, string> = {}
+  try {
+    settings = await getSiteSettings()
+  } catch {
+    settings = {}
+  }
+
   return (
     <html
       lang="zh-TW"
@@ -78,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="font-sans antialiased">
         <JsonLd data={websiteJsonLd()} />
-        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={organizationJsonLd({ sameAs: [settings.fbUrl, settings.igUrl] })} />
         {children}
         <Toaster position="top-center" richColors closeButton />
         <Analytics />

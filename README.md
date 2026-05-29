@@ -805,6 +805,21 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-05-29（接通社群設定：footer 社群圖示 + SEO sameAs 改讀 DB）
+
+**問題**：審計發現後台 `/admin/settings`「社群」群組的 `fbUrl` / `igUrl` 兩欄是**孤兒設定** —— 業主填了存進 `SiteSetting`，但 (a) footer / header / 任何前台都沒讀取它們，填了等於沒填；(b) 唯一用到社群的 SEO `sameAs`（`lib/seo.ts` 的 `localBusinessJsonLd` / `organizationJsonLd`）讀的是 `lib/site-config.ts` 寫死的佔位網址 `https://facebook.com/`（指向 FB 首頁、非粉專），對 Google 是無意義連結。等於設定與消費兩端脫鉤。
+
+**修法（後台一處設定 → 前台 + SEO 同時生效）**：
+
+1. **`lib/seo.ts`**
+   - 新增 export `isValidSocialUrl(u)` predicate —— footer 顯示與 SEO `sameAs` **共用同一份規則**，行為保證一致。把 `fbUrl`/`igUrl` 當不可信輸入處理：用 `new URL()` **強制 http(s) 協議**（擋 `javascript:`/`data:` 的 href XSS）、擋空值與佔位網址（`endsWith('//')` 或 `.com/`）。業主必須填完整 `https://` 網址才會顯示。
+   - `localBusinessJsonLd` / `organizationJsonLd` 的 opts 各加 `sameAs?: Array<string|null|undefined>`，內部 `.filter(isValidSocialUrl)`，空陣列時不輸出 `sameAs` 欄位。不再讀 `siteConfig.social`。
+2. **`app/layout.tsx`**：`RootLayout` 改為 `async`，`await getSiteSettings()` 後把 `sameAs: [settings.fbUrl, settings.igUrl]` 傳給 `organizationJsonLd()`。
+3. **`app/(site)/page.tsx`**：`localBusinessJsonLd()` 呼叫補 `sameAs: [settings.fbUrl, settings.igUrl]`。
+4. **`components/site-footer.tsx`**：左欄（品牌區，App 下載之後）新增「追蹤我們」社群圖示區塊，`Facebook` / `Instagram` lucide 圖示描邊圓鈕；用 `isValidSocialUrl(fbUrl)` / `isValidSocialUrl(igUrl)` 各自判斷，**有填真網址才顯示**，兩欄皆空則整塊隱藏。
+
+**為什麼用同一個 predicate 而非各寫各的**：避免「footer 顯示了、但 SEO 沒輸出」或反過來的不一致。seed.ts 灌的初始值是 `siteConfig.social` 的佔位網址（`.com/` 結尾），predicate 會一併擋掉 → 真正做到「業主到後台填真粉專網址才會出現」，不會因 seed 佔位就冒出連到 FB 首頁的死連結。`lib/site-config.ts` 的 `social` 欄位保留（seed.ts 仍引用），但前台 / SEO 已不再依賴它。
+
 ### 2026-05-23（SEO + GEO 強化，不改 DB schema 不開新頁）
 
 **動機**：原 SEO 基礎不弱（已有 LocalBusiness/Service JSON-LD、ISR sitemap、robots、next/image），但留了幾個明顯漏洞：FAQ 頁有 FAQ 資料卻沒輸出 `FAQPage` schema（rich snippet 白丟）、`areaServed` 是「雙北・桃園・新竹」一個字串（與「全台都接」目標不符）、作品頁前後對比圖核心賣點沒任何 `ImageGallery` 結構化、`app/layout.tsx` 沒設預設 OG/Twitter、缺 `BreadcrumbList`/`Review`/`Organization`、GEO（AI 引用）面向幾乎空白。**約束**：不動 DB、不開 Blog / 不開城市落地頁，只強化現有 7 頁。

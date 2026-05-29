@@ -10,6 +10,23 @@ export const BUSINESS_ID = `${baseUrl}#business`
 export const ORG_ID = `${baseUrl}#organization`
 export const WEBSITE_ID = `${baseUrl}#website`
 
+/**
+ * 社群網址有效性判斷 —— footer 顯示與 SEO sameAs 共用同一份規則。
+ * 後台 `fbUrl`/`igUrl` 是業主輸入、會渲染進 `<a href>` 與 JSON-LD，必須當不可信來源處理：
+ * 1. 強制 http(s) 協議 —— 擋掉 `javascript:` / `data:` 等會造成 href XSS 的 scheme。
+ * 2. 擋掉空值與佔位網址（如 https://facebook.com/ 這種只到網域根、沒指向粉專的值）。
+ * 因此業主必須在後台填「完整的 https:// 粉專網址」才會顯示。
+ */
+export function isValidSocialUrl(u?: string | null): u is string {
+  if (!u || u.endsWith('//') || u.endsWith('.com/')) return false
+  try {
+    const { protocol } = new URL(u)
+    return protocol === 'https:' || protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
 type City = string
 
 function cityArray(cities?: City[]): Array<Record<string, unknown>> {
@@ -30,8 +47,10 @@ export function localBusinessJsonLd(opts?: {
   image?: string
   knowsAbout?: string[]
   cities?: City[]
+  sameAs?: Array<string | null | undefined>
 }) {
   const cities = cityArray(opts?.cities)
+  const sameAs = (opts?.sameAs ?? []).filter(isValidSocialUrl)
   return {
     '@context': 'https://schema.org',
     '@type': 'HomeAndConstructionBusiness',
@@ -70,9 +89,7 @@ export function localBusinessJsonLd(opts?: {
         closes: '19:00',
       },
     ],
-    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram].filter(
-      (u) => u && !u.endsWith('//') && !u.endsWith('.com/'),
-    ),
+    ...(sameAs.length ? { sameAs } : {}),
     ...(opts?.rating && opts.rating.count > 0
       ? {
           aggregateRating: {
@@ -87,7 +104,12 @@ export function localBusinessJsonLd(opts?: {
   }
 }
 
-export function organizationJsonLd(opts?: { image?: string; foundingDate?: string }) {
+export function organizationJsonLd(opts?: {
+  image?: string
+  foundingDate?: string
+  sameAs?: Array<string | null | undefined>
+}) {
+  const sameAs = (opts?.sameAs ?? []).filter(isValidSocialUrl)
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -99,9 +121,7 @@ export function organizationJsonLd(opts?: { image?: string; foundingDate?: strin
     description: siteConfig.description,
     email: siteConfig.contact.email,
     telephone: siteConfig.contact.phone,
-    sameAs: [siteConfig.social.facebook, siteConfig.social.instagram].filter(
-      (u) => u && !u.endsWith('//') && !u.endsWith('.com/'),
-    ),
+    ...(sameAs.length ? { sameAs } : {}),
     ...(opts?.foundingDate ? { foundingDate: opts.foundingDate } : {}),
   }
 }
