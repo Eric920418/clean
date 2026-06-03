@@ -3,6 +3,7 @@ import { Noto_Sans_TC, Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { getSiteSettings } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo'
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Analytics />
         <SpeedInsights />
       </body>
+      <GoogleAnalytics gaId="G-7DSMSX9BXD" />
     </html>
   )
 }

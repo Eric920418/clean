@@ -49,7 +49,7 @@
 | UI | Tailwind CSS 4（CSS-first config）+ Radix UI primitives |
 | 圖床 | Cloudflare R2（S3 SDK） |
 | Lightbox | `yet-another-react-lightbox`（dynamic import，僅用戶點圖才載入） |
-| 觀測 | Vercel Analytics + Speed Insights（部署後自動收 Web Vitals） |
+| 觀測 | Vercel Analytics + Speed Insights（部署後自動收 Web Vitals）、Google Analytics 4（`@next/third-parties`，GA ID `G-7DSMSX9BXD`） |
 | 通知 | Sonner toast |
 | 套件管理 | **pnpm（強制）** |
 | 字體 | Noto Sans TC + Inter（next/font/google） |
@@ -804,6 +804,12 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-06-03（綁定 Google Search Console + 接 Google Analytics 4）
+
+**GSC 驗證**：採 HTML 檔驗證法，把 Google 給的 `public/google92f564497b708f7d.html` 放進 `public/`，部署後以 `https://<域名>/google92f564497b708f7d.html` 對外提供。`middleware.ts` 的 `matcher` 只攔 `/admin/:path*`，不影響此檔抓取。（補充：`app/layout.tsx` 的 `generateMetadata` 另有 `GOOGLE_SITE_VERIFICATION` env / `SiteSetting.googleVerification` 走 meta tag 的驗證路徑，兩種擇一即可，此次用 HTML 檔。）
+
+**GA4**：用官方 `@next/third-parties@15`（對齊 Next 15 主版本，非預設裝到的 16.x）的 `<GoogleAnalytics gaId="G-7DSMSX9BXD" />`，放在 `app/layout.tsx` 的 `<body>` 同級。GA ID 非機密、直接寫死（少一個 env 出錯點）。底層以 `next/script` 的 `afterInteractive` 注入 gtag，不阻塞渲染，效果等同手貼的 `<script async>` 片段。dev 環境也會載入，本機測試請用 GA4 DebugView 確認。
 
 ### 2026-05-29（接通社群設定：footer 社群圖示 + SEO sameAs 改讀 DB）
 
