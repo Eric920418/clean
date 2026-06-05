@@ -46,6 +46,11 @@ const SETTING_GROUPS: { title: string; fields: SettingField[] }[] = [
     fields: [
       { key: 'fbUrl', label: 'Facebook 網址' },
       { key: 'igUrl', label: 'Instagram 網址' },
+      {
+        key: 'ogImage',
+        label: '社群分享縮圖（OG Image）網址',
+        hint: '分享網址到 FB/LINE 時顯示的預覽圖，建議 1200×630 的圖片完整網址；留空時退到 logo.jpg（偏小，部分平台可能不顯示）',
+      },
     ],
   },
 ]

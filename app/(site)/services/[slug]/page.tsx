@@ -39,8 +39,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug: rawSlug } = await params
   const slug = safeDecodeSlug(rawSlug)
-  const service = await getServiceBySlugFull(slug)
+  const [service, settings] = await Promise.all([
+    getServiceBySlugFull(slug),
+    getSiteSettings().catch(() => ({}) as Record<string, string>),
+  ])
   if (!service) return { title: '找不到服務' }
+  // Next.js metadata 不深度合併：子頁定義 openGraph 會「整包」覆蓋根 layout 的設定，
+  // images 給 undefined 就等於該頁完全沒有 og:image（社群分享無縮圖）。
+  // 所以一律 fallback：服務主圖 → 後台 ogImage → logo.jpg
+  const ogImage = service.heroImage || settings.ogImage || '/logo.jpg'
   return {
     title: service.seoTitle ?? service.name,
     description: service.seoDesc ?? service.shortDesc,
@@ -48,13 +55,13 @@ export async function generateMetadata({
     openGraph: {
       title: service.name,
       description: service.shortDesc,
-      images: service.heroImage ? [{ url: service.heroImage }] : undefined,
+      images: [{ url: ogImage, alt: service.name }],
     },
     twitter: {
       card: 'summary_large_image',
       title: service.name,
       description: service.shortDesc,
-      images: service.heroImage ? [service.heroImage] : undefined,
+      images: [ogImage],
     },
   }
 }

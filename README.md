@@ -805,6 +805,22 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-06-05（修社群分享縮圖「有些頁有、有些頁沒有」）
+
+**症狀**：分享網址到 FB/LINE 時，部分頁面有預覽縮圖、部分沒有。
+
+**根因有三層**：
+1. **Next.js metadata 不深度合併** — `/services/[slug]` 的 `generateMetadata` 自己定義了 `openGraph`，會「整包」覆蓋根 layout 的設定。沒設 `heroImage` 的服務頁 `images: undefined`，該頁就完全沒有 `og:image`（連根 layout 的 fallback 都拿不到）→ 這是「有些有有些沒有」的直接原因。
+2. **後台缺欄位** — `app/layout.tsx` 註解寫「業主應於後台設定 `ogImage`」，但 `/admin/settings` 根本沒有這個欄位，`settings.ogImage` 永遠是空，所有頁面都退到 logo.jpg。
+3. **謊報尺寸** — logo.jpg 實際 349×359，metadata 卻宣告 `width: 1200, height: 630`，FB 可能因尺寸不符拒絕渲染。
+
+**修法**：
+- `app/(site)/services/[slug]/page.tsx`：OG image 改三層 fallback `service.heroImage → settings.ogImage → /logo.jpg`，保證每個服務頁都有 `og:image`
+- `app/admin/settings/page.tsx`：「社群」群組新增 `ogImage` 欄位（建議 1200×630 圖片網址）
+- `app/layout.tsx`：移除寫死的 `width: 1200, height: 630` 宣告
+
+**業主操作**：後台「站台設定 → 社群」填一張 1200×630 的品牌主視覺網址（可先上傳到 R2 再貼網址）。**改完要清社群快取才看得到**：FB 用 [Sharing Debugger](https://developers.facebook.com/tools/debug/) 按「再次抓取」，LINE 快取約 1 週自動過期（無官方清除工具）。
+
 ### 2026-06-03（綁定 Google Search Console + 接 Google Analytics 4）
 
 **GSC 驗證**：採 HTML 檔驗證法，把 Google 給的 `public/google92f564497b708f7d.html` 放進 `public/`，部署後以 `https://<域名>/google92f564497b708f7d.html` 對外提供。`middleware.ts` 的 `matcher` 只攔 `/admin/:path*`，不影響此檔抓取。（補充：`app/layout.tsx` 的 `generateMetadata` 另有 `GOOGLE_SITE_VERIFICATION` env / `SiteSetting.googleVerification` 走 meta tag 的驗證路徑，兩種擇一即可，此次用 HTML 檔。）

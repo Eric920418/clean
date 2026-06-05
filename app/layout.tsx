@@ -37,8 +37,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     settings.description ||
     'invisible care 整合冷氣／洗衣機深度拆洗、水塔清洗、全戶濾水、防霾紗網與精緻居家清潔，服務全台主要城市。'
-  // 業主應於後台 SiteSetting 設定 `ogImage`（建議 1200×630），未設定時退到 logo.jpg
+  // 業主於後台「站台設定 → 社群」填 `ogImage`（建議 1200×630），未設定時退到 logo.jpg
   // 雖然 logo.jpg 不是標準 OG 尺寸，但比 404 強；社群預覽至少有東西可見
+  // 注意：不宣告 width/height — fallback 的 logo.jpg 實際只有 349×359，謊報尺寸會讓 FB 拒絕渲染
   const ogImage = settings.ogImage || `${baseUrl}/logo.jpg`
   const googleVerification = process.env.GOOGLE_SITE_VERIFICATION || settings.googleVerification
 
@@ -57,7 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'zh_TW',
       siteName,
       url: baseUrl,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: siteName }],
+      images: [{ url: ogImage, alt: siteName }],
     },
     twitter: {
       card: 'summary_large_image',
