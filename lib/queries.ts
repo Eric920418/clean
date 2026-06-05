@@ -125,7 +125,7 @@ export async function getServiceBySlugFull(slug: string) {
         include: {
           features: { orderBy: { order: 'asc' } },
           faqs: { orderBy: { order: 'asc' } },
-          beforeAfters: { where: { isActive: true }, orderBy: { order: 'asc' } },
+          beforeAfters: { where: { isActive: true }, orderBy: [{ order: 'asc' }, { id: 'asc' }] },
           galleryImgs: { orderBy: { order: 'asc' } },
         },
       },

@@ -10,6 +10,7 @@ import {
   reviewListJsonLd,
 } from '@/lib/seo'
 import { SectionRenderer } from '@/components/service-sections/SectionRenderer'
+import { configString } from '@/components/service-sections/types'
 
 type Params = { slug: string }
 
@@ -46,8 +47,17 @@ export async function generateMetadata({
   if (!service) return { title: '找不到服務' }
   // Next.js metadata 不深度合併：子頁定義 openGraph 會「整包」覆蓋根 layout 的設定，
   // images 給 undefined 就等於該頁完全沒有 og:image（社群分享無縮圖）。
-  // 所以一律 fallback：服務主圖 → 後台 ogImage → logo.jpg
-  const ogImage = service.heroImage || settings.ogImage || '/logo.jpg'
+  //
+  // 縮圖跟頁面 Hero 同源：業主在「頁面區塊 → Hero」換圖存在 section config，
+  // 不會寫回 Service.heroImage，只讀後者會讓分享縮圖跟畫面脫鉤。
+  // fallback 鏈：Hero 區塊圖 → 服務 Hero 大圖 → 服務卡片圖 → 全站 ogImage → logo.jpg
+  const heroSection = service.sections.find((s) => s.type === 'hero')
+  const ogImage =
+    (heroSection ? configString(heroSection.config, 'heroImage') : null) ||
+    service.heroImage ||
+    service.cardImage ||
+    settings.ogImage ||
+    '/logo.jpg'
   return {
     title: service.seoTitle ?? service.name,
     description: service.seoDesc ?? service.shortDesc,

@@ -5,12 +5,15 @@ import { Loader2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
+import { ImageUploader } from '@/components/admin/image-uploader'
 
 type SettingField = {
   key: string
   label: string
   hint?: string
   multiline?: boolean
+  /** 圖片上傳欄位：value 存上傳後的 R2 網址 */
+  image?: boolean
 }
 
 const SETTING_GROUPS: { title: string; fields: SettingField[] }[] = [
@@ -48,8 +51,9 @@ const SETTING_GROUPS: { title: string; fields: SettingField[] }[] = [
       { key: 'igUrl', label: 'Instagram 網址' },
       {
         key: 'ogImage',
-        label: '社群分享縮圖（OG Image）網址',
-        hint: '分享網址到 FB/LINE 時顯示的預覽圖，建議 1200×630 的圖片完整網址；留空時退到 logo.jpg（偏小，部分平台可能不顯示）',
+        label: '社群分享縮圖（OG Image）',
+        hint: '分享網址到 FB/LINE 時顯示的預覽圖，建議 1200×630。服務詳情頁優先用該服務的「主圖」，沒主圖才退到這張；其他頁面（首頁/關於/案例…）都用這張',
+        image: true,
       },
     ],
   },
@@ -137,9 +141,18 @@ export default function SettingsPage() {
                     key={f.key}
                     label={f.label}
                     hint={f.hint}
-                    className={f.multiline ? 'md:col-span-2' : undefined}
+                    className={f.multiline || f.image ? 'md:col-span-2' : undefined}
                   >
-                    {f.multiline ? (
+                    {f.image ? (
+                      // 預覽框用 1200:630 的 OG 比例，業主上傳後直接看得到裁切效果
+                      <ImageUploader
+                        value={values[f.key] || null}
+                        onChange={(url) => setValues({ ...values, [f.key]: url })}
+                        folder="settings"
+                        hint="點擊上傳分享縮圖"
+                        className="w-full max-w-sm aspect-[1200/630] h-auto"
+                      />
+                    ) : f.multiline ? (
                       <textarea
                         value={values[f.key] ?? ''}
                         onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}

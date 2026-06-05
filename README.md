@@ -805,6 +805,22 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-06-05（前後對比圖「最後上傳的跑到倒數第 2」：order 撞號第二波修復）
+
+**症狀**：客戶回報 `/admin/services/6/sections/28/items`（機房電箱清潔比較、機房管路清潔比較）前後對比圖順序會亂跑——最後上傳的跑到倒數第 2 個。
+
+**根因**（2026-05-16「order 碰撞」同一類 bug，當時建了 `lib/admin-reorder.ts` 的 `nextOrder()`，但後來新寫的 section-scoped 編輯器沒沿用）：
+1. `BeforeAfterEditor` 新增時 `defaultOrder = pairs.length`——**刪過中間任一筆後 orders 有空洞**（如 0,1,3..9 共 9 筆），新項目拿 `order=9` 與既有最後一筆**撞號**
+2. admin 讀取的 tie-break 是 `createdAt: 'desc'`——撞號時**新的排舊的前面**，所以新上傳的固定卡在倒數第 2
+3. 前台 `getServiceBySlugFull` 的 beforeAfters 完全沒 tie-break，撞號時順序由 Postgres 隨機決定，前後台可能不一致
+
+**修法**（把製造撞號的源頭堵掉，不再信任 client 算的 order）：
+- **4 個 POST route server 端自算 `max(order)+1`**（aggregate `_max` within sectionId，client 傳的 `order` 一律忽略）：`before-afters`、`gallery`、`faqs`、`features`
+- **tie-break 統一改 `id: 'asc'`**（撞號時保留新增順序，與 `normalize-orders.ts` 準則一致）：`api/admin/sections/[sectionId]`、`api/admin/services/[id]/before-afters` GET、`lib/queries.ts` getServiceBySlugFull beforeAfters
+- **既有撞號資料**：重跑一次性腳本 `pnpm exec tsx prisma/normalize-orders.ts`（只重編 order 為 0..n-1，無資料刪除）
+
+**規則**：列表型子表的「新增」一律由 server 算 order，client 不要再傳 length。
+
 ### 2026-06-05（修社群分享縮圖「有些頁有、有些頁沒有」）
 
 **症狀**：分享網址到 FB/LINE 時，部分頁面有預覽縮圖、部分沒有。
@@ -814,12 +830,16 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 2. **後台缺欄位** — `app/layout.tsx` 註解寫「業主應於後台設定 `ogImage`」，但 `/admin/settings` 根本沒有這個欄位，`settings.ogImage` 永遠是空，所有頁面都退到 logo.jpg。
 3. **謊報尺寸** — logo.jpg 實際 349×359，metadata 卻宣告 `width: 1200, height: 630`，FB 可能因尺寸不符拒絕渲染。
 
+**追加發現（第四層）**：服務 Hero 圖有**兩個存放處** — 新增服務 modal 的「Hero 大圖」存 `Service.heroImage`；但編輯既有服務時主面板沒這欄位，指引到「頁面區塊 → Hero 區塊」，那邊存的是 **section config 的 `heroImage`**，不會寫回 `Service.heroImage`。OG 原本只讀後者 → 業主後來在區塊換的圖，頁面看得到、分享縮圖不會跟著變。
+
 **修法**：
-- `app/(site)/services/[slug]/page.tsx`：OG image 改三層 fallback `service.heroImage → settings.ogImage → /logo.jpg`，保證每個服務頁都有 `og:image`
-- `app/admin/settings/page.tsx`：「社群」群組新增 `ogImage` 欄位（建議 1200×630 圖片網址）
+- `app/(site)/services/[slug]/page.tsx`：OG image 與前台 `HeroSection` 同源，五層 fallback `Hero 區塊 config 圖 → Service.heroImage → Service.cardImage → settings.ogImage → /logo.jpg`，保證每個服務頁都有自己的 `og:image`
+- `app/admin/settings/page.tsx`：「社群」群組新增 `ogImage` **圖片上傳欄位**（`SettingField` 加 `image?: boolean`，渲染共用 `ImageUploader` 上傳到 R2 `settings/`，預覽框 1200:630 比例）
 - `app/layout.tsx`：移除寫死的 `width: 1200, height: 630` 宣告
 
-**業主操作**：後台「站台設定 → 社群」填一張 1200×630 的品牌主視覺網址（可先上傳到 R2 再貼網址）。**改完要清社群快取才看得到**：FB 用 [Sharing Debugger](https://developers.facebook.com/tools/debug/) 按「再次抓取」，LINE 快取約 1 週自動過期（無官方清除工具）。
+**各頁縮圖來源整理**：服務詳情頁 = 該服務 Hero 圖（區塊圖優先，退卡片圖）；其他頁（首頁/about/works/faq/contact）= 後台「站台設定 → 社群 → 社群分享縮圖」上傳的圖，沒上傳退 logo.jpg。
+
+**業主操作**：後台「站台設定 → 社群」直接點擊上傳一張 1200×630 的品牌主視覺。**改完要清社群快取才看得到**：FB 用 [Sharing Debugger](https://developers.facebook.com/tools/debug/) 按「再次抓取」，LINE 快取約 1 週自動過期（無官方清除工具）。
 
 ### 2026-06-03（綁定 Google Search Console + 接 Google Analytics 4）
 

@@ -26,15 +26,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { text, order, sectionId } = await request.json()
+    const { text, sectionId } = await request.json()
     if (!text) return errorResponse('特色文字為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
+
+    // order 由 server 計算 max+1，避免 client 用 length 計算在刪除後撞號
+    const maxOrder = await prisma.serviceFeature.aggregate({
+      where: { sectionId },
+      _max: { order: true },
+    })
 
     const item = await prisma.serviceFeature.create({
       data: {
         sectionId,
         text,
-        order: order ?? 0,
+        order: (maxOrder._max.order ?? -1) + 1,
       },
     })
     await revalidateService(parseInt(id))

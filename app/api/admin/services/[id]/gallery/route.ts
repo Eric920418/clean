@@ -27,9 +27,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { url, alt, caption, order, sectionId } = await request.json()
+    const { url, alt, caption, sectionId } = await request.json()
     if (!url) return errorResponse('url 為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
+
+    // order 由 server 計算 max+1，避免 client 用 length 計算在刪除後撞號
+    const maxOrder = await prisma.serviceGalleryImage.aggregate({
+      where: { sectionId },
+      _max: { order: true },
+    })
 
     const item = await prisma.serviceGalleryImage.create({
       data: {
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         url,
         alt: alt || null,
         caption: caption || null,
-        order: order ?? 0,
+        order: (maxOrder._max.order ?? -1) + 1,
       },
     })
     await revalidateService(parseInt(id))

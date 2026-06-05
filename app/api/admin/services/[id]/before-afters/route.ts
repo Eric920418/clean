@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const items = await prisma.beforeAfterPair.findMany({
       where: { section: { serviceId: parseInt(id) } },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
     })
     return successResponse(items)
   } catch (error) {
@@ -27,12 +27,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   try {
     const body = await request.json()
-    const { beforeUrl, afterUrl, caption, location, takenAt, isFeatured, isActive, order, sectionId } = body
+    const { beforeUrl, afterUrl, caption, location, takenAt, isFeatured, isActive, sectionId } = body
 
     if (!beforeUrl || !afterUrl) {
       return errorResponse('Before 與 After 兩張圖皆為必填', 400)
     }
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
+
+    // order 由 server 計算 max+1，不信任 client 傳的 length（刪除後有空洞時 length 會撞號，導致新增的排序亂跑）
+    const maxOrder = await prisma.beforeAfterPair.aggregate({
+      where: { sectionId },
+      _max: { order: true },
+    })
 
     const item = await prisma.beforeAfterPair.create({
       data: {
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         takenAt: takenAt ? new Date(takenAt) : null,
         isFeatured: !!isFeatured,
         isActive: isActive !== false,
-        order: order ?? 0,
+        order: (maxOrder._max.order ?? -1) + 1,
       },
     })
     await revalidateService(parseInt(id))

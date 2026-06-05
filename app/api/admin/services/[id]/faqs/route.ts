@@ -27,18 +27,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { question, answer, order, sectionId } = await request.json()
+    const { question, answer, sectionId } = await request.json()
     if (!question) return errorResponse('問題為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
     const cleanAnswer = sanitizeRichText(answer)
     if (!cleanAnswer) return errorResponse('答案為必填', 400)
+
+    // order 由 server 計算 max+1，避免 client 用 length 計算在刪除後撞號
+    const maxOrder = await prisma.serviceFaq.aggregate({
+      where: { sectionId },
+      _max: { order: true },
+    })
 
     const item = await prisma.serviceFaq.create({
       data: {
         sectionId,
         question,
         answer: cleanAnswer,
-        order: order ?? 0,
+        order: (maxOrder._max.order ?? -1) + 1,
       },
     })
     await revalidateService(parseInt(id))
