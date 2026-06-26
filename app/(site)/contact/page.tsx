@@ -57,20 +57,20 @@ export default async function ContactPage() {
               <h3 className="text-base font-medium text-ink">直接聯絡</h3>
               <ul className="mt-5 space-y-4 text-sm">
                 <li className="flex items-start gap-3">
-                  <Phone className="mt-0.5 h-4 w-4 text-primary-deep" />
-                  <div>
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary-deep" />
+                  <div className="min-w-0">
                     <div className="text-ink-muted">服務專線（點擊來電）</div>
                     <a
                       href={phoneTel}
-                      className="font-medium text-ink hover:text-primary-deep"
+                      className="font-medium text-ink hover:text-primary-deep break-words"
                     >
                       {phone}
                     </a>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Mail className="mt-0.5 h-4 w-4 text-primary-deep" />
-                  <div>
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary-deep" />
+                  <div className="min-w-0">
                     <div className="text-ink-muted">電子郵件</div>
                     <a
                       href={`mailto:${email}`}
@@ -83,10 +83,10 @@ export default async function ContactPage() {
 
                 {lineId && (
                   <li className="flex items-start gap-3">
-                    <MessageCircle className="mt-0.5 h-4 w-4 text-primary-deep" />
-                    <div>
+                    <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary-deep" />
+                    <div className="min-w-0">
                       <div className="text-ink-muted">LINE 好友 ID</div>
-                      <span className="font-medium text-ink">{lineId}</span>
+                      <span className="font-medium text-ink break-all">{lineId}</span>
                     </div>
                   </li>
                 )}
@@ -118,17 +118,17 @@ export default async function ContactPage() {
                 )}
 
                 <li className="flex items-start gap-3">
-                  <Clock className="mt-0.5 h-4 w-4 text-primary-deep" />
-                  <div>
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary-deep" />
+                  <div className="min-w-0">
                     <div className="text-ink-muted">服務時間</div>
-                    <span className="font-medium text-ink">{hours}</span>
+                    <span className="font-medium text-ink break-words">{hours}</span>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <MapPin className="mt-0.5 h-4 w-4 text-primary-deep" />
-                  <div>
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary-deep" />
+                  <div className="min-w-0">
                     <div className="text-ink-muted">服務範圍</div>
-                    <span className="font-medium text-ink">{serviceArea}</span>
+                    <span className="font-medium text-ink break-words">{serviceArea}</span>
                   </div>
                 </li>
               </ul>

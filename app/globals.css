@@ -326,6 +326,30 @@
     color: inherit;
   }
 
+  /* 手機版防爆版：CKEditor 富文本內使用者貼上的長網址/長英數字串，
+   * 預設 overflow-wrap:normal 整串不斷行，會把版面撐寬造成手機橫向爆版。
+   * 寬表格改成表格內水平捲動、寬媒體限制在容器內。
+   * RichText 元件統一套 .prose，故此一處覆蓋全站（服務頁 / FAQ / 自訂區塊 / 卡片摘要）。
+   * 刻意不用 body{overflow-x:hidden} 藏症狀 — 直接讓內容真的會斷行。 */
+  .prose {
+    overflow-wrap: anywhere;
+  }
+  .prose :where(a):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    word-break: break-word;
+  }
+  .prose :where(table):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .prose :where(img):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    max-width: 100%;
+    height: auto;
+  }
+  .prose :where(video, iframe, pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    max-width: 100%;
+  }
+
   /* Eyebrow 文字（章節標籤） */
   .eyebrow {
     display: inline-flex;

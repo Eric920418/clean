@@ -110,6 +110,14 @@
 
 新增頁面卡片 className 一律使用 `p-4 sm:p-5 md:p-6`，請勿單獨寫死 `p-5` 或 `p-6`。
 
+#### 前台富文本斷行（避免手機橫向爆版）
+
+前台所有 CKEditor 富文本都經 `components/rich-text.tsx` 的 `RichText` 統一套 `.prose`。業主在後台貼上的**長網址**（如 `https://nehrc.nhri.edu.tw/2021/...`、蝦皮 `tw.shp.ee/...`）預設 `overflow-wrap: normal` **整串不斷行**，會在 375px 手機把版面撐寬 → 橫向捲動爆版（中文可逐字斷行所以不受影響，純英文網址才中招）。
+
+`app/globals.css` 在 `.prose` 統一加 `overflow-wrap: anywhere`，並把表格改 `display:block; overflow-x:auto`、圖片/媒體 `max-width:100%`。**一處覆蓋全站**所有富文本（服務頁 / FAQ / 自訂區塊 / 卡片摘要），業主貼任何長連結或寬表格都不會再爆版。
+
+> 刻意**不用** `body { overflow-x: hidden }` 把橫向捲動藏起來——那只遮症狀、會破壞 `position: sticky`，且違背「錯誤完整顯示」原則。正解是讓內容真的會斷行。聯絡頁 `app/(site)/contact/page.tsx` 的電話／Email／LINE ID／服務時間／範圍等值也加了 `break-all`/`break-words` + 外層 `min-w-0` 防呆（flex 子項預設 `min-width:auto` 不會縮，長值會頂破容器）。
+
 ## API 路由
 
 ```
@@ -804,6 +812,24 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-06-26（修手機版富文本長網址爆版：全站 `.prose` 斷行硬化）
+
+**症狀**：客戶回報 `/services/anti-smog-mesh` 等頁面在手機上「爆版」（橫向捲動、版面被撐寬）。
+
+**全站實測**（瀏覽器 375px 逐元素量測水平溢出）：
+- 靜態版型全乾淨——首頁 `/`、`/services`、`/about`、`/works`、`/faq`、`/contact` 在 375px 下 0 溢出。
+- 唯一元兇 = 服務頁 `.prose` 富文本裡業主貼的**長網址不斷行**：`anti-smog-mesh`（3 個，最遠撐到 526px）、`home-cleaning`（7 個蝦皮連結）、南投房屋仲介頁（1 個 line.me）。其餘服務頁無長網址、目前乾淨。
+- 排除假陽性：偵測到的 `ue-sidebar-container` 607px iframe 是瀏覽器擴充功能注入，非網站問題。viewport meta 也確認存在（Next.js 自動注入），非主因。
+
+**根因**：英文長網址（50+ 字元無空白）在 `overflow-wrap: normal` 下整串不斷行，硬撐版面寬度。中文可逐字斷行故不受影響。
+
+**修法**（修根因、不藏症狀）：
+- `app/globals.css`：`.prose` 加 `overflow-wrap: anywhere`；連結 `word-break: break-word`；表格 `display:block; overflow-x:auto`；圖片/媒體 `max-width:100%`。RichText 元件統一套 `.prose`，**一處覆蓋全站**。
+- `app/(site)/contact/page.tsx`：聯絡資訊（電話/Email/LINE ID/時間/範圍）補 `break-all`/`break-words` + 外層 `min-w-0` + icon `shrink-0` 防呆（潛在風險，現未爆版）。
+- 詳見上方「前台富文本斷行（避免手機橫向爆版）」一節。
+
+**規則**：富文本爆版一律修 `.prose` 斷行，禁用 `body{overflow-x:hidden}` 遮蔽。
 
 ### 2026-06-05（前後對比圖「最後上傳的跑到倒數第 2」：order 撞號第二波修復）
 
