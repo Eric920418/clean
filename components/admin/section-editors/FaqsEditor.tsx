@@ -120,7 +120,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             value={a}
             onContentChange={(html) => setA(html)}
             placeholder="答案（可直接貼入 LINE 加好友按鈕等 HTML 片段，前台會自動渲染）"
-            height="180px"
+            height="clamp(300px, 50vh, 600px)"
             allowHeading4
           />
           <p className="text-xs text-ink-muted leading-relaxed">
@@ -250,7 +250,7 @@ function FaqRow({
       <RichTextEditor
         value={a}
         onContentChange={(html) => setA(html)}
-        height="180px"
+        height="clamp(300px, 50vh, 600px)"
         allowHeading4
       />
       <div className="flex justify-end gap-2">

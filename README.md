@@ -838,6 +838,14 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 
 ## 變更記錄
 
+### 2026-06-29（後台富文本編輯器高度自適應，一次看到更多）
+
+客戶反映所有編輯器太矮。`RichTextEditor` 的高度（min/max 綁同值＝固定高＋內部捲動）改成隨視窗自適應：
+- 預設 `400px` → `clamp(400px, 60vh, 720px)`（多數編輯器吃此預設）。
+- `FaqsEditor`（服務 FAQ 新增＋編輯）`180px` → `clamp(300px, 50vh, 600px)`。
+
+用 `clamp` 而非寫死大 px：大螢幕自動長高（一次看到更多），小筆電收斂到 floor 不爆版。工具列固定、內容區內部捲動的行為不變。`components/admin/rich-text-editor.tsx`、`components/admin/section-editors/FaqsEditor.tsx`。
+
 ### 2026-06-29（服務 FAQ 也獨立 URL 化：巢狀 /services/[服務]/faq/[問題]）
 
 **需求**：客戶 QA 反映「整份沒做完，只做了一般服務」。把服務 FAQ（`ServiceFaq`）也補成獨立可索引網址。

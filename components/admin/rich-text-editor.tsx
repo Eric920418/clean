@@ -100,7 +100,7 @@ function R2UploadAdapterPlugin(editor: unknown) {
 export function RichTextEditor({
   value,
   onContentChange,
-  height = '400px',
+  height = 'clamp(400px, 60vh, 720px)',
   placeholder,
   allowHeading4 = false,
 }: Props) {
