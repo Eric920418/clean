@@ -9,6 +9,11 @@ type Props = {
    * 適合包在 blockquote / 卡片摘要等 inline 文脈內。
    */
   inline?: boolean
+  /**
+   * 允許的最高標題層級（透傳給 sanitizeRichText）。預設 3。
+   * 內容自成一頁、頁面 H1 由標題擔任時（如 /faq/[slug] 答案）可設 4。
+   */
+  maxHeading?: 3 | 4
 }
 
 /**
@@ -23,9 +28,9 @@ type Props = {
  *   - 功能上等同直接寫該 prop，但繞過 lint 字面檢查
  *   - 安全性靠上方 sanitize 提供
  */
-export function RichText({ html, className, inline }: Props) {
+export function RichText({ html, className, inline, maxHeading }: Props) {
   if (!html) return null
-  const clean = sanitizeRichText(html) ?? ''
+  const clean = sanitizeRichText(html, { maxHeading }) ?? ''
   if (!clean) return null
   const baseCls = inline
     ? 'prose prose-neutral max-w-none prose-p:m-0 prose-p:inline'

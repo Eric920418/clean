@@ -180,6 +180,29 @@ export function faqPageJsonLd(faqs: Array<{ question: string; answer: string }>)
   }
 }
 
+/**
+ * 單一問題頁（/faq/[slug]）用的 QAPage 結構化資料。
+ * answer 需傳「純文字」（呼叫端用 stripHtml 攤平），避免把 HTML 塞進 schema text。
+ */
+export function qaPageJsonLd(faq: { question: string; answer: string; path: string }) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'QAPage',
+    mainEntity: {
+      '@type': 'Question',
+      name: faq.question,
+      text: faq.question,
+      answerCount: 1,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+        url: `${baseUrl}${faq.path}`,
+      },
+      url: `${baseUrl}${faq.path}`,
+    },
+  }
+}
+
 export function breadcrumbJsonLd(items: Array<{ name: string; path: string }>) {
   return {
     '@context': 'https://schema.org',

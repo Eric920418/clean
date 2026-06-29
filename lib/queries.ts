@@ -85,6 +85,11 @@ export async function getGeneralFaqs() {
   return prisma.generalFaq.findMany({ orderBy: { order: 'asc' } })
 }
 
+// /faq/[slug] 單題詳細頁（slug 非 DB unique，唯一性由應用層保證，故用 findFirst）
+export async function getGeneralFaqBySlug(slug: string) {
+  return prisma.generalFaq.findFirst({ where: { slug } })
+}
+
 export async function getActiveServices() {
   // 服務列表 + 每個服務透過 sections 拉子表（features/faqs 用於卡片摘要 / FAQ 頁；
   // _count 用於 /admin/services 列表的「N 組對比 / N 圖」顯示）

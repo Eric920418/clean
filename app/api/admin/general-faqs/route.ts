@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { sanitizeRichText } from '@/lib/sanitize-html'
+import { slugify, uniqueSlug } from '@/lib/slug'
 
 export async function GET() {
   const auth = await checkAdminAuth()
@@ -21,11 +22,12 @@ export async function POST(request: NextRequest) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { question, answer, order } = await request.json()
+    const { question, answer, order, slug } = await request.json()
     if (typeof question !== 'string' || !question.trim()) {
       return errorResponse('問題為必填', 400)
     }
-    const cleanAnswer = sanitizeRichText(answer)
+    // FAQ 答案自成一頁（/faq/[slug]，H1=問題），故放行到 h4
+    const cleanAnswer = sanitizeRichText(answer, { maxHeading: 4 })
     if (!cleanAnswer) return errorResponse('回答為必填', 400)
 
     let finalOrder = typeof order === 'number' ? order : null
@@ -34,8 +36,17 @@ export async function POST(request: NextRequest) {
       finalOrder = (last?.order ?? -1) + 1
     }
 
+    // slug：未填則由問題自動產生；唯一性由 uniqueSlug 對既有 slug 集合應用層保證
+    const existingSlugs = new Set(
+      (await prisma.generalFaq.findMany({ select: { slug: true } }))
+        .map((f) => f.slug)
+        .filter((s): s is string => !!s),
+    )
+    const base = typeof slug === 'string' && slug.trim() ? slugify(slug) : slugify(question)
+    const finalSlug = uniqueSlug(base, existingSlugs)
+
     const item = await prisma.generalFaq.create({
-      data: { question: question.trim(), answer: cleanAnswer, order: finalOrder },
+      data: { question: question.trim(), answer: cleanAnswer, slug: finalSlug, order: finalOrder },
     })
     return successResponse(item, 201)
   } catch (error) {

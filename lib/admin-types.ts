@@ -145,6 +145,7 @@ export type AdminGeneralFaq = {
   id: number
   question: string
   answer: string
+  slug: string | null
   order: number
   createdAt: string
   updatedAt: string

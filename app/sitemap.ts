@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getActiveServices, getFeaturedBeforeAfters } from '@/lib/queries'
+import { getActiveServices, getFeaturedBeforeAfters, getGeneralFaqs } from '@/lib/queries'
 
 export const revalidate = 300 // sitemap 5 分鐘 ISR 即可
 
@@ -19,12 +19,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 若 DB 不可用，回退僅有靜態路由（避免 build 時 fail）
   let serviceRoutes: MetadataRoute.Sitemap = []
+  let faqRoutes: MetadataRoute.Sitemap = []
   let worksImageEntry: MetadataRoute.Sitemap = []
   try {
-    const [services, featured] = await Promise.all([
+    const [services, featured, generalFaqs] = await Promise.all([
       getActiveServices(),
       getFeaturedBeforeAfters().catch(() => []),
+      getGeneralFaqs().catch(() => []),
     ])
+
+    // 每則一般 FAQ 的獨立頁進 sitemap，讓 Google 收錄各問題 URL
+    faqRoutes = generalFaqs
+      .filter((f) => f.slug)
+      .map((f) => ({
+        url: `${base}/faq/${f.slug}`,
+        lastModified: f.updatedAt ?? now,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
 
     serviceRoutes = services.map((s) => ({
       url: `${base}/services/${s.slug}`,
@@ -56,5 +68,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB 不可用，sitemap 仍輸出靜態路由
   }
 
-  return [...staticRoutes, ...worksImageEntry, ...serviceRoutes]
+  return [...staticRoutes, ...worksImageEntry, ...serviceRoutes, ...faqRoutes]
 }

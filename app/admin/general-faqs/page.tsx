@@ -12,8 +12,8 @@ import { useConfirm } from '@/components/admin/confirm-dialog'
 import type { AdminGeneralFaq } from '@/lib/admin-types'
 import { swapOrderByIndex } from '@/lib/admin-reorder'
 
-type FormState = { question: string; answer: string }
-const emptyForm: FormState = { question: '', answer: '' }
+type FormState = { question: string; answer: string; slug: string }
+const emptyForm: FormState = { question: '', answer: '', slug: '' }
 
 export default function GeneralFaqsPage() {
   const [items, setItems] = useState<AdminGeneralFaq[]>([])
@@ -52,7 +52,7 @@ export default function GeneralFaqsPage() {
 
   function openEdit(it: AdminGeneralFaq) {
     setEditing(it)
-    setForm({ question: it.question, answer: it.answer })
+    setForm({ question: it.question, answer: it.answer, slug: it.slug ?? '' })
     setError(null)
     setOpen(true)
   }
@@ -197,11 +197,31 @@ export default function GeneralFaqsPage() {
             />
           </Field>
 
+          <Field label="網址（slug）">
+            <input
+              value={form.slug}
+              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              className={inputClass}
+              placeholder="留空＝自動由問題產生；每題會有獨立網址 /faq/…"
+            />
+            {editing?.slug && (
+              <a
+                href={`/faq/${editing.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-xs text-primary-deep hover:underline"
+              >
+                前台預覽 /faq/{editing.slug} ↗
+              </a>
+            )}
+          </Field>
+
           <Field label="回答" required>
             <RichTextEditor
               value={form.answer}
               onContentChange={(html) => setForm({ ...form, answer: html })}
               placeholder="一般情況下 1–3 天內可安排…"
+              allowHeading4
             />
           </Field>
 

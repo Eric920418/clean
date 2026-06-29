@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
-import { MessageCircle, PhoneCall } from 'lucide-react'
+import Link from 'next/link'
+import { MessageCircle, PhoneCall, ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
 import { Faq } from '@/components/faq'
 import { getActiveServices, getGeneralFaqs, getContentBlock, getSiteSettings } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
-import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, faqPageJsonLd, itemListJsonLd } from '@/lib/seo'
+import { stripHtml } from '@/lib/sanitize-html'
 
 export const revalidate = 60
 
@@ -25,29 +27,38 @@ export default async function FaqPage() {
   const lineFriendUrl = settings.lineFriendUrl || ''
   const lineCallUrl = settings.lineCallUrl || ''
 
-  // 把 general + 各服務 FAQ 合併成 FAQPage schema 餵給 Google
-  // 注意：rich result 規範建議單頁 ≤ 約 50 題；超量則挑優先 general 題目 + 各服務各 5 題
-  const allFaqs: Array<{ question: string; answer: string }> = [
-    ...generalFaqs.map((f) => ({ question: f.question, answer: f.answer })),
-    ...services.flatMap((s) =>
-      (s.faqs ?? []).slice(0, 5).map((f) => ({
-        // 在 service faq 的 question 前加服務名，避免不同服務題目撞名
-        question: `${s.name}：${f.question}`,
-        answer: f.answer,
-      })),
-    ),
-  ]
+  // 一般 FAQ 各自有獨立頁 → 用 ItemList 串連結（答案交給 /faq/[slug] 的 QAPage，避免重複內容）
+  const generalList = generalFaqs.filter((f) => f.slug)
+  const generalListSchema =
+    generalList.length > 0
+      ? itemListJsonLd(
+          generalList.map((f) => ({
+            name: f.question,
+            url: `/faq/${f.slug}`,
+            description: stripHtml(f.answer, 100),
+          })),
+        )
+      : null
+
+  // 服務 FAQ 仍內嵌本頁（手風琴）→ 維持 FAQPage（各服務各取 5 題，題目前綴服務名避免撞名）
+  const serviceFaqs = services.flatMap((s) =>
+    (s.faqs ?? []).slice(0, 5).map((f) => ({
+      question: `${s.name}：${f.question}`,
+      answer: f.answer,
+    })),
+  )
+  const serviceFaqSchema = serviceFaqs.length > 0 ? faqPageJsonLd(serviceFaqs) : null
 
   const breadcrumb = breadcrumbJsonLd([
     { name: '首頁', path: '/' },
     { name: '常見問題', path: '/faq' },
   ])
-  const faqSchema = allFaqs.length > 0 ? faqPageJsonLd(allFaqs) : null
 
   return (
     <>
       <JsonLd data={breadcrumb} />
-      {faqSchema && <JsonLd data={faqSchema} />}
+      {generalListSchema && <JsonLd data={generalListSchema} />}
+      {serviceFaqSchema && <JsonLd data={serviceFaqSchema} />}
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
@@ -61,13 +72,34 @@ export default async function FaqPage() {
 
       <section className="section pt-8 md:pt-10">
         <div className="container-narrow max-w-3xl space-y-12">
-          {generalFaqs.length > 0 && (
+          {generalList.length > 0 && (
             <div>
               <h2 className="text-xl font-medium text-ink">
                 {hero.generalHeading || "一般服務"}
               </h2>
-              <div className="mt-6">
-                <Faq items={generalFaqs} />
+              <div className="mt-6 divide-y divide-hairline border-y border-hairline">
+                {generalList.map((f) => (
+                  <article key={f.id} className="group py-5">
+                    <h3 className="text-base font-medium text-ink md:text-lg">
+                      <Link
+                        href={`/faq/${f.slug}`}
+                        className="transition group-hover:text-primary-deep"
+                      >
+                        {f.question}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">
+                      {stripHtml(f.answer, 90)}
+                    </p>
+                    <Link
+                      href={`/faq/${f.slug}`}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary-deep transition-all group-hover:gap-2"
+                    >
+                      查看詳情
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </article>
+                ))}
               </div>
             </div>
           )}

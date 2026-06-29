@@ -62,6 +62,12 @@ type Props = {
   onContentChange: (html: string) => void
   height?: string | number
   placeholder?: string
+  /**
+   * 是否在標題下拉多開放「標題 4」。
+   * 預設 false（只有 段落/標題2/標題3，站台通用內文嵌在區塊 H2 之下）。
+   * 內容自成一頁、頁面 H1 由標題擔任時（如一般 FAQ 答案 → /faq/[slug]，H1=問題）設 true。
+   */
+  allowHeading4?: boolean
 }
 
 /**
@@ -96,6 +102,7 @@ export function RichTextEditor({
   onContentChange,
   height = '400px',
   placeholder,
+  allowHeading4 = false,
 }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
@@ -228,8 +235,9 @@ export function RichTextEditor({
         supportAllValues: true,
       },
       heading: {
-        // 只保留 H2/H3：頁面主標 H1 由頁面框架掌控，富文本內僅允許次級標題，
+        // 預設只保留 H2/H3：頁面主標 H1 由頁面框架掌控，富文本內僅允許次級標題，
         // 配合 lib/sanitize-html.ts 的降級收口，確保不破壞 SEO 標題階級。
+        // allowHeading4=true 時多開放標題4（內容自成一頁、H1=標題本身的情境，如一般 FAQ 答案）。
         options: [
           {
             model: 'paragraph' as const,
@@ -248,6 +256,16 @@ export function RichTextEditor({
             title: '標題 3',
             class: 'ck-heading_heading3',
           },
+          ...(allowHeading4
+            ? [
+                {
+                  model: 'heading4' as const,
+                  view: 'h4',
+                  title: '標題 4',
+                  class: 'ck-heading_heading4',
+                },
+              ]
+            : []),
         ],
       },
       htmlEmbed: {
@@ -312,7 +330,7 @@ export function RichTextEditor({
       },
       translations: [translations],
     }
-  }, [isReady])
+  }, [isReady, allowHeading4])
 
   const handleEditorChange = (_event: unknown, editor: unknown) => {
     const e = editor as { getData: () => string }

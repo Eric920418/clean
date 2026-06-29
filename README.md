@@ -129,6 +129,17 @@
 - **頁尾**：`components/site-footer.tsx` 的欄位標籤（服務項目／聯絡資訊）用 `<p>` 而非 heading——頁尾是 `<footer>` 地標，不佔用內容大綱層級、永不跳級。
 - 驗證：每頁 Console 跑 `$$('h1,h2,h3,h4,h5,h6').map(h=>h.tagName)`，確認恰一個 `H1`、無 `H4–H6`、不跳級。
 
+#### FAQ 獨立 URL 架構（一般 FAQ）
+
+為 SEO 讓**每則一般 FAQ（`GeneralFaq`）都是可被索引的獨立網址**。服務 FAQ（`ServiceFaq`）維持內嵌手風琴、本期不變。
+
+- **資料**：`GeneralFaq.slug String?`（nullable，不加 DB `@unique` 以免 `prisma db push` 觸發 `--accept-data-loss`；**唯一性由應用層保證**）。slug 由 `lib/slug.ts` 的 `slugify(question)` + `uniqueSlug` 產生（保留中文）。一次性回填腳本：`prisma/backfill-faq-slug.ts`（`pnpm exec tsx prisma/backfill-faq-slug.ts`，冪等）。
+- **詳細頁** `app/(site)/faq/[slug]/page.tsx`：仿 `services/[slug]` 範式。**H1＝問題**；答案用 `<RichText maxHeading={4}>` 渲染（見下）；`breadcrumbJsonLd` + `qaPageJsonLd`（`@type: QAPage`）；`generateMetadata` 用 `stripHtml(answer,150)` 當 description。查詢 `getGeneralFaqBySlug`（用 `findFirst`，因 slug 非 DB unique）。
+- **列表頁** `/faq`：一般 FAQ 改成 webtech 風文章清單（`<h3>` 問題連結 → `/faq/[slug]` + 摘要 + 查看詳情），schema 改 `itemListJsonLd`；服務 FAQ 區維持手風琴 + `faqPageJsonLd`。
+- **sitemap**：`app/sitemap.ts` 收錄每則 `/faq/[slug]`。
+- **標題層級放行（關鍵）**：詳細頁 H1＝問題，故答案可合法用 H2–H4。`sanitizeRichText(input, { maxHeading })` 參數化——預設 `3`（站台通用內文，h4–h6 降 h3）；FAQ 答案寫入端與 `<RichText maxHeading={4}>` 用 `4`（保留 h4、h5/h6 降 h4），**h1 恆降 h2**（不產生第二 H1）。`RichTextEditor` 加 `allowHeading4` prop，一般 FAQ 答案編輯器開「段落／標題2／標題3／標題4」，其餘 8 個使用點不受影響。
+- **後台**：`/admin/general-faqs` 表單加「網址（slug）」欄（留空＝自動）＋「前台預覽」連結。
+
 ## API 路由
 
 ```
@@ -823,6 +834,22 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-06-29（FAQ 一般問題獨立 URL 化 + /faq 列表頁改版）
+
+**需求**：客戶為 SEO 要求「每個 FAQ 問題是獨立可爬取的 URL」，`/faq` 樣式參考 webtech 文章清單，後台答案編輯器要能設標題層級。
+
+**範圍**：只做一般 FAQ（`GeneralFaq`）；服務 FAQ 維持現狀。slug 自動沿用問題中文。
+
+**做法**：
+- `prisma/schema.prisma`：`GeneralFaq` 加 `slug String?`（**不加 DB `@unique`** → `db:push` 加 nullable 欄位非破壞性、**全程未用 accept-data-loss**；唯一性走應用層 `uniqueSlug`）。一次性回填 `prisma/backfill-faq-slug.ts`（已回填 5 筆、冪等）。
+- 新 `app/(site)/faq/[slug]/page.tsx`：H1＝問題 + 答案（`maxHeading=4`）+ QAPage/麵包屑 JSON-LD。
+- `/faq` 改 webtech 風清單（一般 FAQ 連到詳細頁，`itemListJsonLd`）；服務 FAQ 維持手風琴。
+- `app/sitemap.ts` 收錄 `/faq/[slug]`；`lib/seo.ts` 加 `qaPageJsonLd`；`lib/sanitize-html.ts` 加 `stripHtml` 與 `sanitizeRichText(_, { maxHeading })`；`components/rich-text.tsx` 加 `maxHeading`；`components/admin/rich-text-editor.tsx` 加 `allowHeading4`；`/admin/general-faqs` 表單加 slug 欄與前台預覽；general-faqs API 自動產生 slug 並以 `maxHeading:4` sanitize。
+
+**本地實測**：5 個 `/faq/[slug]` 全 H1＝問題、QAPage 有效、無 H5/6、不跳級；`/faq` 列表 5 連結正常；sitemap 含 5 筆；固定 6 頁標題階級無回歸；`maxHeading` 3/4 降級邏輯經單元驗證。`tsc` 全綠。
+
+**規則**：FAQ 答案唯一允許用到 H4（因 H1＝問題、自成一頁）；其餘富文本仍上限 H3。slug 一旦產生不隨改問題自動變動（避免既有 URL 失效）。
 
 ### 2026-06-29（SEO 標題階級 H1–H3 全站規範化）
 
