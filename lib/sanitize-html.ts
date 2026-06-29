@@ -75,7 +75,7 @@ export function sanitizeRichText(input: unknown): string | null {
   if (typeof input !== 'string') return null
   const trimmed = input.trim()
   if (trimmed === '' || trimmed === '<p></p>' || trimmed === '<p><br></p>') return null
-  return sanitize(input, {
+  const cleaned = sanitize(input, {
     allowedTags: [
       ...sanitize.defaults.allowedTags,
       'h1',
@@ -104,6 +104,21 @@ export function sanitizeRichText(input: unknown): string | null {
     transformTags: {
       // 外部連結加 rel="noopener noreferrer"
       a: sanitize.simpleTransform('a', { rel: 'noopener noreferrer' }, true),
+      // SEO 標題階級收口：富文本永遠嵌在頁面 H1／區塊 H2 之下，
+      // 故 h1 降為 h2、h4–h6 降為 h3，保證不產生第二個 H1、也不超出 H1–H3。
+      // 涵蓋所有現有與未來的 DB 內容（API 寫入 + 前台 render 都會過這裡）。
+      h1: sanitize.simpleTransform('h2', {}),
+      h4: sanitize.simpleTransform('h3', {}),
+      h5: sanitize.simpleTransform('h3', {}),
+      h6: sanitize.simpleTransform('h3', {}),
     },
+  })
+
+  // 移除「空標題」：業主在富文本按 Enter 留下的空白標題行（<h3></h3>、<h2>&nbsp;</h2>、<h3><br></h3>）。
+  // SEO 工具（如 SEO META in 1 Click）會標記為 empty heading。含 <img> 的標題保留（不視為空）。
+  return cleaned.replace(/<(h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/gi, (m, _tag, inner) => {
+    if (/<img/i.test(inner)) return m
+    const textOnly = inner.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;| /g, '').trim()
+    return textOnly === '' ? '' : m
   })
 }

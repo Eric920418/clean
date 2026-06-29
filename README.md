@@ -118,6 +118,17 @@
 
 > 刻意**不用** `body { overflow-x: hidden }` 把橫向捲動藏起來——那只遮症狀、會破壞 `position: sticky`，且違背「錯誤完整顯示」原則。正解是讓內容真的會斷行。聯絡頁 `app/(site)/contact/page.tsx` 的電話／Email／LINE ID／服務時間／範圍等值也加了 `break-all`/`break-words` + 外層 `min-w-0` 防呆（flex 子項預設 `min-width:auto` 不會縮，長值會頂破容器）。
 
+#### SEO 標題階級（H1–H3）
+
+全站前台公開頁面遵守標題階級：**每頁唯一一個 H1、不跳級、最高到 H3**。原則不是「每頁硬塞 H1+H2+H3」，而是反映內容大綱；像 `/works` 圖庫頁只有 H1 是合理的。
+
+- **語意與視覺解耦**：`components/section-heading.tsx` 的 `SectionHeading` 加了 `as?: 'h1' | 'h2' | 'h3'`（預設 `'h2'`），視覺字級由 className 固定、只切換語意標籤。頁面主標題傳 `as="h1"`：`/services`、`/works`、`/contact`、`/faq` 的頁首皆如此（首頁 `/`、`/about`、`/services/[slug]` 的 H1 由各自 hero 元件直接渲染）。
+- **富文本標題收口（一處覆蓋全站 DB 內容）**：`lib/sanitize-html.ts` 的 `sanitizeRichText` 用 `transformTags` 把 `h1→h2`、`h4/h5/h6→h3`。富文本永遠嵌在頁面 H1／區塊 H2 之下，降級後僅用 h2/h3，**保證業主在後台貼任何內容都不會產生第二個 H1、也不超出 H1–H3**（API 寫入 + 前台 render 都會過這裡）。同一收口點還會**移除空標題**（業主按 Enter 留下的 `<h3></h3>`、`<h2>&nbsp;</h2>` 等空白標題行，SEO 工具會標記為 empty heading；含 `<img>` 的標題保留）。
+- **服務詳細頁保證唯一 H1**：H1 由 `HeroSection`（type `hero`）渲染。若某服務未設 hero 區塊（部分舊資料如此）會整頁缺 H1，故 `app/(site)/services/[slug]/page.tsx` 在 `!hasHeroSection` 時補一個服務名稱 H1 — 防禦性、不依賴業主乖乖加區塊。
+- **編輯器預防**：`components/admin/rich-text-editor.tsx` 的 CKEditor 標題下拉只保留「段落／標題 2／標題 3」。
+- **頁尾**：`components/site-footer.tsx` 的欄位標籤（服務項目／聯絡資訊）用 `<p>` 而非 heading——頁尾是 `<footer>` 地標，不佔用內容大綱層級、永不跳級。
+- 驗證：每頁 Console 跑 `$$('h1,h2,h3,h4,h5,h6').map(h=>h.tagName)`，確認恰一個 `H1`、無 `H4–H6`、不跳級。
+
 ## API 路由
 
 ```
@@ -812,6 +823,29 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-06-29（SEO 標題階級 H1–H3 全站規範化）
+
+**需求**：客戶為 SEO 要求「整個網頁都遵守 H1 到 H3 標頭階級、不能漏掉」。
+
+**全站逐檔盤點後的真正問題**（非「缺很多標題」）：
+- `/services`、`/works`、`/contact`、`/faq` **沒有 H1**——頁首都用寫死 `<h2>` 的 `SectionHeading`，整頁最高只到 H2。
+- 跳級：`/services` 卡片、`/contact`「直接聯絡」直接用 H3，缺 H2 中介。
+- 富文本可破壞階級：`sanitizeRichText` 與 CKEditor 皆放行 h1–h6，業主插一個 H1 整頁就兩個 H1。
+- 頁尾用 H4，超出「只到 H3」。
+
+**修法**：
+- `components/section-heading.tsx`：加 `as` prop 解耦語意層級與視覺字級（預設 `h2`，呼叫端不受影響）；4 個公開頁頁首傳 `as="h1"`。
+- `/services` 卡片 `h3→h2`、`/contact`「直接聯絡」`h3→h2`，補上 H2 中介層。
+- `lib/sanitize-html.ts`：`transformTags` 加 `h1→h2`、`h4/h5/h6→h3`，並**移除空標題**，一處收口覆蓋全站現有與未來 DB 富文本。
+- `components/admin/rich-text-editor.tsx`：CKEditor 標題下拉只留段落／標題 2／標題 3。
+- `components/site-footer.tsx`：欄位標籤 `h4→p`（頁尾地標不佔大綱層級）。
+- `app/(site)/services/[slug]/page.tsx`：服務未設 hero 區塊時補服務名稱 H1，保證每頁唯一 H1。
+- 範圍只含前台公開頁；admin 後台不被索引故不動。詳見上方「SEO 標題階級（H1–H3）」一節。
+
+**全站實測驗證**（本地 dev server 逐頁抓伺服器渲染 DOM，比照 SEO META in 1 Click 的 Headings 判定）：6 個固定頁 + 10 個服務詳細頁共 16 頁，全部 H1 唯一、無 H4–H6、無空標題、不跳級。實測抓到並修掉 `window-cleaning` 缺 H1、`anti-smog-mesh`/`web-design`/`about` 共 9 個空標題。
+
+**規則**：每頁唯一一個 H1、不跳級、最高 H3；富文本標題一律走 `sanitizeRichText` 降級收口（含去空標題），不在頁面層逐處補丁。
 
 ### 2026-06-26（修手機版富文本長網址爆版：全站 `.prose` 斷行硬化）
 

@@ -10,6 +10,7 @@ import {
   reviewListJsonLd,
 } from '@/lib/seo'
 import { SectionRenderer } from '@/components/service-sections/SectionRenderer'
+import { SectionHeading } from '@/components/section-heading'
 import { configString } from '@/components/service-sections/types'
 
 type Params = { slug: string }
@@ -98,6 +99,10 @@ export default async function ServiceDetailPage({
     .filter((s) => s.isVisible)
     .sort((a, b) => a.order - b.order)
 
+  // 防禦性保證每頁唯一 H1：H1 由 hero 區塊渲染，若服務未設 hero 區塊（部分舊資料如此），
+  // 前台補一個服務名稱 H1，避免整頁缺 H1（SEO 工具會標記 missing H1）。
+  const hasHeroSection = visibleSections.some((s) => s.type === 'hero')
+
   // 從 sections 攤平 faqs 給 FAQPage schema 用
   const faqs = service.sections.flatMap((sec) => sec.faqs ?? [])
 
@@ -143,6 +148,13 @@ export default async function ServiceDetailPage({
       <JsonLd data={serviceSchema} />
       {faqSchema && <JsonLd data={faqSchema} />}
       {reviewSchema && <JsonLd data={reviewSchema} />}
+      {!hasHeroSection && (
+        <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
+          <div className="container-narrow">
+            <SectionHeading as="h1" title={service.name} description={service.shortDesc} />
+          </div>
+        </section>
+      )}
       {visibleSections.map((section) => (
         <SectionRenderer
           key={section.id}

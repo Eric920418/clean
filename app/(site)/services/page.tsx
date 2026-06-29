@@ -41,6 +41,7 @@ export default async function ServicesIndexPage() {
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading
+            as="h1"
             eyebrow={hero.eyebrow || "Our Services"}
             title={hero.title || "服務項目"}
             description={
@@ -81,9 +82,9 @@ export default async function ServicesIndexPage() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-bg-tint text-primary-deep">
                   <IconByName name={s.icon ?? "Sparkles"} className="h-5 w-5" />
                 </span>
-                <h3 className="mt-4 text-2xl font-medium tracking-tight text-ink md:text-3xl">
+                <h2 className="mt-4 text-2xl font-medium tracking-tight text-ink md:text-3xl">
                   {s.name}
-                </h3>
+                </h2>
                 <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-ink-soft md:text-base">
                   {s.shortDesc}
                 </p>

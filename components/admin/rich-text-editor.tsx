@@ -228,17 +228,13 @@ export function RichTextEditor({
         supportAllValues: true,
       },
       heading: {
+        // 只保留 H2/H3：頁面主標 H1 由頁面框架掌控，富文本內僅允許次級標題，
+        // 配合 lib/sanitize-html.ts 的降級收口，確保不破壞 SEO 標題階級。
         options: [
           {
             model: 'paragraph' as const,
             title: '段落',
             class: 'ck-heading_paragraph',
-          },
-          {
-            model: 'heading1' as const,
-            view: 'h1',
-            title: '標題 1',
-            class: 'ck-heading_heading1',
           },
           {
             model: 'heading2' as const,
@@ -251,24 +247,6 @@ export function RichTextEditor({
             view: 'h3',
             title: '標題 3',
             class: 'ck-heading_heading3',
-          },
-          {
-            model: 'heading4' as const,
-            view: 'h4',
-            title: '標題 4',
-            class: 'ck-heading_heading4',
-          },
-          {
-            model: 'heading5' as const,
-            view: 'h5',
-            title: '標題 5',
-            class: 'ck-heading_heading5',
-          },
-          {
-            model: 'heading6' as const,
-            view: 'h6',
-            title: '標題 6',
-            class: 'ck-heading_heading6',
           },
         ],
       },

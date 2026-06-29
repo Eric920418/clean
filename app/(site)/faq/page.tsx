@@ -51,6 +51,7 @@ export default async function FaqPage() {
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
+            as="h1"
             eyebrow={hero.eyebrow || "FAQ"}
             title={hero.title || "常見問題"}
             description={hero.description || "找不到答案？歡迎直接聯繫我們。"}

@@ -63,6 +63,7 @@ export default async function WorksPage() {
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow">
           <SectionHeading
+            as="h1"
             eyebrow={hero.eyebrow || "Real Results"}
             title={hero.title || "服務案例・前後對比"}
             description={

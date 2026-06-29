@@ -112,7 +112,7 @@ export async function SiteFooter({
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-ink">服務項目</h4>
+          <p className="text-sm font-semibold text-ink">服務項目</p>
           <ul className="mt-4 space-y-2.5 text-sm text-ink-soft">
             {services.map((s) => (
               <li key={s.slug}>
@@ -125,7 +125,7 @@ export async function SiteFooter({
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-ink">聯絡資訊</h4>
+          <p className="text-sm font-semibold text-ink">聯絡資訊</p>
           <ul className="mt-4 space-y-3 text-sm text-ink-soft">
             <li className="flex items-start gap-2">
               <Phone className="mt-0.5 h-4 w-4 text-primary-deep shrink-0" />
