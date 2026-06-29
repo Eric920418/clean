@@ -129,16 +129,19 @@
 - **頁尾**：`components/site-footer.tsx` 的欄位標籤（服務項目／聯絡資訊）用 `<p>` 而非 heading——頁尾是 `<footer>` 地標，不佔用內容大綱層級、永不跳級。
 - 驗證：每頁 Console 跑 `$$('h1,h2,h3,h4,h5,h6').map(h=>h.tagName)`，確認恰一個 `H1`、無 `H4–H6`、不跳級。
 
-#### FAQ 獨立 URL 架構（一般 FAQ）
+#### FAQ 獨立 URL 架構（一般 + 服務 FAQ）
 
-為 SEO 讓**每則一般 FAQ（`GeneralFaq`）都是可被索引的獨立網址**。服務 FAQ（`ServiceFaq`）維持內嵌手風琴、本期不變。
+為 SEO 讓**每則 FAQ 都是可被索引的獨立網址**，`/faq` 是 webtech 風的連結清單（點進詳細頁看答案）。兩種 FAQ 用不同網址命名空間：
+- 一般 FAQ（`GeneralFaq`）→ **`/faq/[slug]`**（平鋪知識庫）
+- 服務 FAQ（`ServiceFaq`）→ **`/services/[服務]/faq/[問題]`**（巢狀在所屬服務下，URL 帶主題層級）
 
-- **資料**：`GeneralFaq.slug String?`（nullable，不加 DB `@unique` 以免 `prisma db push` 觸發 `--accept-data-loss`；**唯一性由應用層保證**）。slug 由 `lib/slug.ts` 的 `slugify(question)` + `uniqueSlug` 產生（保留中文）。一次性回填腳本：`prisma/backfill-faq-slug.ts`（`pnpm exec tsx prisma/backfill-faq-slug.ts`，冪等）。
-- **詳細頁** `app/(site)/faq/[slug]/page.tsx`：仿 `services/[slug]` 範式。**H1＝問題**；答案用 `<RichText maxHeading={4}>` 渲染（見下）；`breadcrumbJsonLd` + `qaPageJsonLd`（`@type: QAPage`）；`generateMetadata` 用 `stripHtml(answer,150)` 當 description。查詢 `getGeneralFaqBySlug`（用 `findFirst`，因 slug 非 DB unique）。
-- **列表頁** `/faq`：一般 FAQ 改成 webtech 風文章清單（`<h3>` 問題連結 → `/faq/[slug]` + 摘要 + 查看詳情），schema 改 `itemListJsonLd`；服務 FAQ 區維持手風琴 + `faqPageJsonLd`。
-- **sitemap**：`app/sitemap.ts` 收錄每則 `/faq/[slug]`。
-- **標題層級放行（關鍵）**：詳細頁 H1＝問題，故答案可合法用 H2–H4。`sanitizeRichText(input, { maxHeading })` 參數化——預設 `3`（站台通用內文，h4–h6 降 h3）；FAQ 答案寫入端與 `<RichText maxHeading={4}>` 用 `4`（保留 h4、h5/h6 降 h4），**h1 恆降 h2**（不產生第二 H1）。`RichTextEditor` 加 `allowHeading4` prop，一般 FAQ 答案編輯器開「段落／標題2／標題3／標題4」，其餘 8 個使用點不受影響。
-- **後台**：`/admin/general-faqs` 表單加「網址（slug）」欄（留空＝自動）＋「前台預覽」連結。
+- **資料**：兩表各加 `slug String?`（nullable，**不加 DB `@unique`** 以免 `prisma db push` 觸發 `--accept-data-loss`；唯一性由應用層 `uniqueSlug` 保證——一般 FAQ 全域唯一、服務 FAQ「同一服務內」唯一）。slug 由 `lib/slug.ts` 的 `slugify(question)` 產生（保留中文）。回填腳本：`prisma/backfill-faq-slug.ts`、`prisma/backfill-service-faq-slug.ts`（`pnpm exec tsx …`，皆冪等）。
+- **詳細頁**：`app/(site)/faq/[slug]/page.tsx`（一般）、`app/(site)/services/[slug]/faq/[faqSlug]/page.tsx`（服務）。仿 `services/[slug]` 範式：**H1＝問題**、答案 `<RichText maxHeading={4}>`、`breadcrumbJsonLd` + `qaPageJsonLd`（`@type: QAPage`）、`generateMetadata` 用 `stripHtml(answer,150)`。查詢 `getGeneralFaqBySlug` / `getServiceFaqBySlug`（`findFirst`）。
+- **重複內容**：服務 FAQ 答案同時出現在「服務詳細頁手風琴」與「自己的獨立頁」。獨立頁 `canonical` **指自己**（為該問答正本），服務頁手風琴只是現場呈現——明確 canonical 避免互相稀釋。
+- **列表頁** `/faq`：一般 + 服務 FAQ 全改成連結清單（`<h3>` 問題連結 + 摘要 + 查看詳情），schema 用單一 `itemListJsonLd`（答案交給各詳細頁的 QAPage，不在列表頁重複）。
+- **sitemap**：`app/sitemap.ts` 收錄每則 `/faq/[slug]` 與 `/services/[服務]/faq/[問題]`。
+- **標題層級放行（關鍵）**：詳細頁 H1＝問題，故答案可合法用 H2–H4。`sanitizeRichText(input, { maxHeading })` 參數化——預設 `3`（站台通用內文，h4–h6 降 h3）；FAQ 答案寫入端與 `<RichText maxHeading={4}>` 用 `4`（保留 h4、h5/h6 降 h4），**h1 恆降 h2**（不產生第二 H1）。`RichTextEditor` 加 `allowHeading4` prop，一般 FAQ（`/admin/general-faqs`）與服務 FAQ（`FaqsEditor`）的答案編輯器都開「段落／標題2／標題3／標題4」，其餘富文本使用點不受影響。
+- **後台**：`/admin/general-faqs` 表單加「網址（slug）」欄（留空＝自動）＋「前台預覽」連結；服務 FAQ slug 目前自動產生（`FaqsEditor` 暫無手動 slug 欄）。
 
 ## API 路由
 
@@ -834,6 +837,25 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-06-29（服務 FAQ 也獨立 URL 化：巢狀 /services/[服務]/faq/[問題]）
+
+**需求**：客戶 QA 反映「整份沒做完，只做了一般服務」。把服務 FAQ（`ServiceFaq`）也補成獨立可索引網址。
+
+**決定**：URL 用**巢狀** `/services/[服務]/faq/[問題]`（URL 帶主題層級）；服務詳細頁**保留手風琴**、獨立頁 `canonical` 指自己。
+
+**做法**：
+- `prisma/schema.prisma`：`ServiceFaq` 加 `slug String?`（同前：不加 DB `@unique`、**未用 accept-data-loss**；唯一性＝同一服務內）。回填 `prisma/backfill-service-faq-slug.ts`（已回填 14 筆、冪等）。
+- 新 `app/(site)/services/[slug]/faq/[faqSlug]/page.tsx`：H1＝問題、答案 `maxHeading=4`、QAPage + 麵包屑、canonical 指自己。查詢 `getServiceFaqBySlug`。
+- `/faq` 列表頁：服務 FAQ 區從手風琴改成連結清單（連到巢狀詳細頁）；整頁 schema 統一成單一 `itemListJsonLd`（移除 `faqPageJsonLd`）。
+- `app/sitemap.ts` 收錄每則 `/services/[服務]/faq/[問題]`。
+- `services/[id]/faqs` API（POST/PUT）自動產生 slug（同服務內唯一）並以 `maxHeading:4` sanitize；`FaqsEditor` 兩個答案編輯器開 `allowHeading4`。
+
+**本地實測**：14 則服務 FAQ 巢狀連結出現在 /faq；抽樣 4 個詳細頁全 H1＝問題、QAPage 有效、canonical 指自己、不跳級；/faq 整頁與服務詳細頁手風琴均無回歸；`tsc` 全綠。
+
+### 2026-06-29（服務頁「服務重點」側欄標籤 h3→p）
+
+客戶要求服務詳細頁的「服務重點」不要是 h3。它是 `WhyWithFeaturesSection` 側欄上方的固定小標籤（每個服務頁都一樣、非真正內容標題），當 h3 只會在標題大綱裡製造重複噪音。改成 `<p>`（className 不動、視覺零變化），移出標題大綱。`components/service-sections/WhyWithFeaturesSection.tsx`。
 
 ### 2026-06-29（FAQ 一般問題獨立 URL 化 + /faq 列表頁改版）
 

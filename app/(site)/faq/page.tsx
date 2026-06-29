@@ -2,10 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MessageCircle, PhoneCall, ArrowRight } from 'lucide-react'
 import { SectionHeading } from '@/components/section-heading'
-import { Faq } from '@/components/faq'
 import { getActiveServices, getGeneralFaqs, getContentBlock, getSiteSettings } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
-import { breadcrumbJsonLd, faqPageJsonLd, itemListJsonLd } from '@/lib/seo'
+import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
 import { stripHtml } from '@/lib/sanitize-html'
 
 export const revalidate = 60
@@ -27,27 +26,29 @@ export default async function FaqPage() {
   const lineFriendUrl = settings.lineFriendUrl || ''
   const lineCallUrl = settings.lineCallUrl || ''
 
-  // 一般 FAQ 各自有獨立頁 → 用 ItemList 串連結（答案交給 /faq/[slug] 的 QAPage，避免重複內容）
+  // 一般 + 各服務 FAQ 都各有獨立頁 → 整頁是連結清單；答案交給各詳細頁的 QAPage（避免重複內容）
   const generalList = generalFaqs.filter((f) => f.slug)
-  const generalListSchema =
-    generalList.length > 0
-      ? itemListJsonLd(
-          generalList.map((f) => ({
-            name: f.question,
-            url: `/faq/${f.slug}`,
-            description: stripHtml(f.answer, 100),
-          })),
-        )
-      : null
+  const serviceList = services
+    .map((s) => ({ service: s, faqs: (s.faqs ?? []).filter((f) => f.slug) }))
+    .filter((g) => g.faqs.length > 0)
 
-  // 服務 FAQ 仍內嵌本頁（手風琴）→ 維持 FAQPage（各服務各取 5 題，題目前綴服務名避免撞名）
-  const serviceFaqs = services.flatMap((s) =>
-    (s.faqs ?? []).slice(0, 5).map((f) => ({
-      question: `${s.name}：${f.question}`,
-      answer: f.answer,
-    })),
-  )
-  const serviceFaqSchema = serviceFaqs.length > 0 ? faqPageJsonLd(serviceFaqs) : null
+  const listSchema = (() => {
+    const links = [
+      ...generalList.map((f) => ({
+        name: f.question,
+        url: `/faq/${f.slug}`,
+        description: stripHtml(f.answer, 100),
+      })),
+      ...serviceList.flatMap((g) =>
+        g.faqs.map((f) => ({
+          name: `${g.service.name}：${f.question}`,
+          url: `/services/${g.service.slug}/faq/${f.slug}`,
+          description: stripHtml(f.answer, 100),
+        })),
+      ),
+    ]
+    return links.length > 0 ? itemListJsonLd(links) : null
+  })()
 
   const breadcrumb = breadcrumbJsonLd([
     { name: '首頁', path: '/' },
@@ -57,8 +58,7 @@ export default async function FaqPage() {
   return (
     <>
       <JsonLd data={breadcrumb} />
-      {generalListSchema && <JsonLd data={generalListSchema} />}
-      {serviceFaqSchema && <JsonLd data={serviceFaqSchema} />}
+      {listSchema && <JsonLd data={listSchema} />}
       <section className="bg-medical-glow pt-8 pb-8 md:pt-12 md:pb-12">
         <div className="container-narrow max-w-3xl">
           <SectionHeading
@@ -104,16 +104,35 @@ export default async function FaqPage() {
             </div>
           )}
 
-          {services
-            .filter((s) => (s.faqs?.length ?? 0) > 0)
-            .map((s) => (
-              <div key={s.id}>
-                <h2 className="text-xl font-medium text-ink">{s.name}</h2>
-                <div className="mt-6">
-                  <Faq items={s.faqs ?? []} />
-                </div>
+          {serviceList.map(({ service: s, faqs }) => (
+            <div key={s.id}>
+              <h2 className="text-xl font-medium text-ink">{s.name}</h2>
+              <div className="mt-6 divide-y divide-hairline border-y border-hairline">
+                {faqs.map((f) => (
+                  <article key={f.id} className="group py-5">
+                    <h3 className="text-base font-medium text-ink md:text-lg">
+                      <Link
+                        href={`/services/${s.slug}/faq/${f.slug}`}
+                        className="transition group-hover:text-primary-deep"
+                      >
+                        {f.question}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">
+                      {stripHtml(f.answer, 90)}
+                    </p>
+                    <Link
+                      href={`/services/${s.slug}/faq/${f.slug}`}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary-deep transition-all group-hover:gap-2"
+                    >
+                      查看詳情
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </article>
+                ))}
               </div>
-            ))}
+            </div>
+          ))}
 
           <div className="rounded-xl border border-hairline bg-bg-soft p-8 text-center">
             <p className="text-base text-ink-soft">

@@ -121,6 +121,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             onContentChange={(html) => setA(html)}
             placeholder="答案（可直接貼入 LINE 加好友按鈕等 HTML 片段，前台會自動渲染）"
             height="180px"
+            allowHeading4
           />
           <p className="text-xs text-ink-muted leading-relaxed">
             💡 想貼 LINE 加好友按鈕等 HTML 片段（
@@ -250,6 +251,7 @@ function FaqRow({
         value={a}
         onContentChange={(html) => setA(html)}
         height="180px"
+        allowHeading4
       />
       <div className="flex justify-end gap-2">
         <button onClick={() => setEditing(false)} className="btn-ghost !py-1.5 !text-sm">

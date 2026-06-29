@@ -36,6 +36,7 @@ export type AdminServiceFaq = {
   sectionId: number
   question: string
   answer: string
+  slug: string | null
   order: number
 }
 

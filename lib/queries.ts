@@ -90,6 +90,20 @@ export async function getGeneralFaqBySlug(slug: string) {
   return prisma.generalFaq.findFirst({ where: { slug } })
 }
 
+// /services/[serviceSlug]/faq/[faqSlug] 服務 FAQ 單題詳細頁
+export async function getServiceFaqBySlug(serviceSlug: string, faqSlug: string) {
+  const service = await prisma.service.findUnique({
+    where: { slug: serviceSlug },
+    select: { id: true, name: true, slug: true },
+  })
+  if (!service) return null
+  const faq = await prisma.serviceFaq.findFirst({
+    where: { slug: faqSlug, section: { serviceId: service.id } },
+  })
+  if (!faq) return null
+  return { service, faq }
+}
+
 export async function getActiveServices() {
   // 服務列表 + 每個服務透過 sections 拉子表（features/faqs 用於卡片摘要 / FAQ 頁；
   // _count 用於 /admin/services 列表的「N 組對比 / N 圖」顯示）

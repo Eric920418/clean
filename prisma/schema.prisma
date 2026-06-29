@@ -92,6 +92,7 @@ model ServiceFaq {
   section   ServiceSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   question  String
   answer    String
+  slug      String? // SEO 獨立網址 /services/[服務]/faq/[slug]；nullable 安全 migration（不加 DB @unique）；唯一性由 API 應用層保證（同一服務內唯一）
   order     Int     @default(0)
 }
 

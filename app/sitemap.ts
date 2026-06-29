@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 若 DB 不可用，回退僅有靜態路由（避免 build 時 fail）
   let serviceRoutes: MetadataRoute.Sitemap = []
   let faqRoutes: MetadataRoute.Sitemap = []
+  let serviceFaqRoutes: MetadataRoute.Sitemap = []
   let worksImageEntry: MetadataRoute.Sitemap = []
   try {
     const [services, featured, generalFaqs] = await Promise.all([
@@ -47,6 +48,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...(s.heroImage ? { images: [s.heroImage] } : {}),
     }))
 
+    // 每則服務 FAQ 的巢狀獨立頁進 sitemap（/services/[服務]/faq/[問題]）
+    serviceFaqRoutes = services.flatMap((s) =>
+      (s.faqs ?? [])
+        .filter((f) => f.slug)
+        .map((f) => ({
+          url: `${base}/services/${s.slug}/faq/${f.slug}`,
+          lastModified: s.updatedAt ?? now,
+          changeFrequency: 'monthly' as const,
+          priority: 0.5,
+        })),
+    )
+
     // 作品頁帶上前 10 張 featured before-after 圖（避免 sitemap 太肥）
     if (featured.length > 0) {
       worksImageEntry = [
@@ -68,5 +81,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB 不可用，sitemap 仍輸出靜態路由
   }
 
-  return [...staticRoutes, ...worksImageEntry, ...serviceRoutes, ...faqRoutes]
+  return [...staticRoutes, ...worksImageEntry, ...serviceRoutes, ...faqRoutes, ...serviceFaqRoutes]
 }
