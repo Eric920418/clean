@@ -39,8 +39,10 @@ export default function ServicesAdminPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function fetchServices() {
-    setLoading(true)
+  // silent=true：重新抓取時不切回全頁 spinner，避免表格塌縮成單列讓捲動位置跳回頂端。
+  // 排序 / 存檔 / 刪除 / 上下架都走 silent；只有首次載入顯示載入中。詳見 README「列表操作後保留捲動位置」。
+  async function fetchServices(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true)
     try {
       const r = await fetch('/api/admin/services')
       const data = await r.json()
@@ -49,7 +51,7 @@ export default function ServicesAdminPage() {
     } catch (err) {
       toast.error(`讀取失敗：${err instanceof Error ? err.message : err}`)
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }
 
@@ -79,7 +81,7 @@ export default function ServicesAdminPage() {
 
       toast.success('已新增')
       setModalOpen(false)
-      fetchServices()
+      fetchServices({ silent: true })
     } catch (err) {
       const msg = err instanceof Error ? err.message : '建立失敗'
       setError(msg)
@@ -103,7 +105,7 @@ export default function ServicesAdminPage() {
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '刪除失敗')
       toast.success('已刪除')
-      fetchServices()
+      fetchServices({ silent: true })
     } catch (err) {
       toast.error(`刪除失敗：${err instanceof Error ? err.message : err}`)
     }
@@ -117,7 +119,7 @@ export default function ServicesAdminPage() {
         dir,
         (id) => `/api/admin/services/${id}`,
       )
-      if (moved) fetchServices()
+      if (moved) fetchServices({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
@@ -132,7 +134,7 @@ export default function ServicesAdminPage() {
       })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '切換失敗')
-      fetchServices()
+      fetchServices({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '切換失敗')
     }

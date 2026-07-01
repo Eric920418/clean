@@ -95,6 +95,18 @@
 
 **修改任何後台文字／enum 顯示，請從 `lib/i18n/admin-zh.ts` 改起，不要散落在各頁面。**
 
+#### 列表操作後保留捲動位置（不要跳回頂端）
+
+後台列表在**排序、編輯存檔、新增、刪除、上下架**後會重新抓取資料。若重新抓取時把 `loading` 切回 `true`，整個清單會被換成一顆置中 spinner（或整頁 early-return spinner）→ 可捲動高度瞬間塌縮 → 瀏覽器守不住捲動位置就**跳回頂端**（老闆按第 8 個區塊的下移箭頭，畫面卻彈到第 1 個，很難用）。
+
+**準則：`fetchAll`（或 `fetchServices`）接受 `opts?: { silent?: boolean }`，只在「首次載入 / 切換頁面（useEffect）」顯示全頁 spinner；排序 / 存檔 / 新增 / 刪除 / 上下架一律走 `fetch...({ silent: true })` 靜默更新、保留清單不塌縮。** 靠 `key={item.id}` 讓 React 就地重排 DOM，捲動位置自然不動。
+
+已落實（全後台列表）：`app/admin/content/_components/PageSectionsManager.tsx`、`WhyUsSectionsEditor.tsx`、`app/admin/general-faqs/page.tsx`、`app/admin/process-steps/page.tsx`、`app/admin/testimonials/page.tsx`、`app/admin/services/page.tsx`、`app/admin/services/[id]/sections/page.tsx`（後者的主欄位 `onChange` 與區塊 `onSaved` 兩條存檔路徑都改成 `() => fetchAll({ silent: true })`）。
+
+> 例外：`app/admin/services/[id]/sections/[sectionId]/items/page.tsx` 的 `fetchSection` **刻意不寫 `setLoading(true)`**，本身就是靜默 refetch，其子編輯器（`components/admin/section-editors/*`）的 `busy` 只 disable 按鈕、不藏清單，因此無需 silent 參數。
+>
+> 注意：`AdminModal` 用 `body.style.overflow='hidden'` 開關，不會改變捲動位置，跳頂與 modal 無關；真兇一律是 `loading` spinner 把清單抽掉造成的高度塌縮。新增任何後台列表頁請沿用此準則。
+
 #### 手機版 Spacing 慣例（避免擁擠／爆版）
 
 375px iPhone 上外層 padding 會與卡片 padding 疊加吃掉內容寬度。後台統一以下規則：

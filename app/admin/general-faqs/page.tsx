@@ -25,8 +25,10 @@ export default function GeneralFaqsPage() {
   const [submitting, setSubmitting] = useState(false)
   const { confirm, node: confirmNode } = useConfirm()
 
-  async function fetchAll() {
-    setLoading(true)
+  // silent=true：重新抓取時不切回全頁 spinner，避免清單塌縮讓捲動位置跳回頂端。
+  // 排序 / 存檔 / 新增 / 刪除都走 silent；只有首次載入顯示 spinner。詳見 README「列表操作後保留捲動位置」。
+  async function fetchAll(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true)
     try {
       const r = await fetch('/api/admin/general-faqs')
       const data = await r.json()
@@ -35,7 +37,7 @@ export default function GeneralFaqsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '讀取失敗')
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }
 
@@ -72,7 +74,7 @@ export default function GeneralFaqsPage() {
       if (!r.ok) throw new Error(data.error || '儲存失敗')
       toast.success(editing ? '已更新' : '已新增')
       setOpen(false)
-      fetchAll()
+      fetchAll({ silent: true })
     } catch (err) {
       const msg = err instanceof Error ? err.message : '儲存失敗'
       setError(msg)
@@ -93,7 +95,7 @@ export default function GeneralFaqsPage() {
           const data = await r.json()
           if (!r.ok) throw new Error(data.error || '刪除失敗')
           toast.success('已刪除')
-          fetchAll()
+          fetchAll({ silent: true })
         } catch (err) {
           toast.error(err instanceof Error ? err.message : '刪除失敗')
         }
@@ -109,7 +111,7 @@ export default function GeneralFaqsPage() {
         dir,
         (fid) => `/api/admin/general-faqs/${fid}`,
       )
-      if (moved) fetchAll()
+      if (moved) fetchAll({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }

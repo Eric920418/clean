@@ -187,8 +187,11 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
   const [whyUsModalOpen, setWhyUsModalOpen] = useState(false)
   const { confirm, node: confirmNode } = useConfirm()
 
-  async function fetchAll() {
-    setLoading(true)
+  // silent=true：重新抓取時「不」切回全頁 spinner，避免清單塌縮成一顆 loading
+  // 而讓瀏覽器守不住捲動位置跳回頂端。排序 / 存檔 / 新增 / 刪除都走 silent；
+  // 只有首次載入與切換頁面（home↔about）才顯示 spinner。
+  async function fetchAll(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true)
     setError(null)
     try {
       const r = await fetch(`/api/admin/page-sections?page=${encodeURIComponent(page)}`)
@@ -198,7 +201,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : '讀取失敗')
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }
 
@@ -215,7 +218,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
         dir,
         (sid) => `/api/admin/page-sections/${sid}`,
       )
-      if (moved) fetchAll()
+      if (moved) fetchAll({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
@@ -249,7 +252,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
       if (!r.ok) throw new Error(data.error || '新增失敗')
       toast.success(`已新增「${DYNAMIC_META[type].label}」`)
       setCreateOpen(false)
-      fetchAll()
+      fetchAll({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '新增失敗')
     }
@@ -271,7 +274,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
           const data = await r.json()
           if (!r.ok) throw new Error(data.error || '刪除失敗')
           toast.success('已刪除')
-          fetchAll()
+          fetchAll({ silent: true })
         } catch (err) {
           toast.error(err instanceof Error ? err.message : '刪除失敗')
         }
@@ -456,7 +459,7 @@ export function PageSectionsManager({ page, onEditFixed }: Props) {
         open={!!editingSection}
         onClose={() => setEditingSection(null)}
         section={editingSection}
-        onSaved={fetchAll}
+        onSaved={() => fetchAll({ silent: true })}
       />
 
       <WhyUsSectionsModal

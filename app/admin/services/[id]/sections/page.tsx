@@ -129,8 +129,11 @@ export default function ServiceSectionsPage({ params }: PageProps) {
   const [editingSection, setEditingSection] = useState<AdminServiceSection | null>(null)
   const { confirm, node: confirmNode } = useConfirm()
 
-  async function fetchAll() {
-    setLoading(true)
+  // silent=true：重新抓取時不切回整頁 spinner（本頁 loading 會 early-return 整頁），
+  // 避免主欄位存檔 / 區塊排序 / 新增 / 刪除後畫面重繪跳回頂端。只有首次載入與換 id 顯示 spinner。
+  // 詳見 README「列表操作後保留捲動位置」。
+  async function fetchAll(opts?: { silent?: boolean }) {
+    if (!opts?.silent) setLoading(true)
     try {
       const [serviceRes, sectionsRes] = await Promise.all([
         fetch(`/api/admin/services/${id}`),
@@ -145,7 +148,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : '讀取失敗')
     } finally {
-      setLoading(false)
+      if (!opts?.silent) setLoading(false)
     }
   }
 
@@ -162,7 +165,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
         dir,
         (sid) => `/api/admin/services/${id}/sections/${sid}`,
       )
-      if (moved) fetchAll()
+      if (moved) fetchAll({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? `排序失敗：${err.message}` : '排序失敗')
     }
@@ -196,7 +199,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
       if (!r.ok) throw new Error(data.error || '新增失敗')
       toast.success(`已新增「${TYPE_META[type].label}」區塊`)
       setCreateOpen(false)
-      fetchAll()
+      fetchAll({ silent: true })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '新增失敗')
     }
@@ -232,7 +235,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
           const data = await r.json()
           if (!r.ok) throw new Error(data.error || '刪除失敗')
           toast.success('已刪除')
-          fetchAll()
+          fetchAll({ silent: true })
         } catch (err) {
           toast.error(err instanceof Error ? err.message : '刪除失敗')
         }
@@ -278,7 +281,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
         }
       />
 
-      <ServiceMainFieldsPanel service={service} onChange={fetchAll} />
+      <ServiceMainFieldsPanel service={service} onChange={() => fetchAll({ silent: true })} />
 
       <div className="mb-3 flex items-center justify-between">
         <div>
@@ -414,7 +417,7 @@ export default function ServiceSectionsPage({ params }: PageProps) {
         onClose={() => setEditingSection(null)}
         serviceId={parseInt(id, 10)}
         section={editingSection}
-        onSaved={fetchAll}
+        onSaved={() => fetchAll({ silent: true })}
       />
 
       {confirmNode}
