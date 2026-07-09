@@ -93,6 +93,7 @@ model ServiceFaq {
   question  String
   answer    String
   slug      String? // SEO 獨立網址 /services/[服務]/faq/[slug]；nullable 安全 migration（不加 DB @unique）；唯一性由 API 應用層保證（同一服務內唯一）
+  metaDescription String? // SEO meta description 覆寫；留空＝generateMetadata 自動由答案 stripHtml 截斷
   order     Int     @default(0)
 }
 
@@ -228,6 +229,7 @@ model GeneralFaq {
   question  String
   answer    String
   slug      String?  // SEO 獨立網址 /faq/[slug]；nullable 以便安全 migration（不加 DB @unique 以免觸發 accept-data-loss）；唯一性由 API 的 uniqueSlug 應用層保證
+  metaDescription String? // SEO meta description 覆寫；留空＝generateMetadata 自動由答案 stripHtml 截斷
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

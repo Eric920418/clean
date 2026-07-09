@@ -30,7 +30,8 @@ export async function generateMetadata({
   const { slug, faqSlug } = await params
   const data = await getServiceFaqBySlug(safeDecode(slug), safeDecode(faqSlug))
   if (!data) return { title: '找不到問題' }
-  const desc = stripHtml(data.faq.answer, 150)
+  // 手填 metaDescription 優先；留空則自動由答案 stripHtml 截斷 150 字
+  const desc = data.faq.metaDescription?.trim() || stripHtml(data.faq.answer, 150)
   return {
     title: `${data.faq.question}｜${data.service.name}`,
     description: desc,

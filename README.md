@@ -148,12 +148,13 @@
 - 服務 FAQ（`ServiceFaq`）→ **`/services/[服務]/faq/[問題]`**（巢狀在所屬服務下，URL 帶主題層級）
 
 - **資料**：兩表各加 `slug String?`（nullable，**不加 DB `@unique`** 以免 `prisma db push` 觸發 `--accept-data-loss`；唯一性由應用層 `uniqueSlug` 保證——一般 FAQ 全域唯一、服務 FAQ「同一服務內」唯一）。slug 由 `lib/slug.ts` 的 `slugify(question)` 產生（保留中文）。回填腳本：`prisma/backfill-faq-slug.ts`、`prisma/backfill-service-faq-slug.ts`（`pnpm exec tsx …`，皆冪等）。
-- **詳細頁**：`app/(site)/faq/[slug]/page.tsx`（一般）、`app/(site)/services/[slug]/faq/[faqSlug]/page.tsx`（服務）。仿 `services/[slug]` 範式：**H1＝問題**、答案 `<RichText maxHeading={4}>`、`breadcrumbJsonLd` + `qaPageJsonLd`（`@type: QAPage`）、`generateMetadata` 用 `stripHtml(answer,150)`。查詢 `getGeneralFaqBySlug` / `getServiceFaqBySlug`（`findFirst`）。
+- **詳細頁**：`app/(site)/faq/[slug]/page.tsx`（一般）、`app/(site)/services/[slug]/faq/[faqSlug]/page.tsx`（服務）。仿 `services/[slug]` 範式：**H1＝問題**、答案 `<RichText maxHeading={4}>`、`breadcrumbJsonLd` + `qaPageJsonLd`（`@type: QAPage`）、`generateMetadata` 用 `faq.metaDescription?.trim() || stripHtml(answer,150)`（**手填 meta description 優先，留空自動由答案截斷**）。查詢 `getGeneralFaqBySlug` / `getServiceFaqBySlug`（`findFirst`，不帶 `select` 故自動含新欄位）。
 - **重複內容**：服務 FAQ 答案同時出現在「服務詳細頁手風琴」與「自己的獨立頁」。獨立頁 `canonical` **指自己**（為該問答正本），服務頁手風琴只是現場呈現——明確 canonical 避免互相稀釋。
 - **列表頁** `/faq`：一般 + 服務 FAQ 全改成連結清單（`<h3>` 問題連結 + 摘要 + 查看詳情），schema 用單一 `itemListJsonLd`（答案交給各詳細頁的 QAPage，不在列表頁重複）。
 - **sitemap**：`app/sitemap.ts` 收錄每則 `/faq/[slug]` 與 `/services/[服務]/faq/[問題]`。
 - **標題層級放行（關鍵）**：詳細頁 H1＝問題，故答案可合法用 H2–H4。`sanitizeRichText(input, { maxHeading })` 參數化——預設 `3`（站台通用內文，h4–h6 降 h3）；FAQ 答案寫入端與 `<RichText maxHeading={4}>` 用 `4`（保留 h4、h5/h6 降 h4），**h1 恆降 h2**（不產生第二 H1）。`RichTextEditor` 加 `allowHeading4` prop，一般 FAQ（`/admin/general-faqs`）與服務 FAQ（`FaqsEditor`）的答案編輯器都開「段落／標題2／標題3／標題4」，其餘富文本使用點不受影響。
 - **後台**：`/admin/general-faqs` 表單加「網址（slug）」欄（留空＝自動）＋「前台預覽」連結；服務 FAQ slug 目前自動產生（`FaqsEditor` 暫無手動 slug 欄）。
+- **SEO 描述覆寫**：兩表各加 `metaDescription String?`（nullable，純附加，`db push` 不觸發 `--accept-data-loss`）。後台 `/admin/general-faqs` 與服務 FAQ `FaqsEditor`（新增＋編輯兩處）皆加「SEO 描述」選填 `<textarea>`；API 端 `metaDescription` 空白正規化為 `null`。詳細頁 `generateMetadata` 手填優先、留空 fallback 回 `stripHtml(answer,150)`。列表頁 `/faq`（寫死站台描述）不受影響。
 
 ## API 路由
 
@@ -849,6 +850,24 @@ PUT/DELETE 路徑保持 itemId-scoped 不變（無 sectionId 概念）。
 ---
 
 ## 變更記錄
+
+### 2026-07-09（FAQ 可自訂 SEO meta description，後台選填覆寫）
+
+**需求**：業主問「問答的 meta description 能不能在後台編輯」。查證後：FAQ 兩表原本**無 meta 欄位**，詳細頁一律用 `stripHtml(answer,150)` 自動截斷、列表頁寫死字串——後台無任何 SEO 欄位（對照 `Service` 早有 `seoTitle`/`seoDesc`）。FAQ 剛獨立 URL 化、成了可被單獨索引的著陸頁，才有自訂描述的價值。
+
+**設計**：不做「每題必填」（多為白工，Google 常自行改寫 FAQ 描述），而是**選填覆寫**——與 `Service.seoDesc` 同範式。留空＝沿用自動截斷，重點題才手填。
+
+**範圍（7 支檔案）**：
+- `prisma/schema.prisma`：`GeneralFaq` + `ServiceFaq` 各加 `metaDescription String?`（nullable 純附加，`db push` 不觸發 `--accept-data-loss`）。
+- `lib/admin-types.ts`：兩型別加 `metaDescription: string | null`。
+- 後台表單：`app/admin/general-faqs/page.tsx`（slug 與回答間插選填 `<textarea>` + 字數提示）、`components/admin/section-editors/FaqsEditor.tsx`（新增表單與 `FaqRow` 編輯兩處各加 textarea，`dirty` 判斷納入）。
+- API：`general-faqs` 的 POST/PUT、`services/[id]/faqs` 的 POST/PUT 皆讀寫 `metaDescription`，**空白/全空白正規化為 `null`**（讓前台 `?.trim() ||` fallback 乾淨觸發）。
+- 前台：兩詳細頁 `generateMetadata` 改 `faq.metaDescription?.trim() || stripHtml(answer,150)`。
+- 查詢層 `getGeneralFaqBySlug` / `getServiceFaqBySlug` 用 `findFirst` 不帶 `select`，自動含新欄位、無需改。
+
+**部署待辦**：因新增 DB 欄位，需跑一次 `pnpm db:push`（純附加、不需 `--accept-data-loss`）。已套用、diff 歸零。`tsc` 全綠。
+
+**後台列表收合答案**：後台問答列表在「未進入編輯」時只顯示問題、**不再攤出答案內容**（要看答案就點編輯）。改動：`app/admin/general-faqs/page.tsx` 列表移除 `{it.answer}` 預覽（原本還把 RichText HTML 當純文字印出、會露出 `<p>` 等標籤源碼）；`FaqsEditor.tsx` 的 `FaqRow` 非編輯列移除 `<RichText html={faq.answer}>`（連帶移除變成未使用的 `RichText` import）。編輯態與前台顯示不受影響。
 
 ### 2026-06-29（後台富文本編輯器高度自適應，一次看到更多）
 

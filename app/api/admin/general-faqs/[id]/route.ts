@@ -39,6 +39,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       if (dup) return errorResponse(`網址「${normalized}」已被其他問題使用`, 400)
       data.slug = normalized
     }
+    // metaDescription：明確帶入才更新；留空字串＝清除覆寫（存 null），fallback 回答案截斷
+    if (body.metaDescription !== undefined) {
+      data.metaDescription =
+        typeof body.metaDescription === 'string' && body.metaDescription.trim()
+          ? body.metaDescription.trim()
+          : null
+    }
 
     const item = await prisma.generalFaq.update({ where: { id: parseInt(id, 10) }, data })
     return successResponse(item)

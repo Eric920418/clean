@@ -37,6 +37,7 @@ export type AdminServiceFaq = {
   question: string
   answer: string
   slug: string | null
+  metaDescription: string | null
   order: number
 }
 
@@ -147,6 +148,7 @@ export type AdminGeneralFaq = {
   question: string
   answer: string
   slug: string | null
+  metaDescription: string | null
   order: number
   createdAt: string
   updatedAt: string

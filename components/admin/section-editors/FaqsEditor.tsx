@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { Plus, Save, Trash2, Pencil, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
-import { inputClass } from '@/components/admin/form-field'
+import { inputClass, textareaClass } from '@/components/admin/form-field'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
-import { RichText } from '@/components/rich-text'
 import { swapOrderByIndex, nextOrder } from '@/lib/admin-reorder'
 import type { AdminServiceFaq } from '@/lib/admin-types'
 
@@ -21,6 +20,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
   const [adding, setAdding] = useState(false)
   const [q, setQ] = useState('')
   const [a, setA] = useState('')
+  const [md, setMd] = useState('')
   const [busy, setBusy] = useState(false)
   const { confirm, node: confirmNode } = useConfirm()
 
@@ -34,6 +34,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
         body: JSON.stringify({
           question: q.trim(),
           answer: a.trim(),
+          metaDescription: md.trim(),
           order: nextOrder(faqs),
           sectionId,
         }),
@@ -42,6 +43,7 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
       if (!r.ok) throw new Error(data.error || '新增失敗')
       setQ('')
       setA('')
+      setMd('')
       setAdding(false)
       onChange()
       toast.success('已新增 FAQ')
@@ -130,6 +132,18 @@ export function FaqsEditor({ serviceId, sectionId, faqs, onChange }: Props) {
             <code className="px-1 rounded bg-bg-tint text-[10px]">{'</>'}</code>) → 在跳出的框內貼程式碼 → 按「儲存」。
             直接貼到編輯區會被當成純文字（角括號被跳脫）。前台會自動 sanitize 並渲染為可點擊圖片。
           </p>
+          <div>
+            <span className="mb-1 inline-block text-xs font-medium text-ink-soft">
+              SEO 描述（選填）
+            </span>
+            <textarea
+              value={md}
+              onChange={(e) => setMd(e.target.value)}
+              placeholder="顯示在 Google 搜尋結果的描述；建議 60–90 字。留空＝自動由答案擷取。"
+              className={textareaClass}
+              rows={2}
+            />
+          </div>
           <div className="flex justify-end gap-2">
             <button onClick={() => setAdding(false)} className="btn-ghost !py-1.5 !text-sm">
               取消
@@ -177,14 +191,15 @@ function FaqRow({
   const [editing, setEditing] = useState(false)
   const [q, setQ] = useState(faq.question)
   const [a, setA] = useState(faq.answer)
-  const dirty = q !== faq.question || a !== faq.answer
+  const [md, setMd] = useState(faq.metaDescription ?? '')
+  const dirty = q !== faq.question || a !== faq.answer || md !== (faq.metaDescription ?? '')
 
   async function save() {
     try {
       const r = await fetch(`/api/admin/services/${serviceId}/faqs/${faq.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q, answer: a }),
+        body: JSON.stringify({ question: q, answer: a, metaDescription: md }),
       })
       const data = await r.json()
       if (!r.ok) throw new Error(data.error || '更新失敗')
@@ -202,10 +217,6 @@ function FaqRow({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium text-ink">{faq.question}</div>
-            <RichText
-              html={faq.answer}
-              className="mt-1 text-xs text-ink-soft leading-relaxed prose-sm"
-            />
           </div>
           <div className="flex shrink-0 gap-1">
             <button
@@ -252,6 +263,13 @@ function FaqRow({
         onContentChange={(html) => setA(html)}
         height="clamp(300px, 50vh, 600px)"
         allowHeading4
+      />
+      <textarea
+        value={md}
+        onChange={(e) => setMd(e.target.value)}
+        placeholder="SEO 描述（選填，留空自動由答案產生）"
+        className={textareaClass}
+        rows={2}
       />
       <div className="flex justify-end gap-2">
         <button onClick={() => setEditing(false)} className="btn-ghost !py-1.5 !text-sm">

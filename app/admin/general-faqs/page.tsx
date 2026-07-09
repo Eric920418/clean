@@ -5,15 +5,15 @@ import { Plus, Pencil, Trash2, Loader2, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { AdminModal } from '@/components/admin/admin-modal'
-import { Field, inputClass } from '@/components/admin/form-field'
+import { Field, inputClass, textareaClass } from '@/components/admin/form-field'
 import { RichTextEditor } from '@/components/admin/rich-text-editor-loader'
 import { ErrorBanner } from '@/components/admin/error-banner'
 import { useConfirm } from '@/components/admin/confirm-dialog'
 import type { AdminGeneralFaq } from '@/lib/admin-types'
 import { swapOrderByIndex } from '@/lib/admin-reorder'
 
-type FormState = { question: string; answer: string; slug: string }
-const emptyForm: FormState = { question: '', answer: '', slug: '' }
+type FormState = { question: string; answer: string; slug: string; metaDescription: string }
+const emptyForm: FormState = { question: '', answer: '', slug: '', metaDescription: '' }
 
 export default function GeneralFaqsPage() {
   const [items, setItems] = useState<AdminGeneralFaq[]>([])
@@ -54,7 +54,12 @@ export default function GeneralFaqsPage() {
 
   function openEdit(it: AdminGeneralFaq) {
     setEditing(it)
-    setForm({ question: it.question, answer: it.answer, slug: it.slug ?? '' })
+    setForm({
+      question: it.question,
+      answer: it.answer,
+      slug: it.slug ?? '',
+      metaDescription: it.metaDescription ?? '',
+    })
     setError(null)
     setOpen(true)
   }
@@ -145,7 +150,6 @@ export default function GeneralFaqsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <h3 className="text-base font-semibold text-ink">Q. {it.question}</h3>
-                  <p className="mt-2 text-sm text-ink-soft whitespace-pre-line">{it.answer}</p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button
@@ -216,6 +220,21 @@ export default function GeneralFaqsPage() {
                 前台預覽 /faq/{editing.slug} ↗
               </a>
             )}
+          </Field>
+
+          <Field
+            label="SEO 描述（meta description）"
+            hint={`顯示在 Google 搜尋結果的描述文字。留空＝自動擷取答案前 150 字；建議 60–90 字，過長會被搜尋引擎截斷。${
+              form.metaDescription.trim() ? `（目前 ${form.metaDescription.trim().length} 字）` : ''
+            }`}
+          >
+            <textarea
+              value={form.metaDescription}
+              onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+              className={textareaClass}
+              rows={2}
+              placeholder="留空＝自動由答案產生。填寫可自訂搜尋結果顯示的描述。"
+            />
           </Field>
 
           <Field label="回答" required>

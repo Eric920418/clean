@@ -34,7 +34,8 @@ export async function generateMetadata({
   const { slug: rawSlug } = await params
   const faq = await getGeneralFaqBySlug(safeDecodeSlug(rawSlug))
   if (!faq) return { title: '找不到問題' }
-  const desc = stripHtml(faq.answer, 150)
+  // 手填 metaDescription 優先；留空則自動由答案 stripHtml 截斷 150 字
+  const desc = faq.metaDescription?.trim() || stripHtml(faq.answer, 150)
   return {
     title: faq.question,
     description: desc,

@@ -28,12 +28,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { question, answer, sectionId, slug } = await request.json()
+    const { question, answer, sectionId, slug, metaDescription } = await request.json()
     if (!question) return errorResponse('問題為必填', 400)
     if (typeof sectionId !== 'number') return errorResponse('sectionId 為必填', 400)
     // FAQ 答案自成一頁（/services/[s]/faq/[slug]，H1=問題），故放行到 h4
     const cleanAnswer = sanitizeRichText(answer, { maxHeading: 4 })
     if (!cleanAnswer) return errorResponse('答案為必填', 400)
+    // metaDescription 選填：留空存 null，generateMetadata 會 fallback 回答案截斷
+    const metaDesc =
+      typeof metaDescription === 'string' && metaDescription.trim()
+        ? metaDescription.trim()
+        : null
 
     // order 由 server 計算 max+1，避免 client 用 length 計算在刪除後撞號
     const maxOrder = await prisma.serviceFaq.aggregate({
@@ -61,6 +66,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         question,
         answer: cleanAnswer,
         slug: finalSlug,
+        metaDescription: metaDesc,
         order: (maxOrder._max.order ?? -1) + 1,
       },
     })

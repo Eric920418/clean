@@ -22,10 +22,15 @@ export async function POST(request: NextRequest) {
   if (!auth.authorized) return auth.response
 
   try {
-    const { question, answer, order, slug } = await request.json()
+    const { question, answer, order, slug, metaDescription } = await request.json()
     if (typeof question !== 'string' || !question.trim()) {
       return errorResponse('問題為必填', 400)
     }
+    // metaDescription 選填：留空存 null，generateMetadata 會 fallback 回答案截斷
+    const metaDesc =
+      typeof metaDescription === 'string' && metaDescription.trim()
+        ? metaDescription.trim()
+        : null
     // FAQ 答案自成一頁（/faq/[slug]，H1=問題），故放行到 h4
     const cleanAnswer = sanitizeRichText(answer, { maxHeading: 4 })
     if (!cleanAnswer) return errorResponse('回答為必填', 400)
@@ -46,7 +51,13 @@ export async function POST(request: NextRequest) {
     const finalSlug = uniqueSlug(base, existingSlugs)
 
     const item = await prisma.generalFaq.create({
-      data: { question: question.trim(), answer: cleanAnswer, slug: finalSlug, order: finalOrder },
+      data: {
+        question: question.trim(),
+        answer: cleanAnswer,
+        slug: finalSlug,
+        metaDescription: metaDesc,
+        order: finalOrder,
+      },
     })
     return successResponse(item, 201)
   } catch (error) {
