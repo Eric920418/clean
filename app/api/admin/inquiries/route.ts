@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const isRead = searchParams.get('isRead')
 
+    if (searchParams.get('count') === 'unread') {
+      return successResponse({ count: await prisma.bookingInquiry.count({ where: { isRead: false } }) })
+    }
+
     const items = await prisma.bookingInquiry.findMany({
       where: {
         ...(status && { status: status as 'NEW' | 'CONTACTED' | 'QUOTED' | 'DONE' | 'CLOSED' }),
