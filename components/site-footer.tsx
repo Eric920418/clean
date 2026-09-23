@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Phone, Mail, MapPin, Clock, MessageCircle, PhoneCall, Apple, ExternalLink, Facebook, Instagram } from 'lucide-react'
-import { getActiveServices } from '@/lib/queries'
+import { prisma } from '@/lib/prisma'
 import { isValidSocialUrl } from '@/lib/seo'
 import { RichText } from '@/components/rich-text'
 
@@ -15,7 +15,11 @@ export async function SiteFooter({
   // 拿真實服務列表；DB 不可用時回退空清單，footer 仍能顯示
   let services: { slug: string; name: string }[] = []
   try {
-    services = await getActiveServices()
+    services = await prisma.service.findMany({
+      where: { isActive: true },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      select: { slug: true, name: true },
+    })
   } catch {
     services = []
   }

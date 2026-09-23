@@ -6,6 +6,8 @@
 
 本專案是 invisible care 的官網與內容管理系統（CMS）。本 README 是專案唯一的事實來源，所有環境變數、開發指令、部署流程、資料模型說明都在這份文件裡。
 
+2026-09-23 成本調整：後台未讀詢問單 badge 改查 `/api/admin/inquiries?count=unread`，只取資料庫計數；進入後台頁面及視窗重新可見時刷新，不再每分鐘輪詢。原詢問單列表 API 保持不變。前台 footer 只查服務名稱與 slug，不載入 sections、FAQ、features 與計數。這些變動需部署後才會影響線上資料庫用量。
+
 ---
 
 ## 目前狀態

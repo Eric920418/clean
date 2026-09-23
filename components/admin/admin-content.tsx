@@ -10,6 +10,7 @@ export function AdminContent({ children }: { children: React.ReactNode }) {
   const { status } = useSession()
   const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadError, setUnreadError] = useState<string | null>(null)
 
   const isLoginPage = pathname === '/admin/login'
   const isAuthenticated = status === 'authenticated'
@@ -20,24 +21,26 @@ export function AdminContent({ children }: { children: React.ReactNode }) {
     let cancelled = false
     async function fetchUnread() {
       try {
-        const r = await fetch('/api/admin/inquiries', { cache: 'no-store' })
-        if (!r.ok) return
+        const r = await fetch('/api/admin/inquiries?count=unread', { cache: 'no-store' })
         const data = await r.json()
-        if (!cancelled && Array.isArray(data)) {
-          const unread = data.filter(
-            (it: { isRead?: boolean }) => it.isRead === false,
-          ).length
-          setUnreadCount(unread)
+        if (!r.ok) throw new Error(data.error || `${r.status} ${r.statusText}`)
+        if (typeof data.count !== 'number') throw new Error('未讀詢問單數量格式錯誤')
+        if (!cancelled) {
+          setUnreadCount(data.count)
+          setUnreadError(null)
         }
-      } catch {
-        // 不阻擋畫面
+      } catch (error) {
+        if (!cancelled) setUnreadError(error instanceof Error ? error.message : String(error))
       }
     }
     fetchUnread()
-    const id = setInterval(fetchUnread, 60000) // 每分鐘刷新
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchUnread()
+    }
+    document.addEventListener('visibilitychange', onVisible)
     return () => {
       cancelled = true
-      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [isAuthenticated, isLoginPage, pathname])
 
@@ -54,6 +57,7 @@ export function AdminContent({ children }: { children: React.ReactNode }) {
             className="px-3 py-4 sm:p-6 md:p-8"
             style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom) + 1rem)' }}
           >
+            {unreadError && <p role="alert" className="mb-4 text-sm text-red-700">未讀詢問單載入失敗：{unreadError}</p>}
             {children}
           </div>
         </main>
