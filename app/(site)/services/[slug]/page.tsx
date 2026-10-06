@@ -19,6 +19,9 @@ type Params = { slug: string }
 // CMS 存檔失效；一小時 TTL 為非 CMS 寫入的備援
 export const revalidate = 3600
 
+// 不預先查 DB 列舉網址；首次存取產生並快取，之後走 ISR。
+export function generateStaticParams() { return [] }
+
 /**
  * 防禦性 decode：production 環境 Vercel 偶爾把 percent-encoded 中文 path 原樣帶進
  * `params.slug`（dev server decode、prod 沒，疑似 Edge proxy → Lambda 沒有再解一次），

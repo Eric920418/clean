@@ -13,6 +13,8 @@ type Params = { slug: string }
 // CMS 存檔失效；一小時 TTL 為非 CMS 寫入的備援
 export const revalidate = 3600
 
+export function generateStaticParams() { return [] }
+
 /**
  * 防禦性 decode：FAQ slug 多為中文，production 的 Edge proxy 偶爾把 percent-encoded
  * 中文原樣帶進 params.slug，導致對不上 DB。decodeURIComponent 對已 decode / 純 ASCII 為冪等。

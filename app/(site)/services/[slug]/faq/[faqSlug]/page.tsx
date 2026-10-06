@@ -13,6 +13,8 @@ type Params = { slug: string; faqSlug: string }
 // CMS 存檔失效；一小時 TTL 為非 CMS 寫入的備援
 export const revalidate = 3600
 
+export function generateStaticParams() { return [] }
+
 /** 防禦性 decode：服務/FAQ slug 多為中文，prod proxy 偶爾原樣帶 percent-encoded 進來 */
 function safeDecode(s: string): string {
   try {

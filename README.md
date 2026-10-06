@@ -8,7 +8,7 @@
 
 2026-09-23 成本調整：後台未讀詢問單 badge 改查 `/api/admin/inquiries?count=unread`，只取資料庫計數；進入後台頁面及視窗重新可見時刷新，不再每分鐘輪詢。原詢問單列表 API 保持不變。前台 footer 只查服務名稱與 slug，不載入 sections、FAQ、features 與計數。這些變動需部署後才會影響線上資料庫用量。
 
-2026-10-06 第二輪成本調整：九個公開內容頁與 sitemap 改用一小時 ISR；CMS 存檔立即標記快取失效，下次存取重新生成。補齊站台設定、一般 FAQ、評價與「為何選我們」的失效通知，服務編輯同時涵蓋 FAQ、作品、頁尾與 sitemap，含改名前舊網址。站台設定在單次 Server Component 渲染中去重，不跨請求快取私人資料。保留既有預約表單、權限與錯誤回應；直接 SQL 修改最多需等一小時及後續請求更新。驗證指令：`node --test tests/content-cache.test.cjs`、`pnpm exec tsc --noEmit`。
+2026-10-06 第二輪成本調整：九個公開內容頁與 sitemap 改用一小時 ISR；CMS 存檔立即標記快取失效，下次存取重新生成。三種詳情路由原本缺少 `generateStaticParams`，即使宣告 revalidate 仍每次 SSR；現在回傳空陣列，首次存取按需產生並快取，保留不存在網址的 404。補齊站台設定、一般 FAQ、評價與「為何選我們」的失效通知，服務編輯同時涵蓋 FAQ、作品、頁尾與 sitemap，含改名前舊網址。站台設定在單次 Server Component 渲染中去重，不跨請求快取私人資料。保留既有預約表單、權限與錯誤回應；直接 SQL 修改最多需等一小時及後續請求更新。驗證指令：`node --test tests/content-cache.test.cjs`、`pnpm exec tsc --noEmit`。
 
 ---
 
