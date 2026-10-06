@@ -5,7 +5,7 @@ import { getAllBeforeAfters, getActiveServices, getContentBlock } from '@/lib/qu
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, imageGalleryJsonLd } from '@/lib/seo'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '服務案例',

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { Prisma } from '@prisma/client'
-import { revalidatePath } from 'next/cache'
+import { revalidatePublicSite } from '@/lib/revalidate-service'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
 import { slugify, uniqueSlug } from '@/lib/slug'
@@ -97,8 +97,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    revalidatePath('/services')
-    revalidatePath('/')
+    revalidatePublicSite()
     return successResponse(service, 201)
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

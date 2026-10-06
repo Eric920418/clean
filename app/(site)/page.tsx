@@ -12,8 +12,8 @@ import { HomeSections } from './_components/home-sections'
 import { JsonLd } from '@/components/json-ld'
 import { localBusinessJsonLd, itemListJsonLd, reviewListJsonLd } from '@/lib/seo'
 
-// ISR：每 60 秒 background revalidation；首次以外的訪客都讀 cache
-export const revalidate = 60
+// ISR：一小時備援更新；CMS 存檔失效，下一次存取重新生成
+export const revalidate = 3600
 
 export default async function HomePage() {
   const [services, testimonials, featured, whyUsSections, processSteps, settings, blocks, sections] =

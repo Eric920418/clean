@@ -8,6 +8,8 @@
 
 2026-09-23 成本調整：後台未讀詢問單 badge 改查 `/api/admin/inquiries?count=unread`，只取資料庫計數；進入後台頁面及視窗重新可見時刷新，不再每分鐘輪詢。原詢問單列表 API 保持不變。前台 footer 只查服務名稱與 slug，不載入 sections、FAQ、features 與計數。這些變動需部署後才會影響線上資料庫用量。
 
+2026-10-06 第二輪成本調整：九個公開內容頁與 sitemap 改用一小時 ISR；CMS 存檔立即標記快取失效，下次存取重新生成。補齊站台設定、一般 FAQ、評價與「為何選我們」的失效通知，服務編輯同時涵蓋 FAQ、作品、頁尾與 sitemap，含改名前舊網址。站台設定在單次 Server Component 渲染中去重，不跨請求快取私人資料。保留既有預約表單、權限與錯誤回應；直接 SQL 修改最多需等一小時及後續請求更新。驗證指令：`node --test tests/content-cache.test.cjs`、`pnpm exec tsc --noEmit`。
+
 ---
 
 ## 目前狀態
@@ -1681,7 +1683,7 @@ CKEditor 的 toolbar 第一個 button（undo / bold）正好落在 `<Field><Rich
 
 **Scope 取捨**：`app/(site)/about/page.tsx` L80 也讀 `siteConfig.promises`（包裝成「三項職人信仰」），暫保留靜態。`lib/site-config.ts` 的 `promises` 因此不刪，但已標註不再驅動首頁。日後若 about 也要後台化，可加 `location` 欄位區分。
 
-**ISR**：首頁 `revalidate = 60`，業主編輯後最多 60 秒首頁才反映，與 testimonials 行為一致，本次不引入 `revalidatePath`。
+**ISR（歷史實作，2026-10-06 已調整）**：當時首頁 `revalidate = 60`，本次改為一小時 TTL，並補上 why-us-sections／testimonials 的存檔快取失效，下一次存取更新。
 
 ### 2026-05-12（首頁客戶評價拿掉 `.slice(0, 3)` 硬限制）
 

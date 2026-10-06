@@ -2,6 +2,7 @@
 // 集中查詢，方便日後擴展（如 caching、loaders）
 
 import { prisma } from './prisma'
+import { cache } from 'react'
 import { FIXED_TYPES_BY_PAGE, type PageSectionPage } from './admin-types'
 
 /**
@@ -186,12 +187,12 @@ export async function getActiveTestimonials() {
   })
 }
 
-export async function getSiteSettings() {
+export const getSiteSettings = cache(async () => {
   const items = await prisma.siteSetting.findMany()
   const map: Record<string, string> = {}
   items.forEach((s) => (map[s.key] = s.value))
   return map
-}
+})
 
 export async function getContentBlock(key: string) {
   const item = await prisma.contentBlock.findUnique({ where: { key } })

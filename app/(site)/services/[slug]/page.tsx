@@ -16,8 +16,8 @@ import { configString } from '@/components/service-sections/types'
 type Params = { slug: string }
 
 // CMS 內容隨時可被業主在後台修改 — 不做 build-time 預渲染
-// ISR：每 60 秒重新生成一次（業主編輯最慢 1 分鐘可見）
-export const revalidate = 60
+// CMS 存檔失效；一小時 TTL 為非 CMS 寫入的備援
+export const revalidate = 3600
 
 /**
  * 防禦性 decode：production 環境 Vercel 偶爾把 percent-encoded 中文 path 原樣帶進

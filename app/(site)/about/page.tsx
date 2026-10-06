@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/about' },
 }
 
-// CMS 內容隨時可由業主在後台修改，每 60 秒重新生成
-export const revalidate = 60
+// CMS 存檔失效；一小時 TTL 為非 CMS 寫入的備援
+export const revalidate = 3600
 
 export default async function AboutPage() {
   const [settings, beliefSections, blocks, sections] = await Promise.all([

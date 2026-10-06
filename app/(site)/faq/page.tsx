@@ -7,7 +7,7 @@ import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
 import { stripHtml } from '@/lib/sanitize-html'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '常見問題',

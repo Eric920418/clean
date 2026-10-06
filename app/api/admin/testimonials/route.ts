@@ -1,3 +1,4 @@
+import { revalidatePublicSite } from '@/lib/revalidate-service'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
         order: order ?? 0,
       },
     })
+    revalidatePublicSite()
     return successResponse(item, 201)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '建立失敗')
