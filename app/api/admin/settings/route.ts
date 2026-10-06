@@ -1,3 +1,4 @@
+import { revalidatePublicSite } from '@/lib/revalidate-service'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
@@ -32,6 +33,7 @@ export async function PUT(request: NextRequest) {
       }),
     )
     await prisma.$transaction(ops)
+    revalidatePublicSite()
     return successResponse({ message: '已儲存', count: ops.length })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '儲存失敗')

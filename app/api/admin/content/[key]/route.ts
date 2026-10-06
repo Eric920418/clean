@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePublicSite } from '@/lib/revalidate-service'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
@@ -66,12 +66,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // ContentBlock 跨多個前台頁面使用（hero-home、nav、cta 等），全部 revalidate
-    revalidatePath('/')
-    revalidatePath('/about')
-    revalidatePath('/contact')
-    revalidatePath('/faq')
-    revalidatePath('/services')
-    revalidatePath('/works')
+    revalidatePublicSite()
 
     return successResponse(item)
   } catch (error) {

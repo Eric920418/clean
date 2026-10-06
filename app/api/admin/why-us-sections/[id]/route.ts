@@ -1,3 +1,4 @@
+import { revalidatePublicSite } from '@/lib/revalidate-service'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkAdminAuth, errorResponse, successResponse } from '@/lib/api-auth'
@@ -46,6 +47,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       where: { id: parseInt(id, 10) },
       data,
     })
+    revalidatePublicSite()
     return successResponse(item)
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '更新失敗')
@@ -59,6 +61,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
   try {
     await prisma.whyUsSection.delete({ where: { id: parseInt(id, 10) } })
+    revalidatePublicSite()
     return successResponse({ message: '已刪除' })
   } catch (error) {
     return errorResponse(error instanceof Error ? error.message : '刪除失敗')

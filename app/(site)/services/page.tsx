@@ -8,7 +8,7 @@ import { getActiveServices, getContentBlock } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '服務項目',

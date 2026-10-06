@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getActiveServices, getFeaturedBeforeAfters, getGeneralFaqs } from '@/lib/queries'
 
-export const revalidate = 300 // sitemap 5 分鐘 ISR 即可
+export const revalidate = 3600 // CMS 存檔會失效，無需每五分鐘讀取完整內容
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'

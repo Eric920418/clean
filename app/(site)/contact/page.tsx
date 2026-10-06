@@ -6,7 +6,7 @@ import { getSiteSettings, getContentBlock } from '@/lib/queries'
 import { JsonLd } from '@/components/json-ld'
 import { breadcrumbJsonLd, contactPageJsonLd } from '@/lib/seo'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '預約諮詢',
